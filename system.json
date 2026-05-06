@@ -1,15 +1,15 @@
 {
-  "id": "dorso-oscuro",
-  "title": "Mi Primer Sistema de Rol",
-  "description": "Un sistema básico creado paso a paso.",
+  "id": "dorso_oscuro",
+  "title": "Sistema de rol para Dorso Oscuro",
+  "description": "El sistema de rol para el juego con cartas Dorso Oscuro.",
   "version": "1.0.0",
   "compatibility": {
-    "minimum": "13",
-    "verified": "13"
+    "minimum": "14",
+    "verified": "14"
   },
   "authors": [
     {
-      "name": "Tu Nombre"
+      "name": "Miguel Ángel Lucas"
     }
   ],
   "esmodules": [

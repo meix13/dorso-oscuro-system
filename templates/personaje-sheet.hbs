@@ -1,0 +1,47 @@
+<form class="{{cssClass}}" autocomplete="off">
+
+    <header class="sheet-header">
+        <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}" height="64" width="64"/>
+        <h1><input name="name" type="text" value="{{actor.name}}" placeholder="Nombre del Personaje"/></h1>
+    </header>
+
+    <hr>
+
+    <div class="sheet-body">
+        <section>
+            <h2>Atributos Base</h2>
+            <div style="display: flex; gap: 20px;">
+                {{#each system.atributos as |dado key|}}
+                    <div style="text-align: center;">
+                        <label style="display: block; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">{{key}}</label>
+
+                        <a class="cambiar-dado" data-atributo="{{key}}" title="Cambiar dado de {{key}}">
+                            <img src="systems/dorso_oscuro/assets/{{dado}}.png" width="50" height="50" style="border: none; cursor: pointer;" />
+                        </a>
+
+                    </div>
+                {{/each}}
+            </div>
+        </section>
+
+        <hr>
+
+        <section>
+            <h2>Habilidades</h2>
+            <ul>
+                {{#each habilidades as |item|}}
+                    <li class="item" data-item-id="{{item._id}}" style="display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #ccc;">
+                        <a class="tirar-habilidad">
+                            <strong>{{item.name}}</strong> ({{item.system.atributoBase}})
+                        </a>
+                        <span>
+              <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual" style="width: 30px; text-align: center;">
+              / {{item.system.valorMax}}
+            </span>
+                    </li>
+                {{/each}}
+            </ul>
+        </section>
+    </div>
+
+</form>

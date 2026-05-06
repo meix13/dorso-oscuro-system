@@ -1,0 +1,8 @@
+{
+  "Actor": {
+    "types": ["personaje"]
+  },
+  "Item": {
+    "types": ["habilidad"]
+  }
+}
