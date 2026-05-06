@@ -1,0 +1,322 @@
+/* css/dorso_oscuro.css */
+
+/* --- 1. CONTENEDOR PRINCIPAL --- */
+.dorso_oscuro.sheet.actor.mystery-theme {
+    background: #1a1a1a;
+    color: #d4c4a8;
+    font-family: "Courier New", Courier, monospace;
+
+    /* LA MAGIA DEL SCROLL: Convertimos la ficha en bloque y le damos scroll global */
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: 100%;
+    padding-right: 5px; /* Pequeño margen para la barra de scroll */
+}
+
+/* --- 2. CABECERA --- */
+.mystery-theme .sheet-header {
+    border-bottom: 3px double #7a5434;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.mystery-theme .charname input {
+    color: #ff4500;
+    font-size: 28px;
+    border: none;
+    background: transparent;
+    width: 100%;
+}
+
+.mystery-theme .case-number {
+    text-align: right;
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+* --- 3. SIDEBAR E IMAGEN DEL SUJETO --- */
+.mystery-theme .sidebar {
+    flex: 0 0 220px; /* Magia Flexbox: No crece (0), no encoge (0), se queda en 220px fijos */
+    width: 220px;
+    border-right: 1px solid #444;
+    padding-right: 15px;
+    margin-right: 15px;
+}
+
+/* Añade esta regla justo debajo de la anterior para controlar el lado derecho */
+.mystery-theme .sheet-body {
+    flex: 1; /* Obliga al lado derecho a ocupar todo el espacio que sobre */
+    min-width: 0; /* Evita desbordamientos indeseados */
+}
+
+.mystery-theme .profile-img-container {
+    position: relative;
+    border: 5px solid #2a2a2a;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    margin-bottom: 20px;
+    background: #000;
+}
+
+.mystery-theme .profile-img {
+    display: block;
+    width: 100%;
+    height: 300px;       /* Aumentamos el alto para forzar el rectángulo vertical */
+    object-fit: cover;
+    object-position: top; /* Si la imagen es muy grande, recorta por abajo, salvando la cara */
+    filter: sepia(0.5) contrast(1.2);
+    cursor: pointer;
+}
+
+.mystery-theme .photo-stamp {
+    position: absolute;
+    bottom: 5px;
+    right: -10px;
+    background: rgba(139, 0, 0, 0.9);
+    color: white;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: bold;
+    transform: rotate(-10deg);
+    border: 2px solid white;
+    pointer-events: none; /* Para que no estorbe al pinchar la foto */
+}
+
+/* --- 4. ESTADÍSTICAS SECUNDARIAS --- */
+.mystery-theme .stat-row {
+    margin-bottom: 10px;
+    background: #252525;
+    padding: 8px;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.mystery-theme .stat-row label {
+    font-size: 12px;
+    font-weight: bold;
+    color: #888;
+}
+
+.mystery-theme .stat-row input {
+    background: transparent;
+    color: white;
+    border: none;
+    font-size: 20px;
+    text-align: right;
+    width: 50px;
+}
+
+/* --- 5. ATRIBUTOS (LOS DADOS RECUPERADOS) --- */
+.mystery-theme .atributos-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 20px 10px;
+    margin-bottom: 20px;
+}
+
+.mystery-theme .atributo-box {
+    text-align: center;
+    position: relative;
+}
+
+.mystery-theme .atributo-label {
+    display: block;
+    text-transform: uppercase;
+    font-weight: bold;
+    color: #d4c4a8;
+    margin-bottom: 10px;
+}
+
+.mystery-theme .img-dado {
+    width: 60px;  /* Le devolvemos un tamaño sensato */
+    height: 60px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.mystery-theme .img-dado:hover {
+    transform: scale(1.1);
+}
+
+.mystery-theme .btn-editar-dado {
+    position: absolute;
+    top: -15px;
+    right: -20px;
+    background: #4a3424;
+    color: #fff;
+    border-radius: 50%;
+    width: 26px;
+    height: 26px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.mystery-theme .btn-editar-dado:hover {
+    background: #ff4500;
+}
+
+/* --- 6. HABILIDADES --- */
+.mystery-theme .section-title {
+    border-bottom: 1px solid #7a5434;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    color: #7a5434;
+    font-size: 18px;
+}
+
+.mystery-theme .skills-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mystery-theme .skill-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px;
+    border-bottom: 1px dashed #444;
+}
+
+.mystery-theme .skill-row:hover {
+    background: rgba(122, 84, 52, 0.1);
+}
+
+.mystery-theme .skill-name {
+    font-weight: bold;
+    color: #d4c4a8;
+    cursor: pointer;
+}
+
+.mystery-theme .skill-attr {
+    font-size: 10px;
+    color: #666;
+    margin-left: 5px;
+}
+
+.mystery-theme .skill-values input {
+    width: 30px;
+    text-align: center;
+    background: #111;
+    color: white;
+    border: 1px solid #444;
+}
+
+/* --- NUEVO: Estilos para Datos Biográficos --- */
+.mystery-theme .personal-data {
+    margin-top: 10px;
+    gap: 20px;
+}
+
+.mystery-theme .data-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    border-bottom: 1px dashed #7a5434;
+}
+
+.mystery-theme .data-group label {
+    font-size: 10px;
+    color: #888;
+    font-weight: bold;
+}
+
+.mystery-theme .data-group input {
+    background: transparent;
+    border: none;
+    color: #d4c4a8;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 16px;
+    width: 100%;
+
+    /* ESTO ARREGLA LA CABECERA GIGANTE: Forzamos el alto máximo */
+    height: 30px;
+}
+
+.mystery-theme .data-group input:focus {
+    outline: none;
+    border-bottom: 1px solid #ff4500;
+}
+
+/* --- ACTUALIZADO: El fondo para los Dados --- */
+.mystery-theme .img-dado {
+    width: 60px;
+    height: 60px;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.2s;
+
+    /* El truco del fondo */
+    background: #d4c4a8; /* Mismo color hueso de las letras */
+    border-radius: 50%;  /* Círculo perfecto */
+    padding: 8px;        /* Espacio para que el dado respire */
+    box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.8);
+    border: 2px solid #1a1a1a;
+}
+
+/* --- COMPRIMIR LA CABECERA --- */
+.mystery-theme .charname input {
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.mystery-theme .personal-data {
+    margin-top: 5px; /* Reducimos el margen superior */
+}
+
+/* --- ESTILOS DEL TRACK DE ESTABILIDAD --- */
+.mystery-theme .estabilidad-section {
+    background: #252525;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.mystery-theme .estabilidad-track {
+    display: flex;
+    flex-wrap: wrap; /* Si la pantalla es pequeña, baja de línea automáticamente */
+    gap: 4px;
+    margin-top: 10px;
+}
+
+.mystery-theme .estabilidad-box {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 11px;
+    font-weight: bold;
+    color: #888;
+    background: #111;
+    border: 1px solid #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mystery-theme .estabilidad-box:hover {
+    background: #4a3424;
+    color: #fff;
+    border-color: #7a5434;
+}
+
+/* El estilo cuando el número está "rodeado" o seleccionado */
+.mystery-theme .estabilidad-box.activa {
+    color: #ff4500;
+    background: transparent;
+    border: 2px solid #ff4500;
+    border-radius: 50%; /* Lo hace redondo como si estuviera rodeado con boli rojo */
+    transform: scale(1.1);
+    box-shadow: 0 0 8px rgba(255, 69, 0, 0.4);
+}

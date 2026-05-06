@@ -1,47 +1,109 @@
 <form class="{{cssClass}}" autocomplete="off">
 
-    <header class="sheet-header">
-        <img src="{{actor.img}}" data-edit="img" title="{{actor.name}}" height="64" width="64"/>
-        <h1><input name="name" type="text" value="{{actor.name}}" placeholder="Nombre del Personaje"/></h1>
+    {{!-- CABECERA COMPRIMIDA --}}
+    <header class="sheet-header" style="padding-bottom: 5px; margin-bottom: 15px;">
+        <div class="flexrow" style="justify-content: space-between; align-items: baseline;">
+            <h1 class="charname" style="flex: 2; margin: 0;">
+                <input name="name" type="text" value="{{actor.name}}" placeholder="NOMBRE DEL SUJETO"/>
+            </h1>
+            <div class="case-number" style="flex: 1;">EXPEDIENTE Nº {{actor._id}}</div>
+        </div>
+
+        <div class="personal-data flexrow">
+            <div class="data-group">
+                <label>OCUPACIÓN / PROFESIÓN</label>
+                <input type="text" name="system.ocupacion" value="{{system.ocupacion}}">
+            </div>
+            <div class="data-group">
+                <label>EDAD</label>
+                <input type="text" name="system.edad" value="{{system.edad}}">
+            </div>
+            <div class="data-group">
+                <label>PROCEDENCIA</label>
+                <input type="text" name="system.procedencia" value="{{system.procedencia}}">
+            </div>
+        </div>
     </header>
 
-    <hr>
+    <section class="main-content flexrow" style="align-items: flex-start;">
 
-    <div class="sheet-body">
-        <section>
-            <h2>Atributos Base</h2>
-            <div style="display: flex; gap: 20px;">
-                {{#each system.atributos as |dado key|}}
-                    <div style="text-align: center;">
-                        <label style="display: block; text-transform: uppercase; font-weight: bold; margin-bottom: 5px;">{{key}}</label>
-
-                        <a class="cambiar-dado" data-atributo="{{key}}" title="Cambiar dado de {{key}}">
-                            <img src="systems/dorso_oscuro/assets/{{dado}}.png" width="50" height="50" style="border: none; cursor: pointer;" />
-                        </a>
-
-                    </div>
-                {{/each}}
+        {{!-- SIDEBAR IZQUIERDA --}}
+        <aside class="sidebar">
+            <div class="profile-img-container">
+                <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" />
+                <div class="photo-stamp">CONFIDENCIAL</div>
             </div>
-        </section>
 
-        <hr>
+            <div class="secondary-stats">
+                <div class="stat-row">
+                    <label>ESENCIA</label>
+                    <input type="number" name="system.esencia" value="{{system.esencia}}">
+                </div>
+                <div class="stat-row">
+                    <label>CORDURA</label>
+                    <input type="number" name="system.cordura" value="{{system.cordura}}">
+                </div>
+                <div class="stat-row">
+                    <label>CRÉDITO</label>
+                    <input type="number" name="system.credito" value="{{system.credito}}">
+                </div>
+            </div>
+        </aside>
 
-        <section>
-            <h2>Habilidades</h2>
-            <ul>
-                {{#each habilidades as |item|}}
-                    <li class="item" data-item-id="{{item._id}}" style="display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px solid #ccc;">
-                        <a class="tirar-habilidad">
-                            <strong>{{item.name}}</strong> ({{item.system.atributoBase}})
-                        </a>
-                        <span>
-              <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual" style="width: 30px; text-align: center;">
-              / {{item.system.valorMax}}
-            </span>
-                    </li>
-                {{/each}}
-            </ul>
-        </section>
-    </div>
+        {{!-- CUERPO DERECHA --}}
+        <main class="sheet-body">
 
+            {{!-- ATRIBUTOS (DADOS) --}}
+            <section class="attributes-section">
+                <div class="atributos-container">
+                    {{#each system.atributos as |dado key|}}
+                        <div class="atributo-box">
+                            <label class="atributo-label">{{key}}</label>
+                            <a class="tirar-atributo" data-atributo="{{key}}">
+                                <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
+                            </a>
+                            <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}">
+                                <i class="fas fa-pen-fancy"></i>
+                            </a>
+                        </div>
+                    {{/each}}
+                </div>
+            </section>
+
+            {{!-- HABILIDADES --}}
+            <section class="skills-section">
+                <h2 class="section-title"><i class="fas fa-search"></i> Habilidades de Campo</h2>
+                <ul class="skills-list">
+                    {{#each habilidades as |item|}}
+                        <li class="item skill-row" data-item-id="{{item._id}}">
+                            <a class="tirar-habilidad flexrow">
+                                <span class="skill-name">{{item.name}}</span>
+                                <span class="skill-attr">[{{item.system.atributoBase}}]</span>
+                            </a>
+                            <div class="skill-values">
+                                <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual">
+                                <span class="sep">/</span>
+                                <span class="max">{{item.system.valorMax}}</span>
+                            </div>
+                        </li>
+                    {{/each}}
+                </ul>
+            </section>
+
+            <hr style="border-color: #444; margin: 15px 0;">
+
+            {{!-- TRACK DE ESTABILIDAD (MOVIDO ABAJO) --}}
+            <section class="estabilidad-section">
+                <label class="section-title" style="margin-top: 0; border: none;">NIVEL DE ESTABILIDAD MENTAL</label>
+                <div class="estabilidad-track">
+                    {{#each trackEstabilidad as |item|}}
+                        <div class="estabilidad-box {{#if item.activo}}activa{{/if}}" data-valor="{{item.valor}}">
+                            {{item.valor}}
+                        </div>
+                    {{/each}}
+                </div>
+            </section>
+
+        </main>
+    </section>
 </form>

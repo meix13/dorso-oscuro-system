@@ -5,26 +5,33 @@ export class PersonajeSheet extends ActorSheet {
     // 1. Configuración de la ventana
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["dorso_oscuro", "sheet", "actor"],
+            classes: ["dorso_oscuro", "sheet", "actor", "mystery-theme"], // Añadimos clase temática
             template: "systems/dorso_oscuro/templates/personaje-sheet.hbs",
-            width: 500,
-            height: 600
+            width: 700,  // Aumentamos ancho
+            height: 850, // Aumentamos alto
+            tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "stats" }]
         });
     }
-
     // 2. Preparar los datos para la Vista (Handlebars)
     async getData() {
         const context = super.getData();
-        // Foundry V14 mapea los datos del sistema aquí
         context.system = context.data.system;
 
-        // Opciones para el desplegable de dados
         context.config = {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" }
         };
 
-        // Filtramos el inventario para pasarle a la vista solo las Habilidades
         context.habilidades = context.items.filter(item => item.type === "habilidad");
+
+        // NUEVO: Generamos el track de Estabilidad (del -11 al 22)
+        context.trackEstabilidad = [];
+        for (let i = -11; i <= 22; i++) {
+            context.trackEstabilidad.push({
+                valor: i,
+                // Marcamos como "activo" el que coincida con la base de datos
+                activo: (i === context.system.estabilidad)
+            });
+        }
 
         return context;
     }
@@ -32,14 +39,46 @@ export class PersonajeSheet extends ActorSheet {
     // 3. Escuchar Eventos del DOM (Clics)
     activateListeners(html) {
         super.activateListeners(html);
-        // Escuchamos el clic en la habilidad
-        html.find('.tirar-habilidad').click(this._onTirarHabilidad.bind(this));
 
-        // NUEVO: Escuchamos el clic en la imagen del dado
+        // Escuchamos el clic en la habilidad y en el lápiz de editar (los que ya tenías)
+        html.find('.tirar-habilidad').click(this._onTirarHabilidad.bind(this));
         html.find('.cambiar-dado').click(this._onCambiarDado.bind(this));
+
+        // NUEVO: Escuchamos el clic directamente en la imagen para tirar el dado
+        html.find('.tirar-atributo').click(this._onTirarAtributo.bind(this));
+        html.find('.estabilidad-box').click(this._onCambiarEstabilidad.bind(this));
+
+        // Abrir ficha de habilidad al hacer doble clic o clic en editar
+        html.find('.item .skill-name').click(ev => {
+            const li = $(ev.currentTarget).parents(".item");
+            const item = this.actor.items.get(li.data("itemId"));
+            item.sheet.render(true);
+        });
     }
 
     // 4. Lógica de la tirada y gasto de puntos
+
+    async _onTirarAtributo(event) {
+        event.preventDefault();
+
+        // Recuperamos qué atributo se ha pinchado ("mental", "social", "fisico")
+        const atributo = event.currentTarget.dataset.atributo;
+
+        // Consultamos la Base de Datos para saber qué dado tiene asignado (ej: "1d6")
+        const formulaDado = this.actor.system.atributos[atributo];
+
+        // Creamos y evaluamos la tirada
+        const roll = new Roll(formulaDado);
+        await roll.evaluate();
+
+        // Enviamos el resultado al Chat
+        roll.toMessage({
+            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+            flavor: `<h3>Tirada de Atributo: ${atributo.toUpperCase()}</h3>`
+        });
+    }
+
+
     async _onCambiarDado(event) {
         event.preventDefault();
 
@@ -122,4 +161,13 @@ export class PersonajeSheet extends ActorSheet {
             default: "lanzar"
         }).render(true);
     }
+
+    async _onCambiarEstabilidad(event) {
+        event.preventDefault();
+        // Leemos el data-valor del HTML y actualizamos la base de datos
+        const nuevoValor = parseInt(event.currentTarget.dataset.valor);
+        await this.actor.update({ "system.estabilidad": nuevoValor });
+    }
+
+
 }

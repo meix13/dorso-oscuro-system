@@ -1,0 +1,33 @@
+<form class="{{cssClass}} flexcol" autocomplete="off">
+    <header class="sheet-header flex0">
+        <img src="{{item.img}}" data-edit="img" title="{{item.name}}" height="64" width="64"/>
+        <h1><input name="name" type="text" value="{{item.name}}" placeholder="Nombre de la Habilidad"/></h1>
+    </header>
+
+    <main class="sheet-body">
+        <div class="stat-row" style="margin-bottom: 15px;">
+            <label style="font-weight: bold;">ATRIBUTO BASE</label>
+            <select name="system.atributoBase">
+                {{selectOptions config.atributos selected=system.atributoBase}}
+            </select>
+        </div>
+
+        <div class="flexrow" style="gap: 10px;">
+            <div class="stat-row">
+                <label>PUNTOS MÁXIMOS</label>
+                <input type="number" name="system.valorMax" value="{{system.valorMax}}" min="1" max="5">
+            </div>
+            <div class="stat-row">
+                <label>PUNTOS ACTUALES</label>
+                <input type="number" name="system.valorActual" value="{{system.valorActual}}" min="0">
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="description-editor" style="margin-top: 10px;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px;">DESCRIPCIÓN</label>
+            {{editor item.system.descripcion target="system.descripcion" button=true owner=owner editable=editable}}
+        </div>
+    </main>
+</form>
