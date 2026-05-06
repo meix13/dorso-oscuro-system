@@ -1,322 +1,299 @@
 /* css/dorso_oscuro.css */
 
-/* --- 1. CONTENEDOR PRINCIPAL --- */
-.dorso_oscuro.sheet.actor.mystery-theme {
-    background: #1a1a1a;
-    color: #d4c4a8;
-    font-family: "Courier New", Courier, monospace;
+/* --- 1. IMPORTAR FUENTE MANUSCRITA DE GOOGLE --- */
+@import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+/* --- 2. CONTENEDOR PRINCIPAL (Fondo de pergamino) --- */
+/* Cambiamos el selector para apuntar solo al formulario interno */
+form.mystery-paper-theme {
+    background-image: url('../assets/fondo_ficha.jpg');
+    background-size: cover;
+    background-attachment: local;
+    position: relative;
+    padding: 50px 40px; /* Margen amplio para que no pise el marco */
+    font-family: 'Kalam', cursive;
+    color: #1a1a1a; /* Texto oscuro imitando tinta */
 
-    /* LA MAGIA DEL SCROLL: Convertimos la ficha en bloque y le damos scroll global */
+    /* Configuración del scroll del contenido */
     display: block;
     overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
-    padding-right: 5px; /* Pequeño margen para la barra de scroll */
 }
 
-/* --- 2. CABECERA --- */
-.mystery-theme .sheet-header {
-    border-bottom: 3px double #7a5434;
-    padding-bottom: 10px;
-    margin-bottom: 15px;
-}
-
-.mystery-theme .charname input {
-    color: #ff4500;
-    font-size: 28px;
-    border: none;
-    background: transparent;
-    width: 100%;
-}
-
-.mystery-theme .case-number {
-    text-align: right;
-    font-size: 12px;
-    color: #666;
-    margin-top: 5px;
-}
-
-* --- 3. SIDEBAR E IMAGEN DEL SUJETO --- */
-.mystery-theme .sidebar {
-    flex: 0 0 220px; /* Magia Flexbox: No crece (0), no encoge (0), se queda en 220px fijos */
-    width: 220px;
-    border-right: 1px solid #444;
-    padding-right: 15px;
-    margin-right: 15px;
-}
-
-/* Añade esta regla justo debajo de la anterior para controlar el lado derecho */
-.mystery-theme .sheet-body {
-    flex: 1; /* Obliga al lado derecho a ocupar todo el espacio que sobre */
-    min-width: 0; /* Evita desbordamientos indeseados */
-}
-
-.mystery-theme .profile-img-container {
-    position: relative;
-    border: 5px solid #2a2a2a;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    margin-bottom: 20px;
-    background: #000;
-}
-
-.mystery-theme .profile-img {
-    display: block;
-    width: 100%;
-    height: 300px;       /* Aumentamos el alto para forzar el rectángulo vertical */
-    object-fit: cover;
-    object-position: top; /* Si la imagen es muy grande, recorta por abajo, salvando la cara */
-    filter: sepia(0.5) contrast(1.2);
-    cursor: pointer;
-}
-
-.mystery-theme .photo-stamp {
+/* --- 3. EL MARCO DE LA FICHA (Capa superpuesta) --- */
+/* Cambiamos el selector también aquí */
+form.mystery-paper-theme::before {
+    content: "";
     position: absolute;
-    bottom: 5px;
-    right: -10px;
-    background: rgba(139, 0, 0, 0.9);
-    color: white;
-    padding: 2px 10px;
-    font-size: 12px;
-    font-weight: bold;
-    transform: rotate(-10deg);
-    border: 2px solid white;
-    pointer-events: none; /* Para que no estorbe al pinchar la foto */
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('../assets/borde.png');
+    background-size: 100% 100%;
+    pointer-events: none; /* ¡CRÍTICO! Permite hacer clic "a través" del marco */
+    z-index: 10;
+}
+/* --- 4. ESTILOS GLOBALES DE INPUTS (Para quitar las cajas por defecto) --- */
+.mystery-paper-theme input[type="text"],
+.mystery-paper-theme input[type="number"] {
+    background: transparent;
+    border: none;
+    font-family: 'Kalam', cursive;
+    color: #1a1a1a;
+}
+.mystery-paper-theme input:focus {
+    outline: none;
+    border-bottom: 2px solid #000;
 }
 
-/* --- 4. ESTADÍSTICAS SECUNDARIAS --- */
-.mystery-theme .stat-row {
-    margin-bottom: 10px;
-    background: #252525;
-    padding: 8px;
-    border-radius: 4px;
+/* =========================================================
+   ESTRUCTURA DE LA FICHA
+========================================================= */
+
+/* --- A. CABECERA (Dados, Runas, Foto) --- */
+.mystery-paper-theme .sheet-upper {
     display: flex;
     justify-content: space-between;
     align-items: center;
-}
-
-.mystery-theme .stat-row label {
-    font-size: 12px;
-    font-weight: bold;
-    color: #888;
-}
-
-.mystery-theme .stat-row input {
-    background: transparent;
-    color: white;
-    border: none;
-    font-size: 20px;
-    text-align: right;
-    width: 50px;
-}
-
-/* --- 5. ATRIBUTOS (LOS DADOS RECUPERADOS) --- */
-.mystery-theme .atributos-container {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    background: #252525;
-    border: 1px solid #444;
-    border-radius: 8px;
-    padding: 20px 10px;
     margin-bottom: 20px;
 }
 
-.mystery-theme .atributo-box {
-    text-align: center;
-    position: relative;
+/* Columna izquierda: Dados */
+.mystery-paper-theme .dice-column {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
 }
 
-.mystery-theme .atributo-label {
-    display: block;
-    text-transform: uppercase;
+.mystery-paper-theme .dice-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.mystery-paper-theme .attribute-label {
+    font-size: 28px;
     font-weight: bold;
-    color: #d4c4a8;
-    margin-bottom: 10px;
+    text-transform: capitalize;
+    width: 90px;
+    text-align: right;
 }
 
-.mystery-theme .img-dado {
-    width: 60px;  /* Le devolvemos un tamaño sensato */
+.mystery-paper-theme .img-dado {
+    width: 60px;
     height: 60px;
-    border: none;
     cursor: pointer;
     transition: transform 0.2s;
+    background: transparent;
+}
+.mystery-paper-theme .img-dado:hover { transform: scale(1.1); }
+
+/* Centro: Runas */
+.mystery-paper-theme .rune-separator {
+    flex: 0 0 60px;
+    text-align: center;
+}
+.mystery-paper-theme .rune-separator img {
+    max-height: 250px;
+    object-fit: contain;
 }
 
-.mystery-theme .img-dado:hover {
-    transform: scale(1.1);
+/* Columna derecha: Retrato */
+.mystery-paper-theme .portrait-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
-.mystery-theme .btn-editar-dado {
-    position: absolute;
-    top: -15px;
-    right: -20px;
-    background: #4a3424;
-    color: #fff;
+.mystery-paper-theme .charname input {
+    font-size: 45px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #1a1a1a;
+    height: auto;
+}
+
+.mystery-paper-theme .profile-img-circle {
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
-    width: 26px;
-    height: 26px;
+    border: 3px solid #1a1a1a;
+    box-shadow: 2px 4px 8px rgba(0,0,0,0.5);
+    object-fit: cover;
+    object-position: top;
+    cursor: pointer;
+}
+
+
+/* --- B. SECCIÓN MEDIA (Salud, Estabilidad, Umbral, Esencia) --- */
+.mystery-paper-theme .stats-mid {
+    display: flex;
+    justify-content: space-around; /* Reparte el espacio entre las stats y los iconos */
+    align-items: flex-end;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px dotted #444; /* Separador sutil */
+}
+
+.mystery-paper-theme .track-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    font-size: 22px;
+}
+
+.mystery-paper-theme .input-line input {
+    width: 40px;
+    font-size: 22px;
+    text-align: center;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.3); /* Un poco de fondo para que se vea la caja */
+}
+
+.mystery-paper-theme .icon-stats {
+    display: flex;
+    gap: 30px;
+}
+
+.mystery-paper-theme .icon-group {
+    text-align: center;
+}
+
+.mystery-paper-theme .icon-group label {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.mystery-paper-theme .umbral-frame { background-image: url('../assets/icon_umbral.png'); }
+.mystery-paper-theme .esencia-frame { background-image: url('../assets/icon_esencia.png'); }
+
+.mystery-paper-theme .icon-frame {
+    width: 80px;
+    height: 80px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 12px;
-    cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
-.mystery-theme .btn-editar-dado:hover {
-    background: #ff4500;
+.mystery-paper-theme .icon-frame input {
+    width: 50px;
+    font-size: 32px;
+    font-weight: bold;
 }
 
-/* --- 6. HABILIDADES --- */
-.mystery-theme .section-title {
-    border-bottom: 1px solid #7a5434;
-    margin-top: 20px;
-    margin-bottom: 15px;
-    color: #7a5434;
-    font-size: 18px;
+/* --- C. SECCIÓN HABILIDADES (Dos columnas) --- */
+.mystery-paper-theme .skills-grid {
+    display: flex;
+    gap: 50px;
+    margin-bottom: 30px;
 }
 
-.mystery-theme .skills-list {
+.mystery-paper-theme .skill-column {
+    flex: 1;
+}
+
+.mystery-paper-theme .skill-column h3 {
+    font-family: 'Kalam', cursive;
+    font-size: 24px;
+    border-bottom: 2px solid #1a1a1a;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.mystery-paper-theme .skills-list {
     list-style: none;
     padding: 0;
     margin: 0;
 }
 
-.mystery-theme .skill-row {
+.mystery-paper-theme .skill-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px;
-    border-bottom: 1px dashed #444;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(0,0,0,0.3);
 }
 
-.mystery-theme .skill-row:hover {
-    background: rgba(122, 84, 52, 0.1);
-}
-
-.mystery-theme .skill-name {
+.mystery-paper-theme .skill-name {
     font-weight: bold;
-    color: #d4c4a8;
     cursor: pointer;
+    font-size: 18px;
 }
 
-.mystery-theme .skill-attr {
-    font-size: 10px;
-    color: #666;
-    margin-left: 5px;
+.mystery-paper-theme .skill-attr {
+    font-size: 14px;
+    color: #444;
 }
 
-.mystery-theme .skill-values input {
+.mystery-paper-theme .skill-values input {
     width: 30px;
-    text-align: center;
-    background: #111;
-    color: white;
-    border: 1px solid #444;
+    text-align: right;
+    border: 1px solid rgba(0,0,0,0.3);
+    background: rgba(255,255,255,0.4);
+    margin-right: 5px;
 }
 
-/* --- NUEVO: Estilos para Datos Biográficos --- */
-.mystery-theme .personal-data {
-    margin-top: 10px;
-    gap: 20px;
-}
-
-.mystery-theme .data-group {
+/* --- D. PIE DE FICHA (Armas y Notas) --- */
+.mystery-paper-theme .sheet-footer {
     display: flex;
-    flex-direction: column;
+    gap: 50px;
+}
+
+.mystery-paper-theme .footer-box {
     flex: 1;
-    border-bottom: 1px dashed #7a5434;
 }
 
-.mystery-theme .data-group label {
-    font-size: 10px;
-    color: #888;
-    font-weight: bold;
+.mystery-paper-theme .footer-box h3 {
+    font-family: 'Kalam', cursive;
+    font-size: 24px;
+    border-bottom: 2px solid #1a1a1a;
+    margin-bottom: 10px;
+    text-align: center;
 }
 
-.mystery-theme .data-group input {
-    background: transparent;
-    border: none;
-    color: #d4c4a8;
-    font-family: "Courier New", Courier, monospace;
-    font-size: 16px;
+.mystery-paper-theme .empty-placeholder {
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    margin-top: 20px;
+}
+
+.mystery-paper-theme textarea {
     width: 100%;
-
-    /* ESTO ARREGLA LA CABECERA GIGANTE: Forzamos el alto máximo */
-    height: 30px;
-}
-
-.mystery-theme .data-group input:focus {
-    outline: none;
-    border-bottom: 1px solid #ff4500;
-}
-
-/* --- ACTUALIZADO: El fondo para los Dados --- */
-.mystery-theme .img-dado {
-    width: 60px;
-    height: 60px;
-    border: none;
-    cursor: pointer;
-    transition: transform 0.2s;
-
-    /* El truco del fondo */
-    background: #d4c4a8; /* Mismo color hueso de las letras */
-    border-radius: 50%;  /* Círculo perfecto */
-    padding: 8px;        /* Espacio para que el dado respire */
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.8);
-    border: 2px solid #1a1a1a;
-}
-
-/* --- COMPRIMIR LA CABECERA --- */
-.mystery-theme .charname input {
-    margin-bottom: 0;
-    padding-bottom: 0;
-}
-.mystery-theme .personal-data {
-    margin-top: 5px; /* Reducimos el margen superior */
-}
-
-/* --- ESTILOS DEL TRACK DE ESTABILIDAD --- */
-.mystery-theme .estabilidad-section {
-    background: #252525;
-    border: 1px solid #444;
-    border-radius: 4px;
+    height: 120px;
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.3);
+    font-family: 'Kalam', cursive;
+    font-size: 18px;
     padding: 10px;
+    resize: none;
 }
 
-.mystery-theme .estabilidad-track {
-    display: flex;
-    flex-wrap: wrap; /* Si la pantalla es pequeña, baja de línea automáticamente */
-    gap: 4px;
-    margin-top: 10px;
-}
-
-.mystery-theme .estabilidad-box {
-    width: 24px;
-    height: 24px;
+/* Estilo para el botón de editar dado en la ficha de papel */
+.mystery-paper-theme .btn-editar-dado {
+    position: absolute;
+    top: 5px;
+    right: -25px; /* Lo sacamos un poco a la derecha del dado */
+    background: #4a3424;
+    color: #fff;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 11px;
-    font-weight: bold;
-    color: #888;
-    background: #111;
-    border: 1px solid #333;
+    font-size: 10px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    z-index: 20; /* Por encima del borde.png */
+    transition: background 0.2s;
 }
 
-.mystery-theme .estabilidad-box:hover {
-    background: #4a3424;
-    color: #fff;
-    border-color: #7a5434;
-}
-
-/* El estilo cuando el número está "rodeado" o seleccionado */
-.mystery-theme .estabilidad-box.activa {
-    color: #ff4500;
-    background: transparent;
-    border: 2px solid #ff4500;
-    border-radius: 50%; /* Lo hace redondo como si estuviera rodeado con boli rojo */
-    transform: scale(1.1);
-    box-shadow: 0 0 8px rgba(255, 69, 0, 0.4);
+.mystery-paper-theme .btn-editar-dado:hover {
+    background: #ff4500;
 }

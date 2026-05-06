@@ -1,6 +1,6 @@
 // module/sheets/habilidad-sheet.mjs
 
-export class HabilidadSheet extends ItemSheet {
+export class HabilidadSheet extends foundry.appv1.sheets.ItemSheet {
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {

@@ -1,109 +1,90 @@
-<form class="{{cssClass}}" autocomplete="off">
+<form class="{{cssClass}} mystery-paper-theme" autocomplete="off">
 
-    {{!-- CABECERA COMPRIMIDA --}}
-    <header class="sheet-header" style="padding-bottom: 5px; margin-bottom: 15px;">
-        <div class="flexrow" style="justify-content: space-between; align-items: baseline;">
-            <h1 class="charname" style="flex: 2; margin: 0;">
-                <input name="name" type="text" value="{{actor.name}}" placeholder="NOMBRE DEL SUJETO"/>
-            </h1>
-            <div class="case-number" style="flex: 1;">EXPEDIENTE Nº {{actor._id}}</div>
+    {{!-- PARTE SUPERIOR: Dados, Runas y Retrato --}}
+    <header class="sheet-upper flexrow">
+
+        {{!-- Dados Atributos --}}
+        <div class="dice-column flexcol">
+            {{#each system.atributos as |dado key|}}
+                <div class="dice-row flexrow" style="position: relative;">
+                    <span class="attribute-label">{{key}}</span>
+                    <a class="tirar-atributo" data-atributo="{{key}}">
+                        <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
+                    </a>
+
+                    {{!-- NUEVO: Botón para cambiar el dado --}}
+                    <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}" title="Cambiar dado">
+                        <i class="fas fa-pen-fancy"></i>
+                    </a>
+                </div>
+            {{/each}}
         </div>
 
-        <div class="personal-data flexrow">
-            <div class="data-group">
-                <label>OCUPACIÓN / PROFESIÓN</label>
-                <input type="text" name="system.ocupacion" value="{{system.ocupacion}}">
-            </div>
-            <div class="data-group">
-                <label>EDAD</label>
-                <input type="text" name="system.edad" value="{{system.edad}}">
-            </div>
-            <div class="data-group">
-                <label>PROCEDENCIA</label>
-                <input type="text" name="system.procedencia" value="{{system.procedencia}}">
+        {{!-- Decoración Rúnica --}}
+        <div class="rune-separator">
+            <img src="systems/dorso_oscuro/assets/runa_central.png">
+        </div>
+
+        {{!-- Nombre y Foto Circular --}}
+        <div class="portrait-column flexcol">
+            <h1 class="charname">
+                <input name="name" type="text" value="{{actor.name}}" placeholder="Nombre"/>
+            </h1>
+            <div class="portrait-container">
+                <img class="profile-img-circle" src="{{actor.img}}" data-edit="img" />
             </div>
         </div>
     </header>
 
-    <section class="main-content flexrow" style="align-items: flex-start;">
+    {{!-- PARTE MEDIA: Stats, Umbral y Esencia --}}
+    <section class="stats-mid flexrow">
+        <div class="track-stats flexcol">
+            <div class="input-line">Estabilidad: <input type="number" name="system.estabilidad" value="{{system.estabilidad}}"> / 22</div>
+            <div class="input-line">Salud: <input type="number" name="system.hp.value" value="{{system.hp.value}}"> / {{system.hp.max}}</div>
+            <div class="input-line">Cordura: <input type="number" name="system.cordura" value="{{system.cordura}}"> / 5</div>
+            <div class="input-line">Crédito: <input type="number" name="system.credito" value="{{system.credito}}"></div>
+        </div>
 
-        {{!-- SIDEBAR IZQUIERDA --}}
-        <aside class="sidebar">
-            <div class="profile-img-container">
-                <img class="profile-img" src="{{actor.img}}" data-edit="img" title="{{actor.name}}" />
-                <div class="photo-stamp">CONFIDENCIAL</div>
+        <div class="icon-stats flexrow">
+            <div class="icon-group">
+                <label>Umbral</label>
+                <div class="icon-frame umbral-frame">
+                    <input type="number" name="system.umbral" value="{{system.umbral}}">
+                </div>
             </div>
-
-            <div class="secondary-stats">
-                <div class="stat-row">
-                    <label>ESENCIA</label>
+            <div class="icon-group">
+                <label>Esencia</label>
+                <div class="icon-frame esencia-frame">
                     <input type="number" name="system.esencia" value="{{system.esencia}}">
                 </div>
-                <div class="stat-row">
-                    <label>CORDURA</label>
-                    <input type="number" name="system.cordura" value="{{system.cordura}}">
-                </div>
-                <div class="stat-row">
-                    <label>CRÉDITO</label>
-                    <input type="number" name="system.credito" value="{{system.credito}}">
-                </div>
             </div>
-        </aside>
-
-        {{!-- CUERPO DERECHA --}}
-        <main class="sheet-body">
-
-            {{!-- ATRIBUTOS (DADOS) --}}
-            <section class="attributes-section">
-                <div class="atributos-container">
-                    {{#each system.atributos as |dado key|}}
-                        <div class="atributo-box">
-                            <label class="atributo-label">{{key}}</label>
-                            <a class="tirar-atributo" data-atributo="{{key}}">
-                                <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
-                            </a>
-                            <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}">
-                                <i class="fas fa-pen-fancy"></i>
-                            </a>
-                        </div>
-                    {{/each}}
-                </div>
-            </section>
-
-            {{!-- HABILIDADES --}}
-            <section class="skills-section">
-                <h2 class="section-title"><i class="fas fa-search"></i> Habilidades de Campo</h2>
-                <ul class="skills-list">
-                    {{#each habilidades as |item|}}
-                        <li class="item skill-row" data-item-id="{{item._id}}">
-                            <a class="tirar-habilidad flexrow">
-                                <span class="skill-name">{{item.name}}</span>
-                                <span class="skill-attr">[{{item.system.atributoBase}}]</span>
-                            </a>
-                            <div class="skill-values">
-                                <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual">
-                                <span class="sep">/</span>
-                                <span class="max">{{item.system.valorMax}}</span>
-                            </div>
-                        </li>
-                    {{/each}}
-                </ul>
-            </section>
-
-            <hr style="border-color: #444; margin: 15px 0;">
-
-            {{!-- TRACK DE ESTABILIDAD (MOVIDO ABAJO) --}}
-            <section class="estabilidad-section">
-                <label class="section-title" style="margin-top: 0; border: none;">NIVEL DE ESTABILIDAD MENTAL</label>
-                <div class="estabilidad-track">
-                    {{#each trackEstabilidad as |item|}}
-                        <div class="estabilidad-box {{#if item.activo}}activa{{/if}}" data-valor="{{item.valor}}">
-                            {{item.valor}}
-                        </div>
-                    {{/each}}
-                </div>
-            </section>
-
-        </main>
+        </div>
     </section>
+
+    {{!-- PARTE INFERIOR: Dos Columnas de Habilidades --}}
+    <section class="skills-grid flexrow">
+        {{!-- Columna Técnicas --}}
+        <div class="skill-column">
+            <h3>Habilidades Técnicas</h3>
+            {{> "systems/dorso_oscuro/templates/parts/skill-list.hbs" skills=habilidadesTecnicas}}
+        </div>
+
+        {{!-- Columna Generales --}}
+        <div class="skill-column">
+            <h3>Habilidades Generales</h3>
+            {{> "systems/dorso_oscuro/templates/parts/skill-list.hbs" skills=habilidadesGenerales}}
+        </div>
+    </section>
+
+    {{!-- PIE: Armas y Notas --}}
+    <footer class="sheet-footer flexrow">
+        <div class="footer-box armas">
+            <h3>Armas</h3>
+            <div class="empty-placeholder">Listado vacío...</div>
+        </div>
+        <div class="footer-box notas">
+            <h3>Notas</h3>
+            <textarea name="system.notas">{{system.notas}}</textarea>
+        </div>
+    </footer>
 </form>

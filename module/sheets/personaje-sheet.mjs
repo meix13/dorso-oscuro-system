@@ -1,11 +1,11 @@
 // module/sheets/personaje-sheet.mjs
 
-export class PersonajeSheet extends ActorSheet {
+export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
     // 1. Configuración de la ventana
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["dorso_oscuro", "sheet", "actor", "mystery-theme"], // Añadimos clase temática
+            classes: ["dorso_oscuro", "sheet", "actor", "mystery-paper-theme"], // Añadimos clase temática
             template: "systems/dorso_oscuro/templates/personaje-sheet.hbs",
             width: 700,  // Aumentamos ancho
             height: 850, // Aumentamos alto
@@ -21,21 +21,18 @@ export class PersonajeSheet extends ActorSheet {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" }
         };
 
-        context.habilidades = context.items.filter(item => item.type === "habilidad");
+        // Separamos las habilidades por tipo
+        context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
+        context.habilidadesGenerales = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
 
-        // NUEVO: Generamos el track de Estabilidad (del -11 al 22)
+        // Generamos el track de Estabilidad (como antes)
         context.trackEstabilidad = [];
         for (let i = -11; i <= 22; i++) {
-            context.trackEstabilidad.push({
-                valor: i,
-                // Marcamos como "activo" el que coincida con la base de datos
-                activo: (i === context.system.estabilidad)
-            });
+            context.trackEstabilidad.push({ valor: i, activo: (i === context.system.estabilidad) });
         }
 
         return context;
     }
-
     // 3. Escuchar Eventos del DOM (Clics)
     activateListeners(html) {
         super.activateListeners(html);

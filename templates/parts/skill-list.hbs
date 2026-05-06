@@ -1,0 +1,18 @@
+{{!-- templates/parts/skill-list.hbs --}}
+<ul class="skills-list">
+    {{#each skills as |item|}}
+        <li class="item skill-row" data-item-id="{{item._id}}">
+            <div class="skill-main-info">
+                <a class="tirar-habilidad">
+                    <span class="skill-name">{{item.name}}</span>
+                    <span class="skill-attr">[{{item.system.atributoBase}}]</span>
+                </a>
+            </div>
+            <div class="skill-values">
+                <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual">
+                <span class="sep">/</span>
+                <span class="max">{{item.system.valorMax}}</span>
+            </div>
+        </li>
+    {{/each}}
+</ul>
