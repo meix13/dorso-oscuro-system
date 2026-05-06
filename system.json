@@ -1,0 +1,20 @@
+{
+  "id": "dorso-oscuro",
+  "title": "Mi Primer Sistema de Rol",
+  "description": "Un sistema básico creado paso a paso.",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Tu Nombre"
+    }
+  ],
+  "esmodules": [
+    "module/sistema.js"
+  ],
+  "styles": [],
+  "packs": []
+}
