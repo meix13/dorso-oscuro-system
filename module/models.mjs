@@ -23,7 +23,16 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
 
             ocupacion: new fields.StringField({initial: ""}),
             edad: new fields.StringField({initial: ""}),
-            procedencia: new fields.StringField({initial: ""})
+            procedencia: new fields.StringField({initial: ""}),
+
+            // NUEVO: Notas
+            notas: new fields.StringField({initial: ""}),
+            // --- SISTEMA DE CARTAS ---
+            energia: new fields.SchemaField({
+                value: new fields.NumberField({initial: 0, integer: true, min: 0, max: 7}), // Máximo 7 por tus reglas
+            }),
+            merma: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            decadencia: new fields.NumberField({initial: 0, integer: true, min: 0})
         };
     }
 }
@@ -38,6 +47,43 @@ export class HabilidadData extends foundry.abstract.TypeDataModel {
             atributoBase: new fields.StringField({initial: "mental", choices: ["mental", "social", "fisico"]}),
             // NUEVO: Tipo de habilidad
             tipo: new fields.StringField({initial: "general", choices: ["tecnica", "general"]})
+        };
+    }
+}
+
+// Añade esto al final de module/models.mjs
+
+// --- MODELOS DE CARTAS ---
+
+// 1. Carta de Alma (El escudo del jugador)
+export class CartaAlmaData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        const fields = foundry.data.fields;
+        return {
+            vida: new fields.SchemaField({
+                value: new fields.NumberField({initial: 10, integer: true, min: 0}),
+                max: new fields.NumberField({initial: 10, integer: true, min: 1})
+            }),
+            energiaBase: new fields.NumberField({initial: 1, integer: true, min: 0}), // Energía que genera por turno
+            elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
+            descripcion: new fields.HTMLField()
+        };
+    }
+}
+
+// 2. Carta de Poder / Objeto (Usaremos el mismo modelo base para ambos, diferenciándolos por su "tipo" en Foundry)
+export class CartaJugableData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        const fields = foundry.data.fields;
+        return {
+            costeEnergia: new fields.NumberField({initial: 1, integer: true, min: 0}),
+            elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
+            tipoAccion: new fields.StringField({initial: "otro", choices: ["ataque", "cura", "defensa", "otro"]}),
+            formulaBase: new fields.StringField({initial: ""}), // Ej: "1d6" o "2"
+            esInstantanea: new fields.BooleanField({initial: false}),
+            desaparece: new fields.BooleanField({initial: false}),
+            descripcion: new fields.HTMLField(),
+            enBanquillo: new fields.BooleanField({initial: false})
         };
     }
 }

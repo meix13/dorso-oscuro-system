@@ -2,17 +2,19 @@
 
 export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
-    // 1. Configuración de la ventana
+
+    // 1. Configuración de la ventana (Añadimos la gestión de pestañas)
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["dorso_oscuro", "sheet", "actor", "mystery-paper-theme"], // Añadimos clase temática
+            classes: ["dorso_oscuro", "sheet", "actor", "mystery-paper-theme"],
             template: "systems/dorso_oscuro/templates/personaje-sheet.hbs",
-            width: 700,  // Aumentamos ancho
-            height: 850, // Aumentamos alto
-            tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "stats" }]
+            width: 750,  // Lo ensanchamos un pelín más para que respire
+            height: 850,
+            // AQUI ESTÁ LA MAGIA DE LAS PESTAÑAS:
+            tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "expediente" }]
         });
     }
-    // 2. Preparar los datos para la Vista (Handlebars)
+
     async getData() {
         const context = super.getData();
         context.system = context.data.system;
@@ -21,18 +23,26 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" }
         };
 
-        // Separamos las habilidades por tipo
+        // Filtros de Habilidades (se quedan igual)
         context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
         context.habilidadesGenerales = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
 
-        // Generamos el track de Estabilidad (como antes)
-        context.trackEstabilidad = [];
-        for (let i = -11; i <= 22; i++) {
-            context.trackEstabilidad.push({ valor: i, activo: (i === context.system.estabilidad) });
-        }
+        // --- FILTROS DE CARTAS ---
+        context.cartasAlma = context.items.filter(i => i.type === "carta_alma");
 
+        // 1. Filtramos las que están en el Banquillo (máximo 3 según tus reglas [cite: 649])
+        context.banquillo = context.items.filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && i.system.enBanquillo);
+
+        // 2. Filtramos la Baraja Activa separando Poderes de Objetos
+        const barajaActiva = context.items.filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo);
+
+        context.barajaPoderes = barajaActiva.filter(i => i.type === "carta_poder");
+        context.barajaObjetos = barajaActiva.filter(i => i.type === "carta_objeto");
+
+        // Track de estabilidad... (se queda igual)
         return context;
     }
+
     // 3. Escuchar Eventos del DOM (Clics)
     activateListeners(html) {
         super.activateListeners(html);
@@ -51,6 +61,24 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             const item = this.actor.items.get(li.data("itemId"));
             item.sheet.render(true);
         });
+
+        //NUEVO: Escuchador para guardar valores de habilidades "al vuelo"
+        html.find('.skill-values input').change(ev => {
+            ev.preventDefault();
+            const input = ev.currentTarget;
+            const itemId = $(input).closest('.item').data('itemId'); // Sacamos el ID de la habilidad
+            const field = input.dataset.edit; // "system.valorActual"
+            const value = Number(input.value); // Convertimos el texto a número
+
+            // Actualizamos el Item específico dentro de este Actor
+            this.actor.updateEmbeddedDocuments("Item", [{
+                _id: itemId,
+                [field]: value
+            }]);
+        });
+
+        // NUEVO: Escuchador para borrar ítems
+        html.find('.item-delete').click(this._onBorrarItem.bind(this));
     }
 
     // 4. Lógica de la tirada y gasto de puntos
@@ -166,5 +194,23 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         await this.actor.update({ "system.estabilidad": nuevoValor });
     }
 
+
+    async _onBorrarItem(event) {
+        event.preventDefault();
+
+        // Buscamos a qué fila pertenece la papelera que hemos pulsado
+        const li = $(event.currentTarget).parents(".item");
+        // Obtenemos el objeto completo de la base de datos de nuestro actor
+        const item = this.actor.items.get(li.data("itemId"));
+
+        // Usamos la API nativa de Foundry para sacar un cuadro de confirmación
+        Dialog.confirm({
+            title: `Borrar Habilidad`,
+            content: `<p style="text-align: center;">¿Estás seguro de que quieres borrar la habilidad <strong>${item.name}</strong>?</p>`,
+            yes: () => item.delete(), // Si pulsa sí, la borramos de la base de datos
+            no: () => {}, // Si pulsa no, no hacemos nada
+            defaultYes: false // El botón "No" viene marcado por defecto por seguridad
+        });
+    }
 
 }

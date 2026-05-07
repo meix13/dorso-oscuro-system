@@ -20,16 +20,29 @@ form.mystery-paper-theme {
     height: 100%;
 }
 
-/* --- 3. EL MARCO DE LA FICHA (Capa superpuesta) --- */
-/* Cambiamos el selector también aquí */
-form.mystery-paper-theme::before {
+//* --- 3. EL MARCO DE LA FICHA (Capa superpuesta dividida) --- */
+.dorso_oscuro.sheet.actor.mystery-paper-theme::before,
+.dorso_oscuro.sheet.actor.mystery-paper-theme::after {
     content: "";
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/borde.png');
+    left: 0; right: 0;
+    height: 150px; /* Ajusta esto según el alto de tus imágenes de borde */
     background-size: 100% 100%;
-    pointer-events: none; /* ¡CRÍTICO! Permite hacer clic "a través" del marco */
+    background-repeat: no-repeat;
+    pointer-events: none;
     z-index: 10;
+}
+
+.dorso_oscuro.sheet.actor.mystery-paper-theme::before {
+    top: 0;
+    background-image: url('../assets/borde_superior.png');
+    background-position: top center;
+}
+
+.dorso_oscuro.sheet.actor.mystery-paper-theme::after {
+    bottom: 0;
+    background-image: url('../assets/borde_inferior.png');
+    background-position: bottom center;
 }
 /* --- 4. ESTILOS GLOBALES DE INPUTS (Para quitar las cajas por defecto) --- */
 .mystery-paper-theme input[type="text"],
@@ -67,6 +80,8 @@ form.mystery-paper-theme::before {
     display: flex;
     align-items: center;
     gap: 15px;
+    position: relative; /* ¡CRÍTICO para que el lápiz no se escape! */
+    width: fit-content; /* Mantiene la caja pegada al dado */
 }
 
 .mystery-paper-theme .attribute-label {
@@ -273,12 +288,11 @@ form.mystery-paper-theme::before {
     padding: 10px;
     resize: none;
 }
-
-/* Estilo para el botón de editar dado en la ficha de papel */
+/* El botón del lápiz */
 .mystery-paper-theme .btn-editar-dado {
     position: absolute;
-    top: 5px;
-    right: -25px; /* Lo sacamos un poco a la derecha del dado */
+    top: 0px;
+    right: -15px; /* Lo empuja un poquito a la derecha del dado */
     background: #4a3424;
     color: #fff;
     border-radius: 50%;
@@ -290,10 +304,18 @@ form.mystery-paper-theme::before {
     font-size: 10px;
     cursor: pointer;
     box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-    z-index: 20; /* Por encima del borde.png */
+    z-index: 20;
     transition: background 0.2s;
+    border: none;
 }
-
 .mystery-paper-theme .btn-editar-dado:hover {
     background: #ff4500;
+}
+
+/* Eliminar bordes negros indeseados en imágenes transparentes */
+.mystery-paper-theme .img-dado,
+.mystery-paper-theme .rune-separator img {
+    border: none !important;
+    background: transparent !important;
+    outline: none !important;
 }

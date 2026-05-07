@@ -15,12 +15,16 @@ export class HabilidadSheet extends foundry.appv1.sheets.ItemSheet {
         const context = super.getData();
         context.system = context.item.system;
 
-        // Pasamos las opciones para el desplegable de atributos
         context.config = {
             atributos: {
                 "mental": "Mental",
                 "fisico": "Físico",
                 "social": "Social"
+            },
+            // NUEVO: Opciones de tipo de habilidad
+            tipos: {
+                "tecnica": "Técnica",
+                "general": "General"
             }
         };
 

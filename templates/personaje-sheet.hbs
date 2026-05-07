@@ -1,90 +1,176 @@
 <form class="{{cssClass}} mystery-paper-theme" autocomplete="off">
 
-    {{!-- PARTE SUPERIOR: Dados, Runas y Retrato --}}
-    <header class="sheet-upper flexrow">
+    {{!-- MENÚ DE NAVEGACIÓN (LAS PESTAÑAS) --}}
+    <nav class="sheet-tabs tabs" data-group="primary" style="display: flex; justify-content: center; gap: 20px; font-size: 24px; border-bottom: 2px solid #1a1a1a; margin-bottom: 20px;">
+        <a class="item" data-tab="expediente" style="cursor: pointer; padding-bottom: 5px;">Expediente</a>
+        <a class="item" data-tab="baraja" style="cursor: pointer; padding-bottom: 5px;">Baraja y Equipo</a>
+    </nav>
 
-        {{!-- Dados Atributos --}}
-        <div class="dice-column flexcol">
-            {{#each system.atributos as |dado key|}}
-                <div class="dice-row flexrow" style="position: relative;">
-                    <span class="attribute-label">{{key}}</span>
-                    <a class="tirar-atributo" data-atributo="{{key}}">
-                        <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
-                    </a>
+    <section class="sheet-body">
 
-                    {{!-- NUEVO: Botón para cambiar el dado --}}
-                    <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}" title="Cambiar dado">
-                        <i class="fas fa-pen-fancy"></i>
-                    </a>
+        {{!-- PESTAÑA 1: EXPEDIENTE (Todo tu HTML anterior va aquí dentro) --}}
+        <div class="tab" data-group="primary" data-tab="expediente">
+
+
+            {{!-- PARTE SUPERIOR: Dados, Runas y Retrato --}}
+            <header class="sheet-upper flexrow">
+
+                {{!-- Dados Atributos --}}
+                <div class="dice-column flexcol">
+                    {{#each system.atributos as |dado key|}}
+                        <div class="dice-row flexrow" style="position: relative;">
+                            <span class="attribute-label">{{key}}</span>
+                            <a class="tirar-atributo" data-atributo="{{key}}">
+                                <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
+                            </a>
+
+                            {{!-- NUEVO: Botón para cambiar el dado --}}
+                            <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}" title="Cambiar dado">
+                                <i class="fas fa-pen-fancy"></i>
+                            </a>
+                        </div>
+                    {{/each}}
                 </div>
-            {{/each}}
+
+                {{!-- Decoración Rúnica --}}
+                <div class="rune-separator">
+                    <img src="systems/dorso_oscuro/assets/runa_central.png">
+                </div>
+
+                {{!-- Nombre y Foto Circular --}}
+                <div class="portrait-column flexcol">
+                    <h1 class="charname">
+                        <input name="name" type="text" value="{{actor.name}}" placeholder="Nombre"/>
+                    </h1>
+                    <div class="portrait-container">
+                        <img class="profile-img-circle" src="{{actor.img}}" data-edit="img" />
+                    </div>
+                </div>
+            </header>
+
+            {{!-- PARTE MEDIA: Stats, Umbral y Esencia --}}
+            <section class="stats-mid flexrow">
+                <div class="track-stats flexcol">
+                    <div class="input-line">Estabilidad: <input type="number" name="system.estabilidad" value="{{system.estabilidad}}"> / 22</div>
+                    <div class="input-line">Salud: <input type="number" name="system.hp.value" value="{{system.hp.value}}"> / {{system.hp.max}}</div>
+                    <div class="input-line">Cordura: <input type="number" name="system.cordura" value="{{system.cordura}}"> / 5</div>
+                    <div class="input-line">Crédito: <input type="number" name="system.credito" value="{{system.credito}}"></div>
+                </div>
+
+                <div class="icon-stats flexrow">
+                    <div class="icon-group">
+                        <label>Umbral</label>
+                        <div class="icon-frame umbral-frame">
+                            <input type="number" name="system.umbral" value="{{system.umbral}}">
+                        </div>
+                    </div>
+                    <div class="icon-group">
+                        <label>Esencia</label>
+                        <div class="icon-frame esencia-frame">
+                            <input type="number" name="system.esencia" value="{{system.esencia}}">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {{!-- PARTE INFERIOR: Dos Columnas de Habilidades --}}
+            <section class="skills-grid flexrow">
+                {{!-- Columna Técnicas --}}
+                <div class="skill-column">
+                    <h3>Habilidades Técnicas</h3>
+                    {{> "systems/dorso_oscuro/templates/parts/skill-list.hbs" skills=habilidadesTecnicas}}
+                </div>
+
+                {{!-- Columna Generales --}}
+                <div class="skill-column">
+                    <h3>Habilidades Generales</h3>
+                    {{> "systems/dorso_oscuro/templates/parts/skill-list.hbs" skills=habilidadesGenerales}}
+                </div>
+            </section>
+
+            {{!-- PIE: Armas y Notas --}}
+            <footer class="sheet-footer flexrow">
+                <div class="footer-box armas">
+                    <h3>Armas</h3>
+                    <div class="empty-placeholder">Listado vacío...</div>
+                </div>
+                <div class="footer-box notas">
+                    <h3>Notas</h3>
+                    <textarea name="system.notas">{{system.notas}}</textarea>
+                </div>
+            </footer>
+
+
         </div>
 
-        {{!-- Decoración Rúnica --}}
-        <div class="rune-separator">
-            <img src="systems/dorso_oscuro/assets/runa_central.png">
-        </div>
+        <div class="tab" data-group="primary" data-tab="baraja">
+            <div class="deck-container flexcol" style="gap: 20px;">
 
-        {{!-- Nombre y Foto Circular --}}
-        <div class="portrait-column flexcol">
-            <h1 class="charname">
-                <input name="name" type="text" value="{{actor.name}}" placeholder="Nombre"/>
-            </h1>
-            <div class="portrait-container">
-                <img class="profile-img-circle" src="{{actor.img}}" data-edit="img" />
+                {{!-- 1. ALMAS --}}
+                <div class="deck-section">
+                    <h3 style="border-bottom: 2px solid #4a3424;">Almas Disponibles</h3>
+                    <ul class="skills-list">
+                        {{#each cartasAlma as |carta|}}
+                            <li class="item skill-row" data-item-id="{{carta._id}}">
+                                <div class="skill-main-info flexrow" style="align-items: center;">
+                                    <img src="{{carta.img}}" width="35" height="45" style="border: 1px solid #000; margin-right: 10px;">
+                                    <h4 class="skill-name">{{carta.name}}</h4>
+                                    <span class="skill-attr" style="margin-left: 10px;">[{{carta.system.elemento}}]</span>
+                                </div>
+                            </li>
+                        {{/each}}
+                    </ul>
+                </div>
+
+                <div class="flexrow" style="gap: 20px;">
+                    {{!-- 2. PODERES (Baraja Activa) --}}
+                    <div class="deck-section" style="flex: 1;">
+                        <h3 style="border-bottom: 2px solid #004488;">Poderes Activos</h3>
+                        <ul class="skills-list">
+                            {{#each barajaPoderes as |carta|}}
+                                <li class="item skill-row" data-item-id="{{carta._id}}">
+                                    <div class="skill-main-info flexrow" style="align-items: center;">
+                                        <img src="{{carta.img}}" width="25" height="35" style="margin-right: 8px;">
+                                        <span class="skill-name">{{carta.name}}</span>
+                                    </div>
+                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-box-archive"></i></a>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+
+                    {{!-- 3. OBJETOS (Baraja Activa) --}}
+                    <div class="deck-section" style="flex: 1;">
+                        <h3 style="border-bottom: 2px solid #884400;">Objetos Activos</h3>
+                        <ul class="skills-list">
+                            {{#each barajaObjetos as |carta|}}
+                                <li class="item skill-row" data-item-id="{{carta._id}}">
+                                    <div class="skill-main-info flexrow" style="align-items: center;">
+                                        <img src="{{carta.img}}" width="25" height="35" style="margin-right: 8px;">
+                                        <span class="skill-name">{{carta.name}}</span>
+                                    </div>
+                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-box-archive"></i></a>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                </div>
+
+                {{!-- 4. BANQUILLO --}}
+                <div class="deck-section" style="border: 2px dashed #666; padding: 10px; background: rgba(0,0,0,0.03);">
+                    <h3>Banquillo (Máx 3)</h3>
+                    <ul class="skills-list flexrow" style="flex-wrap: wrap; gap: 10px;">
+                        {{#each banquillo as |carta|}}
+                            <li class="item" data-item-id="{{carta._id}}" style="list-style: none; display: flex; align-items: center; background: #eee; padding: 5px; border-radius: 4px;">
+                                <img src="{{carta.img}}" width="20" height="30" style="margin-right: 5px;">
+                                <span style="font-size: 14px;">{{carta.name}}</span>
+                                <a class="item-toggle-bench" title="Sacar del Banquillo" style="margin-left: 10px; color: #444;"><i class="fas fa-arrow-up-from-bracket"></i></a>
+                            </li>
+                        {{/each}}
+                    </ul>
+                </div>
             </div>
         </div>
-    </header>
 
-    {{!-- PARTE MEDIA: Stats, Umbral y Esencia --}}
-    <section class="stats-mid flexrow">
-        <div class="track-stats flexcol">
-            <div class="input-line">Estabilidad: <input type="number" name="system.estabilidad" value="{{system.estabilidad}}"> / 22</div>
-            <div class="input-line">Salud: <input type="number" name="system.hp.value" value="{{system.hp.value}}"> / {{system.hp.max}}</div>
-            <div class="input-line">Cordura: <input type="number" name="system.cordura" value="{{system.cordura}}"> / 5</div>
-            <div class="input-line">Crédito: <input type="number" name="system.credito" value="{{system.credito}}"></div>
-        </div>
-
-        <div class="icon-stats flexrow">
-            <div class="icon-group">
-                <label>Umbral</label>
-                <div class="icon-frame umbral-frame">
-                    <input type="number" name="system.umbral" value="{{system.umbral}}">
-                </div>
-            </div>
-            <div class="icon-group">
-                <label>Esencia</label>
-                <div class="icon-frame esencia-frame">
-                    <input type="number" name="system.esencia" value="{{system.esencia}}">
-                </div>
-            </div>
-        </div>
     </section>
-
-    {{!-- PARTE INFERIOR: Dos Columnas de Habilidades --}}
-    <section class="skills-grid flexrow">
-        {{!-- Columna Técnicas --}}
-        <div class="skill-column">
-            <h3>Habilidades Técnicas</h3>
-            {{> "systems/dorso_oscuro/templates/parts/skill-list.hbs" skills=habilidadesTecnicas}}
-        </div>
-
-        {{!-- Columna Generales --}}
-        <div class="skill-column">
-            <h3>Habilidades Generales</h3>
-            {{> "systems/dorso_oscuro/templates/parts/skill-list.hbs" skills=habilidadesGenerales}}
-        </div>
-    </section>
-
-    {{!-- PIE: Armas y Notas --}}
-    <footer class="sheet-footer flexrow">
-        <div class="footer-box armas">
-            <h3>Armas</h3>
-            <div class="empty-placeholder">Listado vacío...</div>
-        </div>
-        <div class="footer-box notas">
-            <h3>Notas</h3>
-            <textarea name="system.notas">{{system.notas}}</textarea>
-        </div>
-    </footer>
 </form>

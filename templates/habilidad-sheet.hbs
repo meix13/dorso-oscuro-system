@@ -12,6 +12,13 @@
             </select>
         </div>
 
+        <div class="stat-row" style="margin-bottom: 15px;">
+            <label style="font-weight: bold;">TIPO DE HABILIDAD</label>
+            <select name="system.tipo">
+                {{selectOptions config.tipos selected=system.tipo}}
+            </select>
+        </div>
+
         <div class="flexrow" style="gap: 10px;">
             <div class="stat-row">
                 <label>PUNTOS MÁXIMOS</label>

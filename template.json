@@ -3,6 +3,17 @@
     "types": ["personaje"]
   },
   "Item": {
-    "types": ["habilidad"]
+    "types": ["habilidad", "carta_alma", "carta_poder", "carta_objeto"],
+    "habilidad": {
+      "templates": [],
+      "descripcion": "",
+      "valorMax": 3,
+      "valorActual": 3,
+      "atributoBase": "mental",
+      "tipo": "general"
+    },
+    "carta_alma": {},
+    "carta_poder": {},
+    "carta_objeto": {}
   }
 }

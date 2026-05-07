@@ -8,10 +8,17 @@
                     <span class="skill-attr">[{{item.system.atributoBase}}]</span>
                 </a>
             </div>
-            <div class="skill-values">
+
+            {{!-- Añadimos flexrow y align-items para que la papelera quede alineada --}}
+            <div class="skill-values" style="display: flex; align-items: center;">
                 <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual">
-                <span class="sep">/</span>
+                <span class="sep" style="margin: 0 5px;">/</span>
                 <span class="max">{{item.system.valorMax}}</span>
+
+                {{!-- NUEVO: Botón de borrar --}}
+                <a class="item-delete" style="margin-left: 15px; color: #8b0000; cursor: pointer;" title="Borrar Habilidad">
+                    <i class="fas fa-trash"></i>
+                </a>
             </div>
         </li>
     {{/each}}

@@ -1,5 +1,5 @@
 // module/sistema.js
-import { PersonajeData, HabilidadData } from "./models.mjs";
+import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData } from "./models.mjs";
 import { PersonajeSheet } from "./sheets/personaje-sheet.mjs";
 import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
 
@@ -7,7 +7,12 @@ Hooks.once('init', async function() {
     console.log("Dorso Oscuro | Inicializando");
 
     CONFIG.Actor.dataModels.personaje = PersonajeData;
+
+    // Registramos las habilidades y las nuevas cartas
     CONFIG.Item.dataModels.habilidad = HabilidadData;
+    CONFIG.Item.dataModels.carta_alma = CartaAlmaData;
+    CONFIG.Item.dataModels.carta_poder = CartaJugableData;
+    CONFIG.Item.dataModels.carta_objeto = CartaJugableData;
 
     // Actualizamos Actors a su ruta estricta en V13/V14
     foundry.documents.collections.Actors.unregisterSheet("core", foundry.appv1.sheets.ActorSheet);
