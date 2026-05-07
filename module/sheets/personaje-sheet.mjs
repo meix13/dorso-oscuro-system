@@ -1,4 +1,5 @@
 // module/sheets/personaje-sheet.mjs
+import { ManoHUD } from "../apps/mano-hud.mjs";
 
 export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
@@ -18,7 +19,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
     async getData() {
         const context = super.getData();
         context.system = context.data.system;
-
+        context.user = game.user;
         context.config = {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" }
         };
@@ -79,6 +80,22 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
         // NUEVO: Escuchador para borrar ítems
         html.find('.item-delete').click(this._onBorrarItem.bind(this));
+
+        // (Debajo del escuchador de borrar ítem)
+        html.find('.item-toggle-bench').click(this._onToggleBanquillo.bind(this));
+
+        // Escuchador para Ver/Editar una carta o habilidad
+        html.find('.item-edit').click(ev => {
+            ev.preventDefault();
+            const li = $(ev.currentTarget).parents(".item");
+            const item = this.actor.items.get(li.data("itemId"));
+            item.sheet.render(true); // Esto abre la ficha de la carta
+        });
+
+        html.find('.open-hud-btn').click(ev => {
+            new ManoHUD(this.actor).render(true);
+        });
+
     }
 
     // 4. Lógica de la tirada y gasto de puntos
@@ -211,6 +228,49 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             no: () => {}, // Si pulsa no, no hacemos nada
             defaultYes: false // El botón "No" viene marcado por defecto por seguridad
         });
+    }
+
+    async _onToggleBanquillo(event) {
+        event.preventDefault();
+
+        // Identificamos la carta pulsada
+        const li = $(event.currentTarget).parents(".item");
+        const item = this.actor.items.get(li.data("itemId"));
+
+        // Comprobamos si ya está en el banquillo
+        const enBanquillo = item.system.enBanquillo;
+
+        if (enBanquillo) {
+            // Si está, la sacamos a la baraja activa
+            await item.update({ "system.enBanquillo": false });
+        } else {
+            // Si NO está, primero contamos cuántas hay ya en el banquillo
+            const cartasBanquillo = this.actor.items.filter(i =>
+                (i.type === "carta_poder" || i.type === "carta_objeto") && i.system.enBanquillo
+            );
+
+            if (cartasBanquillo.length >= 3) {
+                return ui.notifications.warn("El banquillo ya tiene el máximo de 3 cartas.");
+            }
+            // Si hay hueco, la metemos
+            await item.update({ "system.enBanquillo": true });
+        }
+    }
+
+    // Sobrescribimos el método nativo para evitar que los jugadores arrastren cartas a su ficha
+    async _onDropItemCreate(itemData) {
+        // Permitimos que arrastren si NO es una carta, O si el usuario ES el DJ
+        if (
+            game.user.isGM ||
+            !(itemData.type === "carta_alma" || itemData.type === "carta_poder" || itemData.type === "carta_objeto")
+        ) {
+            // Si es DJ o no es una carta, que haga el comportamiento normal
+            return super._onDropItemCreate(itemData);
+        } else {
+            // Si es un jugador intentando meterse cartas, le damos un aviso
+            ui.notifications.error("Solo el Director de Juego puede otorgar cartas.");
+            return false;
+        }
     }
 
 }

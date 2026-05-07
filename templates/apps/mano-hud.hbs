@@ -1,0 +1,57 @@
+{{!-- templates/apps/mano-hud.hbs --}}
+<div class="mano-hud-container flexrow">
+
+    {{!-- SECCIÓN IZQUIERDA: CONTROLES DE MESA --}}
+    <div class="hud-sidebar flexcol">
+        <div class="energy-box flexcol">
+            <label>ENERGÍA</label>
+            <div class="energy-display">
+                <span class="value">{{system.energia.value}}</span><span class="max">/7</span>
+            </div>
+            <div class="flexrow">
+                <button class="energy-control" data-action="minus">-</button>
+                <button class="energy-control" data-action="plus">+</button>
+            </div>
+            <button class="energy-control collect-btn" data-action="collect">RECOLECTAR</button>
+        </div>
+
+        <div class="malus-box flexrow">
+            <div class="malus-group flexcol" title="Merma: -1 al daño por cada punto">
+                <i class="fas fa-angles-down"></i>
+                <div class="flexrow">
+                    <button class="malus-control" data-field="merma" data-action="minus">-</button>
+                    <span>{{system.merma}}</span>
+                    <button class="malus-control" data-field="merma" data-action="plus">+</button>
+                </div>
+            </div>
+            <div class="malus-group flexcol" title="Decadencia: daño al inicio del turno">
+                <i class="fas fa-biohazard"></i>
+                <div class="flexrow">
+                    <button class="malus-control" data-field="decadencia" data-action="minus">-</button>
+                    <span>{{system.decadencia}}</span>
+                    <button class="malus-control" data-field="decadencia" data-action="plus">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{!-- SECCIÓN CENTRAL: LA MANO --}}
+    <div class="hud-hand-area flexrow">
+        {{#each mano as |item|}}
+            <div class="card-in-hand item" data-item-id="{{item._id}}">
+                <img src="{{item.img}}" title="{{item.name}}">
+            </div>
+        {{/each}}
+    </div>
+
+    {{!-- SECCIÓN DERECHA: MAZO Y ACCIONES --}}
+    <div class="hud-deck-sidebar flexcol">
+        <button class="draw-cards" data-count="1">ROBAR 1</button>
+        <button class="draw-cards" data-count="4">ROBAR MANO (4)</button>
+        <div class="deck-info">
+            <div><i class="fas fa-box"></i> Mazo: 24</div>
+            <div><i class="fas fa-trash-can"></i> Descarte: 5</div>
+        </div>
+        <button class="shuffle-btn"><i class="fas fa-sync"></i> BARAJAR</button>
+    </div>
+</div>

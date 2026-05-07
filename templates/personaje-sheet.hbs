@@ -105,70 +105,99 @@
 
         <div class="tab" data-group="primary" data-tab="baraja">
             <div class="deck-container flexcol" style="gap: 20px;">
+                <button class="open-hud-btn" style="margin-bottom: 10px; background: #4a3424; color: white;">
+                    <i class="fas fa-play"></i> ENTRAR EN COMBATE (Abrir Mesa)
+                </button>
 
-                {{!-- 1. ALMAS --}}
+                {{!-- 1. FILA SUPERIOR: ALMAS Y BANQUILLO --}}
+                <div class="flexrow" style="gap: 20px; align-items: flex-start;">
+
+                    {{!-- ALMAS (Izquierda) --}}
+                    <div class="deck-section" style="flex: 2;">
+                        <h3 style="border-bottom: 2px solid #4a3424; margin-bottom: 10px;">Almas Disponibles</h3>
+                        <ul class="skills-list flexcol" style="gap: 5px;">
+                            {{#each cartasAlma as |carta|}}
+                                <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px; border-bottom: 1px dashed rgba(0,0,0,0.2);">
+                                    <div class="skill-main-info flexrow" style="align-items: center;">
+                                        <img src="{{carta.img}}" width="35" height="52" style="border: 1px solid #000; margin-right: 10px; object-fit: cover;">
+                                        <h4 class="skill-name" style="margin:0; font-size: 18px;">{{carta.name}}</h4>
+                                        <span class="skill-attr" style="margin-left: 10px;">[{{carta.system.elemento}}]</span>
+                                    </div>
+                                    <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
+                                        <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
+                                        {{#if @root.user.isGM}}
+                                            <a class="item-delete" title="Borrar Alma" style="color: #8b0000;"><i class="fas fa-trash"></i></a>
+                                        {{/if}}
+                                    </div>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+
+                    {{!-- BANQUILLO (Derecha) --}}
+                    <div class="deck-section" style="flex: 1; border: 2px dashed #666; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                        <h3 style="border-bottom: 2px solid #666; margin-bottom: 10px; text-align: center;">Banquillo (Máx 3)</h3>
+                        <ul class="skills-list flexcol" style="gap: 8px;">
+                            {{#each banquillo as |carta|}}
+                                <li class="item flexrow" data-item-id="{{carta._id}}" style="align-items: center; background: #eee; padding: 5px 8px; border-radius: 4px; border: 1px solid #ccc;">
+                                    <img src="{{carta.img}}" width="20" height="30" style="margin-right: 8px; border-radius: 2px; filter: grayscale(100%); object-fit: cover;">
+                                    <span style="font-size: 14px; flex: 1; line-height: 1.1;">{{carta.name}}</span>
+                                    <div class="item-controls flexrow" style="flex: 0 0 auto; gap: 8px;">
+                                        <a class="item-edit" title="Ver Carta" style="color: #444;"><i class="fas fa-eye"></i></a>
+                                        <a class="item-toggle-bench" title="Sacar del Banquillo" style="color: #4a3424;"><i class="fas fa-hand-holding-magic"></i></a>
+                                    </div>
+                                </li>
+                            {{/each}}
+                        </ul>
+                    </div>
+                </div>
+
+                {{!-- 2. FILA MEDIA: OBJETOS (Ancho completo) --}}
                 <div class="deck-section">
-                    <h3 style="border-bottom: 2px solid #4a3424;">Almas Disponibles</h3>
-                    <ul class="skills-list">
-                        {{#each cartasAlma as |carta|}}
-                            <li class="item skill-row" data-item-id="{{carta._id}}">
+                    <h3 style="border-bottom: 2px solid #884400; margin-bottom: 10px;">Objetos Activos</h3>
+                    {{!-- Usamos un grid para que si hay 4 objetos se pongan en cuadraditos --}}
+                    <ul class="skills-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                        {{#each barajaObjetos as |carta|}}
+                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.3); border-radius: 4px;">
                                 <div class="skill-main-info flexrow" style="align-items: center;">
-                                    <img src="{{carta.img}}" width="35" height="45" style="border: 1px solid #000; margin-right: 10px;">
-                                    <h4 class="skill-name">{{carta.name}}</h4>
-                                    <span class="skill-attr" style="margin-left: 10px;">[{{carta.system.elemento}}]</span>
+                                    <img src="{{carta.img}}" width="28" height="42" style="margin-right: 8px; border-radius: 2px; object-fit: cover;">
+                                    <span class="skill-name" style="font-weight: bold; font-size: 16px;">{{carta.name}}</span>
+                                </div>
+                                <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
+                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-suitcase"></i></a>
+                                    <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
+                                    {{#if @root.user.isGM}}
+                                        <a class="item-delete" title="Borrar Objeto" style="color: #8b0000;"><i class="fas fa-trash"></i></a>
+                                    {{/if}}
                                 </div>
                             </li>
                         {{/each}}
                     </ul>
                 </div>
 
-                <div class="flexrow" style="gap: 20px;">
-                    {{!-- 2. PODERES (Baraja Activa) --}}
-                    <div class="deck-section" style="flex: 1;">
-                        <h3 style="border-bottom: 2px solid #004488;">Poderes Activos</h3>
-                        <ul class="skills-list">
-                            {{#each barajaPoderes as |carta|}}
-                                <li class="item skill-row" data-item-id="{{carta._id}}">
-                                    <div class="skill-main-info flexrow" style="align-items: center;">
-                                        <img src="{{carta.img}}" width="25" height="35" style="margin-right: 8px;">
-                                        <span class="skill-name">{{carta.name}}</span>
-                                    </div>
-                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-box-archive"></i></a>
-                                </li>
-                            {{/each}}
-                        </ul>
-                    </div>
-
-                    {{!-- 3. OBJETOS (Baraja Activa) --}}
-                    <div class="deck-section" style="flex: 1;">
-                        <h3 style="border-bottom: 2px solid #884400;">Objetos Activos</h3>
-                        <ul class="skills-list">
-                            {{#each barajaObjetos as |carta|}}
-                                <li class="item skill-row" data-item-id="{{carta._id}}">
-                                    <div class="skill-main-info flexrow" style="align-items: center;">
-                                        <img src="{{carta.img}}" width="25" height="35" style="margin-right: 8px;">
-                                        <span class="skill-name">{{carta.name}}</span>
-                                    </div>
-                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-box-archive"></i></a>
-                                </li>
-                            {{/each}}
-                        </ul>
-                    </div>
-                </div>
-
-                {{!-- 4. BANQUILLO --}}
-                <div class="deck-section" style="border: 2px dashed #666; padding: 10px; background: rgba(0,0,0,0.03);">
-                    <h3>Banquillo (Máx 3)</h3>
-                    <ul class="skills-list flexrow" style="flex-wrap: wrap; gap: 10px;">
-                        {{#each banquillo as |carta|}}
-                            <li class="item" data-item-id="{{carta._id}}" style="list-style: none; display: flex; align-items: center; background: #eee; padding: 5px; border-radius: 4px;">
-                                <img src="{{carta.img}}" width="20" height="30" style="margin-right: 5px;">
-                                <span style="font-size: 14px;">{{carta.name}}</span>
-                                <a class="item-toggle-bench" title="Sacar del Banquillo" style="margin-left: 10px; color: #444;"><i class="fas fa-arrow-up-from-bracket"></i></a>
+                {{!-- 3. FILA INFERIOR: PODERES (Ancho completo a 2 COLUMNAS) --}}
+                <div class="deck-section">
+                    <h3 style="border-bottom: 2px solid #004488; margin-bottom: 10px;">Poderes Activos ({{barajaPoderes.length}})</h3>
+                    {{!-- GRID DE 2 COLUMNAS para optimizar las 30 cartas --}}
+                    <ul class="skills-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: x 15px; column-gap: 30px;">
+                        {{#each barajaPoderes as |carta|}}
+                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 4px 0; border-bottom: 1px dashed rgba(0,0,0,0.1);">
+                                <div class="skill-main-info flexrow" style="align-items: center;">
+                                    <img src="{{carta.img}}" width="28" height="42" style="margin-right: 8px; border-radius: 2px; object-fit: cover;">
+                                    <span class="skill-name" style="font-size: 16px;">{{carta.name}}</span>
+                                </div>
+                                <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
+                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-suitcase"></i></a>
+                                    <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
+                                    {{#if @root.user.isGM}}
+                                        <a class="item-delete" title="Borrar Poder" style="color: #8b0000;"><i class="fas fa-trash"></i></a>
+                                    {{/if}}
+                                </div>
                             </li>
                         {{/each}}
                     </ul>
                 </div>
+
             </div>
         </div>
 

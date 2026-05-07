@@ -18,6 +18,7 @@ form.mystery-paper-theme {
     overflow-y: auto;
     overflow-x: hidden;
     height: 100%;
+
 }
 
 //* --- 3. EL MARCO DE LA FICHA (Capa superpuesta dividida) --- */
@@ -318,4 +319,42 @@ form.mystery-paper-theme {
     border: none !important;
     background: transparent !important;
     outline: none !important;
+}
+
+.mano-hud-app {
+    background: rgba(20, 20, 20, 0.9) !important;
+    border: 2px solid #444;
+    color: white;
+}
+
+.mano-hud-container {
+    height: 100%;
+    padding: 10px;
+    gap: 15px;
+}
+
+.hud-sidebar { flex: 0 0 120px; text-align: center; border-right: 1px solid #444; }
+.energy-display { font-size: 30px; font-weight: bold; color: #44aaff; }
+.malus-group i { font-size: 20px; margin-bottom: 5px; }
+
+.hud-hand-area {
+    flex: 1;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+}
+
+.card-in-hand img {
+    height: 150px;
+    transition: transform 0.2s;
+    cursor: grab;
+    border: 1px solid #000;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+.card-in-hand img:hover {
+    transform: translateY(-20px) scale(1.1);
+    z-index: 100;
 }

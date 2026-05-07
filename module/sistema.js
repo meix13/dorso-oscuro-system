@@ -2,6 +2,7 @@
 import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData } from "./models.mjs";
 import { PersonajeSheet } from "./sheets/personaje-sheet.mjs";
 import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
+import { CartaSheet } from "./sheets/carta-sheet.mjs";
 
 Hooks.once('init', async function() {
     console.log("Dorso Oscuro | Inicializando");
@@ -25,6 +26,11 @@ Hooks.once('init', async function() {
     foundry.documents.collections.Items.unregisterSheet("core", foundry.appv1.sheets.ItemSheet);
     foundry.documents.collections.Items.registerSheet("dorso_oscuro", HabilidadSheet, {
         types: ["habilidad"],
+        makeDefault: true
+    });
+
+    foundry.documents.collections.Items.registerSheet("dorso_oscuro", CartaSheet, {
+        types: ["carta_alma", "carta_poder", "carta_objeto"],
         makeDefault: true
     });
 
