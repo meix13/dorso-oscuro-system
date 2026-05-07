@@ -27,6 +27,10 @@
                 <input type="number" name="system.costeEnergia" value="{{system.costeEnergia}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
             </div>
             <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
+                <input type="number" name="system.energiaAportada" value="{{system.energiaAportada}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+            </div>
+            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
                 <label style="flex: 1; font-size: 20px;">Tipo Principal</label>
                 <select name="system.tipoAccion" style="flex: 1; background: #222; color: #d4c4a8; font-family: 'Kalam', cursive; border: 1px solid #444;">
                     {{selectOptions config.tiposAccion selected=system.tipoAccion}}

@@ -290,49 +290,53 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         const actor = this.actor;
         const name = actor.name;
 
-        // Limpiamos mazos viejos si existen
+
+        // Limpiamos mazos viejos
         if (actor.system.deckId) await game.cards.get(actor.system.deckId)?.delete();
         if (actor.system.handId) await game.cards.get(actor.system.handId)?.delete();
         if (actor.system.discardId) await game.cards.get(actor.system.discardId)?.delete();
+        if (actor.system.eliminadasId) await game.cards.get(actor.system.eliminadasId)?.delete();
+        if (actor.system.enJuegoId) await game.cards.get(actor.system.enJuegoId)?.delete(); // NUEVO
 
         // 1. Crear el Mazo (Deck)
         const mazoData = {
             name: `Mazo: ${name}`,
             type: "deck",
             cards: actor.items
-                // Filtramos todas las cartas que no estén en el banquillo
-                .filter(i => (i.type === "carta_poder" || i.type === "carta_objeto" || i.type === "carta_alma") && !i.system.enBanquillo)
+                // CORRECCIÓN: Quitamos carta_alma de aquí. ¡Solo poderes y objetos!
+                .filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo)
                 .map(i => {
-                    // --- LÓGICA DE DORSOS DINÁMICOS ---
-                    const reverso = i.type === "carta_alma"
-                        ? "img_varias/cards/cartas_v2/reverso_alma1_new.png"
-                        : "img_varias/cards/cartas_v2/reverso_carta1.png";
-
+                    const reverso = "img_varias/cards/cartas_v2/reverso_carta1.png"; // Ya no hace falta comprobar si es alma
                     return {
                         name: i.name,
                         type: "base",
                         faces: [{ name: i.name, img: i.img }],
-                        back: { name: "Dorso", img: reverso }, // <--- Aquí aplicamos el dorso correcto
-                        face: 0, // Por defecto boca arriba
+                        back: { name: "Dorso", img: reverso },
+                        face: 0,
                         flags: { dorso_oscuro: { itemId: i.id } }
                     };
                 })
         };
         const deck = await Cards.create(mazoData);
 
-        // 2. Crear la Mano y 3. El Descarte (igual que antes)
+        // 2. Crear las otras pilas
         const hand = await Cards.create({ name: `Mano: ${name}`, type: "hand" });
         const discard = await Cards.create({ name: `Descarte: ${name}`, type: "pile" });
+        const eliminadas = await Cards.create({ name: `Eliminadas: ${name}`, type: "pile" });
+        const enJuego = await Cards.create({ name: `En Juego: ${name}`, type: "pile" }); // NUEVO
 
         // Guardar IDs y barajar
         await actor.update({
             "system.deckId": deck.id,
             "system.handId": hand.id,
-            "system.discardId": discard.id
+            "system.discardId": discard.id,
+            "system.eliminadasId": eliminadas.id,
+            "system.enJuegoId": enJuego.id // NUEVO
         });
 
         await deck.shuffle();
-        ui.notifications.info(`Baraja de ${name} preparada con sus dorsos correspondientes.`);
+        ui.notifications.info(`Baraja de ${name} preparada.`);
+
     }
 
 

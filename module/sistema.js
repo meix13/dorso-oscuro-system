@@ -41,41 +41,93 @@ Hooks.once('init', async function() {
     // En module/sistema.js
 
     // --- INTERCEPTAR EL DRAG & DROP EN EL TABLERO ---
+    // module/sistema.js
+
     Hooks.on("dropCanvasData", async (canvas, data) => {
-        // Si lo que tiran no es nuestra carta, dejamos que Foundry haga su trabajo normal
         if (data.type !== "CartaDorsoOscuro") return true;
 
-        // Recuperamos al jugador y a la carta
         const actor = game.actors.get(data.actorId);
         const item = actor?.items.get(data.itemId);
         if (!actor || !item) return true;
 
-        // Calculamos el tamaño de la carta para el tablero (rectangular 1.5 x 2.2 casillas)
-        const width = 1.5;
-        const height = 2.2;
+        // --- 1. AJUSTE DE TAMAÑO ---
+        // Antes era 1.5 x 2.2. Vamos a probar con 2 x 2.8 para que se vea imponente
+        const width = 2.5;
+        const height = 3.6;
 
-        // Construimos el Token
+        // --- 2. LÓGICA DE ECONOMÍA Y "EN JUEGO" ---
+        if (item.type !== "carta_alma") {
+            const hand = game.cards.get(actor.system.handId);
+            const enJuego = game.cards.get(actor.system.enJuegoId); // <-- CAMBIO AQUÍ
+            const cardInHand = hand?.cards.find(c => c.flags.dorso_oscuro?.itemId === item.id);
+
+            if (cardInHand) {
+                const coste = item.system.costeEnergia || 0;
+                const aporteInmediato = item.type === "carta_poder" ? (item.system.energiaAportada || 0) : 0;
+
+                let nuevaEnergia = actor.system.energia.value - coste + aporteInmediato;
+                await actor.update({"system.energia.value": Math.max(0, nuevaEnergia)});
+
+                // Movemos la carta a la pila de "EN JUEGO"
+                await cardInHand.pass(enJuego); // <-- CAMBIO AQUÍ
+
+                ui.notifications.info(`${actor.name} juega ${item.name}: -${coste}${aporteInmediato > 0 ? ' / +'+aporteInmediato : ''} Energía`);
+
+                const hud = Object.values(ui.windows).find(w => w.id === "mano-hud" && w.actor?.id === actor.id);
+                if (hud) hud.render(true);
+            }
+        }
+
+        // --- 3. CONSTRUCCIÓN DEL TOKEN ---
         const tokenData = {
             name: item.name,
-            texture: { src: item.img }, // En V12 se usa texture.src
-            x: data.x - (canvas.grid.size * width) / 2, // Centramos la carta en el ratón
+            texture: { src: item.img },
+            x: data.x - (canvas.grid.size * width) / 2,
             y: data.y - (canvas.grid.size * height) / 2,
             width: width,
             height: height,
+            lockRotation: false, // <--- LIBERAMOS LA ROTACIÓN para que puedas girarlas a mano
+            displayName: CONST.TOKEN_DISPLAY_MODES.HOVER, // Solo muestra el nombre al pasar el ratón
             flags: {
                 dorso_oscuro: {
                     isCard: true,
+                    type: item.type, // Guardamos si es poder u objeto
                     actorId: actor.id,
                     itemId: item.id
                 }
             }
         };
 
-        // Creamos la "miniatura" (Token) en el mapa
         await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
-
-        // Evitamos que salten errores nativos de Foundry
         return false;
+    });
+
+    // --- INTERCEPTAR BORRADO DE TOKENS (Pasar de En Juego a Descarte) ---
+    Hooks.on("deleteToken", async (tokenDocument, options, userId) => {
+        // Solo ejecuta esto el jugador que ha borrado el token, para no duplicar acciones
+        if (game.user.id !== userId) return;
+
+        const flags = tokenDocument.flags.dorso_oscuro;
+        if (flags && flags.isCard && flags.type !== "carta_alma") {
+            const actor = game.actors.get(flags.actorId);
+            if (!actor) return;
+
+            const enJuego = game.cards.get(actor.system.enJuegoId);
+            const discard = game.cards.get(actor.system.discardId);
+
+            if (enJuego && discard) {
+                // Buscamos la carta en la pila "En Juego"
+                const card = enJuego.cards.find(c => c.flags.dorso_oscuro?.itemId === flags.itemId);
+                if (card) {
+                    // La mandamos al descarte
+                    await card.pass(discard);
+
+                    // Refrescamos el HUD para que el contador de descarte suba
+                    const hud = Object.values(ui.windows).find(w => w.id === "mano-hud" && w.actor?.id === actor.id);
+                    if (hud) hud.render(true);
+                }
+            }
+        }
     });
 
 });

@@ -29,7 +29,7 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
             notas: new fields.StringField({initial: ""}),
             // --- SISTEMA DE CARTAS ---
             energia: new fields.SchemaField({
-                value: new fields.NumberField({initial: 0, integer: true, min: 0, max: 7}), // Máximo 7 por tus reglas
+                value: new fields.NumberField({initial: 0, integer: true, min: 0}), // Máximo 7 por tus reglas
             }),
             merma: new fields.NumberField({initial: 0, integer: true, min: 0}),
             decadencia: new fields.NumberField({initial: 0, integer: true, min: 0}),
@@ -37,7 +37,9 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
             deckId: new fields.StringField({initial: ""}),
             handId: new fields.StringField({initial: ""}),
             discardId: new fields.StringField({initial: ""}),
-            almaActivaId: new fields.StringField({initial: ""})
+            almaActivaId: new fields.StringField({initial: ""}),
+            eliminadasId: new fields.StringField({initial: ""}),
+            enJuegoId: new fields.StringField({initial: ""})
 
         };
     }
@@ -72,6 +74,7 @@ export class CartaAlmaData extends foundry.abstract.TypeDataModel {
             }),
             energiaBase: new fields.NumberField({initial: 1, integer: true, min: 0}), // Energía que genera por turno
             elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
+            energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
             descripcion: new fields.HTMLField()
         };
     }
