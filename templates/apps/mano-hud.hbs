@@ -78,7 +78,13 @@
 
         {{!-- MAZOS EN LÍNEA --}}
         <div class="deck-info flexrow" style="margin: 15px 0; text-align: center; padding: 8px 5px; background: rgba(0,0,0,0.5); border-radius: 5px; font-size: 12px; gap: 5px;">
-            <div title="Mazo" style="flex: 1; border-right: 1px solid #444;"><i class="fas fa-layer-group" style="color: #ccc; font-size: 16px;"></i><br><b style="font-size:16px;">{{conteoMazo}}</b></div>
+
+            {{!-- CAMBIO AQUÍ: Ahora muestra conteoMazo / totalMazo --}}
+            <div title="Mazo (Quedan / Total)" style="flex: 1; border-right: 1px solid #444;">
+                <i class="fas fa-layer-group" style="color: #ccc; font-size: 16px;"></i><br>
+                <b style="font-size:16px;">{{conteoMazo}}/{{totalMazo}}</b>
+            </div>
+
             <div title="Descarte" style="flex: 1; border-right: 1px solid #444;"><i class="fas fa-trash-can" style="color: #aaa; font-size: 16px;"></i><br><b style="font-size:16px;">{{conteoDescarte}}</b></div>
             <div title="Eliminadas" style="flex: 1;"><i class="fas fa-ban" style="color: #8b0000; font-size: 16px;"></i><br><b style="font-size:16px;">{{conteoEliminadas}}</b></div>
         </div>

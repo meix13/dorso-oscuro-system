@@ -20,27 +20,36 @@ export class ManoHUD extends Application {
     }
 
     async getData() {
-        const data = super.getData();
+        const data = await super.getData();
         data.actor = this.actor;
         data.system = this.actor.system;
 
-        // Obtenemos los objetos reales de cartas
+        // Obtenemos todos los contenedores de cartas
         const hand = game.cards.get(this.actor.system.handId);
         const deck = game.cards.get(this.actor.system.deckId);
         const discard = game.cards.get(this.actor.system.discardId);
-        const eliminadas = game.cards.get(this.actor.system.eliminadasId); // NUEVO
+        const eliminadas = game.cards.get(this.actor.system.eliminadasId);
+        const enJuego = game.cards.get(this.actor.system.enJuegoId);
 
+        // Guardamos los conteos individuales
         data.mano = hand ? hand.cards : [];
         data.conteoMazo = deck ? deck.cards.size : 0;
         data.conteoDescarte = discard ? discard.cards.size : 0;
         data.conteoEliminadas = eliminadas ? eliminadas.cards.size : 0;
+        data.conteoEnJuego = enJuego ? enJuego.cards.size : 0;
 
-        // Obtenemos el objeto del Alma Activa
+        // --- CÁLCULO DEL TOTAL ---
+        // Sumamos absolutamente todas las cartas que pertenecen al sistema de juego actual
+        data.totalMazo = data.conteoMazo +
+            data.conteoDescarte +
+            data.conteoEliminadas +
+            data.conteoEnJuego +
+            (hand ? hand.cards.size : 0);
+
         data.activeSoul = this.actor.items.get(this.actor.system.almaActivaId);
 
         return data;
     }
-
     activateListeners(html) {
         super.activateListeners(html);
 
@@ -100,6 +109,7 @@ export class ManoHUD extends Application {
             this.render();
         });
 
+
         // --- BOTONES DE ROBO ---
         html.find('.draw-cards').click(async ev => {
             const countStr = ev.currentTarget.dataset.count;
@@ -107,32 +117,60 @@ export class ManoHUD extends Application {
             const deck = game.cards.get(this.actor.system.deckId);
             const discard = game.cards.get(this.actor.system.discardId);
 
-            if (!hand || !deck) return;
+            if (!hand || !deck || !discard) return;
 
             let numARobar = 0;
             if (countStr === "limit") {
-                // Lógica de tus reglas: Robar hasta completar el límite (ej: 4)
-                // Más adelante lo haremos dinámico, por ahora fijo a 4
-                numARobar = 4 - hand.cards.size;
+                const limiteMano = 4; // Aquí en el futuro sumaremos los bonos de equipo
+                numARobar = Math.max(0, limiteMano - hand.cards.size);
             } else {
                 numARobar = parseInt(countStr);
             }
 
-            if (numARobar <= 0) return;
+            if (numARobar <= 0) {
+                return ui.notifications.warn("Ya tienes la mano llena o no has pedido cartas.");
+            }
 
-            // --- LÓGICA DE ROBO INTELIGENTE ---
-            for (let i = 0; i < numARobar; i++) {
-                if (deck.cards.size === 0) {
+            // --- LÓGICA DE ROBO FÍSICO (Sin clonaciones de Foundry) ---
+            let cartasRobadas = 0;
+
+            while (numARobar > 0) {
+
+                // 1. Miramos cuántas cartas físicas quedan en el mazo
+                if (deck.cards.size > 0) {
+                    const aRobarAhora = Math.min(numARobar, deck.cards.size);
+
+                    // Extraemos los IDs exactos de las cartas superiores
+                    const cartasParaMover = deck.cards.contents.slice(0, aRobarAhora).map(c => c.id);
+
+                    // PASAMOS FÍSICAMENTE las cartas a la mano (esto las borra del mazo)
+                    await deck.pass(hand, cartasParaMover);
+
+                    numARobar -= aRobarAhora;
+                    cartasRobadas += aRobarAhora;
+                }
+
+                // 2. Si faltan cartas y el mazo se ha vaciado
+                if (numARobar > 0) {
                     if (discard.cards.size > 0) {
-                        ui.notifications.warn("Mazo vacío. Barajando descarte...");
-                        await discard.deal([deck], discard.cards.size);
+                        ui.notifications.info("Mazo vacío. Recuperando el Descarte y barajando...");
+
+                        // Pasamos todas las cartas del descarte al mazo
+                        const cartasDescarteIds = discard.cards.map(c => c.id);
+                        await discard.pass(deck, cartasDescarteIds);
+
+                        // Barajamos el mazo recién llenado
                         await deck.shuffle();
+
                     } else {
-                        ui.notifications.error("¡No quedan cartas en el mazo ni en el descarte!");
+                        ui.notifications.error(`Solo pudiste robar ${cartasRobadas} carta(s). No hay más disponibles.`);
                         break;
                     }
                 }
-                await deck.deal([hand], 1);
+            }
+
+            if (cartasRobadas > 0) {
+                ui.notifications.info(`Has robado ${cartasRobadas} carta(s).`);
             }
             this.render();
         });
