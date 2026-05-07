@@ -1,57 +1,87 @@
-{{!-- templates/apps/mano-hud.hbs --}}
 <div class="mano-hud-container flexrow">
 
-    {{!-- SECCIÓN IZQUIERDA: CONTROLES DE MESA --}}
-    <div class="hud-sidebar flexcol">
+    {{!-- 1. SECCIÓN ALMA (Izquierda del todo) --}}
+    <div class="hud-soul-sidebar flexcol" style="flex: 0 0 130px; justify-content: center; border-right: 1px solid #444; padding-right: 15px;">
+        <label style="font-size: 12px; color: #aaa; text-align: center; font-weight: bold; margin-bottom: 10px;">ALMA ACTIVA</label>
+
+        {{#if activeSoul}}
+            <div class="soul-image-container" style="position: relative; cursor: grab;" draggable="true" data-item-id="{{activeSoul._id}}">
+                {{!-- Añadimos draggable="false" a la imagen --}}
+                <img src="{{activeSoul.img}}" title="{{activeSoul.name}}" draggable="false" style="width: 100%; border-radius: 5px; border: 2px solid gold; box-shadow: 0 4px 8px rgba(0,0,0,0.5);">
+                <a class="change-soul" title="Cambiar Alma" style="position: absolute; top: -10px; right: -10px; background: #8b0000; color: white; border-radius: 50%; padding: 4px; font-size: 12px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.5);"><i class="fas fa-sync-alt"></i></a>
+            </div>
+        {{else}}
+            <button class="choose-soul-btn" style="height: 185px; width: 100%; background: rgba(0,0,0,0.3); color: #666; border: 2px dashed #666; border-radius: 5px;">
+                <i class="fas fa-plus" style="font-size: 30px;"></i><br><span style="font-size: 14px; margin-top: 5px; display: block;">ELEGIR</span>
+            </button>
+        {{/if}}
+    </div>
+
+    {{!-- 2. SECCIÓN CONTROLES DE MESA (Energía y Malus) --}}
+    <div class="hud-sidebar flexcol" style="padding-left: 10px;">
         <div class="energy-box flexcol">
             <label>ENERGÍA</label>
             <div class="energy-display">
-                <span class="value">{{system.energia.value}}</span><span class="max">/7</span>
+                <span class="value" style="color: #00aaff; text-shadow: 0 0 5px #00aaff;">{{system.energia.value}}</span>
             </div>
-            <div class="flexrow">
+            <div class="flexrow" style="gap: 5px; margin-bottom: 5px;">
                 <button class="energy-control" data-action="minus">-</button>
                 <button class="energy-control" data-action="plus">+</button>
             </div>
-            <button class="energy-control collect-btn" data-action="collect">RECOLECTAR</button>
+            <button class="energy-control collect-btn" data-action="collect" style="background: #003366; color: white;">RECOLECTAR</button>
         </div>
 
-        <div class="malus-box flexrow">
-            <div class="malus-group flexcol" title="Merma: -1 al daño por cada punto">
-                <i class="fas fa-angles-down"></i>
-                <div class="flexrow">
-                    <button class="malus-control" data-field="merma" data-action="minus">-</button>
-                    <span>{{system.merma}}</span>
-                    <button class="malus-control" data-field="merma" data-action="plus">+</button>
+        {{!-- Apilamos los malus verticalmente (flexcol en vez de flexrow) --}}
+        <div class="malus-box flexcol" style="margin-top: 15px; gap: 10px;">
+            <div class="malus-group flexcol" title="Merma: -1 al daño por cada punto" style="background: rgba(0,0,0,0.4); padding: 5px; border-radius: 5px;">
+                <i class="fas fa-angles-down" style="color: #aa5500; font-size: 20px;"></i>
+                <div class="flexrow malus-controls" style="align-items: center; justify-content: center; margin-top: 5px;">
+                    <a class="malus-control" data-field="merma" data-action="minus"><i class="fas fa-minus"></i></a>
+                    <span class="malus-val">{{system.merma}}</span>
+                    <a class="malus-control" data-field="merma" data-action="plus"><i class="fas fa-plus"></i></a>
                 </div>
             </div>
-            <div class="malus-group flexcol" title="Decadencia: daño al inicio del turno">
-                <i class="fas fa-biohazard"></i>
-                <div class="flexrow">
-                    <button class="malus-control" data-field="decadencia" data-action="minus">-</button>
-                    <span>{{system.decadencia}}</span>
-                    <button class="malus-control" data-field="decadencia" data-action="plus">+</button>
+            <div class="malus-group flexcol" title="Decadencia: Daño al inicio del turno" style="background: rgba(0,0,0,0.4); padding: 5px; border-radius: 5px;">
+                <i class="fas fa-droplet" style="color: #aa0000; font-size: 20px;"></i>
+                <div class="flexrow malus-controls" style="align-items: center; justify-content: center; margin-top: 5px;">
+                    <a class="malus-control" data-field="decadencia" data-action="minus"><i class="fas fa-minus"></i></a>
+                    <span class="malus-val">{{system.decadencia}}</span>
+                    <a class="malus-control" data-field="decadencia" data-action="plus"><i class="fas fa-plus"></i></a>
                 </div>
             </div>
         </div>
     </div>
 
-    {{!-- SECCIÓN CENTRAL: LA MANO --}}
+    {{!-- 3. SECCIÓN CENTRAL: LA MANO (Superpuesta) --}}
     <div class="hud-hand-area flexrow">
         {{#each mano as |item|}}
-            <div class="card-in-hand item" data-item-id="{{item._id}}">
-                <img src="{{item.img}}" title="{{item.name}}">
+            <div class="card-in-hand item" data-item-id="{{item._id}}" draggable="true">
+                {{!-- Añadimos draggable="false" a la imagen --}}
+                <img src="{{item.faces.[0].img}}" title="{{item.name}}" draggable="false">
             </div>
         {{/each}}
     </div>
 
-    {{!-- SECCIÓN DERECHA: MAZO Y ACCIONES --}}
+    {{!-- 4. SECCIÓN DERECHA: MAZO Y ACCIONES --}}
     <div class="hud-deck-sidebar flexcol">
-        <button class="draw-cards" data-count="1">ROBAR 1</button>
-        <button class="draw-cards" data-count="4">ROBAR MANO (4)</button>
-        <div class="deck-info">
-            <div><i class="fas fa-box"></i> Mazo: 24</div>
-            <div><i class="fas fa-trash-can"></i> Descarte: 5</div>
+        <div class="draw-section flexcol" style="background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px;">
+            <label style="font-size: 12px; color: #aaa;">ROBAR CARTAS</label>
+            <div class="flexrow" style="gap: 2px;">
+                <button class="draw-cards" data-count="1">1</button>
+                <button class="draw-cards" data-count="2">2</button>
+                <button class="draw-cards" data-count="3">3</button>
+                <button class="draw-cards" data-count="4">4</button>
+                <button class="draw-cards" data-count="5">5</button>
+            </div>
+            <button class="draw-cards" data-count="limit" style="margin-top: 3px; font-size: 11px;">HASTA EL LÍMITE</button>
         </div>
-        <button class="shuffle-btn"><i class="fas fa-sync"></i> BARAJAR</button>
+
+        <div class="deck-info flexcol" style="margin: 10px 0; text-align: left; padding: 5px 10px; background: rgba(0,0,0,0.5); border-radius: 5px; font-size: 14px;">
+            <div><i class="fas fa-layer-group" style="color: #ccc;"></i> Mazo: {{conteoMazo}}</div>
+            <div><i class="fas fa-trash-can" style="color: #aaa;"></i> Descarte: {{conteoDescarte}}</div>
+        </div>
+
+        <button class="end-turn-btn" style="background: #4a0000; color: white; border: 1px solid #ff4444; padding: 5px;"><i class="fas fa-hourglass-end"></i> FIN TURNO</button>
+        <button class="end-combat-btn" style="margin-top: auto; background: #222; color: #888; border: 1px solid #444; padding: 5px;"><i class="fas fa-flag-checkered"></i> CERRAR MESA</button>
     </div>
 </div>

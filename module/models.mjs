@@ -32,7 +32,13 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
                 value: new fields.NumberField({initial: 0, integer: true, min: 0, max: 7}), // Máximo 7 por tus reglas
             }),
             merma: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            decadencia: new fields.NumberField({initial: 0, integer: true, min: 0})
+            decadencia: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            // IDs de los contenedores de cartas nativos de Foundry
+            deckId: new fields.StringField({initial: ""}),
+            handId: new fields.StringField({initial: ""}),
+            discardId: new fields.StringField({initial: ""}),
+            almaActivaId: new fields.StringField({initial: ""})
+
         };
     }
 }

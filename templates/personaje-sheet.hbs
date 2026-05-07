@@ -108,7 +108,6 @@
                 <button class="open-hud-btn" style="margin-bottom: 10px; background: #4a3424; color: white;">
                     <i class="fas fa-play"></i> ENTRAR EN COMBATE (Abrir Mesa)
                 </button>
-
                 {{!-- 1. FILA SUPERIOR: ALMAS Y BANQUILLO --}}
                 <div class="flexrow" style="gap: 20px; align-items: flex-start;">
 
@@ -117,9 +116,10 @@
                         <h3 style="border-bottom: 2px solid #4a3424; margin-bottom: 10px;">Almas Disponibles</h3>
                         <ul class="skills-list flexcol" style="gap: 5px;">
                             {{#each cartasAlma as |carta|}}
-                                <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px; border-bottom: 1px dashed rgba(0,0,0,0.2);">
-                                    <div class="skill-main-info flexrow" style="align-items: center;">
-                                        <img src="{{carta.img}}" width="35" height="52" style="border: 1px solid #000; margin-right: 10px; object-fit: cover;">
+                                <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px 0;">
+                                    <div class="skill-main-info flexrow">
+                                        {{!-- CLASE card-thumbnail aplicada, eliminados width/height inline --}}
+                                        <img src="{{carta.img}}" class="card-thumbnail">
                                         <h4 class="skill-name" style="margin:0; font-size: 18px;">{{carta.name}}</h4>
                                         <span class="skill-attr" style="margin-left: 10px;">[{{carta.system.elemento}}]</span>
                                     </div>
@@ -155,12 +155,13 @@
                 {{!-- 2. FILA MEDIA: OBJETOS (Ancho completo) --}}
                 <div class="deck-section">
                     <h3 style="border-bottom: 2px solid #884400; margin-bottom: 10px;">Objetos Activos</h3>
-                    {{!-- Usamos un grid para que si hay 4 objetos se pongan en cuadraditos --}}
+                    {{!-- Usamos un grid para que si hay varios objetos se pongan en cajitas --}}
                     <ul class="skills-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
                         {{#each barajaObjetos as |carta|}}
                             <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.3); border-radius: 4px;">
-                                <div class="skill-main-info flexrow" style="align-items: center;">
-                                    <img src="{{carta.img}}" width="28" height="42" style="margin-right: 8px; border-radius: 2px; object-fit: cover;">
+                                <div class="skill-main-info flexrow">
+                                    {{!-- CLASE card-thumbnail aplicada --}}
+                                    <img src="{{carta.img}}" class="card-thumbnail">
                                     <span class="skill-name" style="font-weight: bold; font-size: 16px;">{{carta.name}}</span>
                                 </div>
                                 <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
@@ -175,15 +176,16 @@
                     </ul>
                 </div>
 
-                {{!-- 3. FILA INFERIOR: PODERES (Ancho completo a 2 COLUMNAS) --}}
+                {{!-- 3. FILA INFERIOR: PODERES (Ancho completo a DOS COLUMNAS) --}}
                 <div class="deck-section">
                     <h3 style="border-bottom: 2px solid #004488; margin-bottom: 10px;">Poderes Activos ({{barajaPoderes.length}})</h3>
                     {{!-- GRID DE 2 COLUMNAS para optimizar las 30 cartas --}}
                     <ul class="skills-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: x 15px; column-gap: 30px;">
                         {{#each barajaPoderes as |carta|}}
-                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 4px 0; border-bottom: 1px dashed rgba(0,0,0,0.1);">
-                                <div class="skill-main-info flexrow" style="align-items: center;">
-                                    <img src="{{carta.img}}" width="28" height="42" style="margin-right: 8px; border-radius: 2px; object-fit: cover;">
+                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 4px 0;">
+                                <div class="skill-main-info flexrow">
+                                    {{!-- CLASE card-thumbnail aplicada --}}
+                                    <img src="{{carta.img}}" class="card-thumbnail">
                                     <span class="skill-name" style="font-size: 16px;">{{carta.name}}</span>
                                 </div>
                                 <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">

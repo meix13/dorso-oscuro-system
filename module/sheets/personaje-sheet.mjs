@@ -28,19 +28,22 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
         context.habilidadesGenerales = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
 
+        // En module/sheets/personaje-sheet.mjs -> getData()
+
         // --- FILTROS DE CARTAS ---
         context.cartasAlma = context.items.filter(i => i.type === "carta_alma");
 
-        // 1. Filtramos las que están en el Banquillo (máximo 3 según tus reglas [cite: 649])
+        // 1. Filtramos las que están en el Banquillo (máximo 3 según tus reglas)
         context.banquillo = context.items.filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && i.system.enBanquillo);
 
         // 2. Filtramos la Baraja Activa separando Poderes de Objetos
+        // NOTA: Es importante comprobar la pertenencia al Actor y que no sea alma
         const barajaActiva = context.items.filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo);
 
         context.barajaPoderes = barajaActiva.filter(i => i.type === "carta_poder");
         context.barajaObjetos = barajaActiva.filter(i => i.type === "carta_objeto");
 
-        // Track de estabilidad... (se queda igual)
+
         return context;
     }
 
@@ -92,9 +95,17 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             item.sheet.render(true); // Esto abre la ficha de la carta
         });
 
-        html.find('.open-hud-btn').click(ev => {
+
+        html.find('.open-hud-btn').click(async ev => {
+            // Si NO tiene un mazo creado, lo registramos por primera vez
+            if (!this.actor.system.deckId) {
+                await this._registrarMazoDeJuego();
+            }
+
+            // Abrimos el HUD (si ya estaba abierto, Foundry simplemente le da foco)
             new ManoHUD(this.actor).render(true);
         });
+
 
     }
 
@@ -272,5 +283,57 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             return false;
         }
     }
+
+
+    // Nueva función para preparar los objetos "Cards" de Foundry
+    async _registrarMazoDeJuego() {
+        const actor = this.actor;
+        const name = actor.name;
+
+        // Limpiamos mazos viejos si existen
+        if (actor.system.deckId) await game.cards.get(actor.system.deckId)?.delete();
+        if (actor.system.handId) await game.cards.get(actor.system.handId)?.delete();
+        if (actor.system.discardId) await game.cards.get(actor.system.discardId)?.delete();
+
+        // 1. Crear el Mazo (Deck)
+        const mazoData = {
+            name: `Mazo: ${name}`,
+            type: "deck",
+            cards: actor.items
+                // Filtramos todas las cartas que no estén en el banquillo
+                .filter(i => (i.type === "carta_poder" || i.type === "carta_objeto" || i.type === "carta_alma") && !i.system.enBanquillo)
+                .map(i => {
+                    // --- LÓGICA DE DORSOS DINÁMICOS ---
+                    const reverso = i.type === "carta_alma"
+                        ? "img_varias/cards/cartas_v2/reverso_alma1_new.png"
+                        : "img_varias/cards/cartas_v2/reverso_carta1.png";
+
+                    return {
+                        name: i.name,
+                        type: "base",
+                        faces: [{ name: i.name, img: i.img }],
+                        back: { name: "Dorso", img: reverso }, // <--- Aquí aplicamos el dorso correcto
+                        face: 0, // Por defecto boca arriba
+                        flags: { dorso_oscuro: { itemId: i.id } }
+                    };
+                })
+        };
+        const deck = await Cards.create(mazoData);
+
+        // 2. Crear la Mano y 3. El Descarte (igual que antes)
+        const hand = await Cards.create({ name: `Mano: ${name}`, type: "hand" });
+        const discard = await Cards.create({ name: `Descarte: ${name}`, type: "pile" });
+
+        // Guardar IDs y barajar
+        await actor.update({
+            "system.deckId": deck.id,
+            "system.handId": hand.id,
+            "system.discardId": discard.id
+        });
+
+        await deck.shuffle();
+        ui.notifications.info(`Baraja de ${name} preparada con sus dorsos correspondientes.`);
+    }
+
 
 }

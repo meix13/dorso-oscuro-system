@@ -337,24 +337,67 @@ form.mystery-paper-theme {
 .energy-display { font-size: 30px; font-weight: bold; color: #44aaff; }
 .malus-group i { font-size: 20px; margin-bottom: 5px; }
 
+/* Efecto de abanico/superposición para la mano */
 .hud-hand-area {
     flex: 1;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    padding: 10px 30px; /* Espacio para que respiren a los lados */
     background: rgba(0,0,0,0.4);
     border-radius: 10px;
 }
 
-.card-in-hand img {
-    height: 150px;
-    transition: transform 0.2s;
-    cursor: grab;
-    border: 1px solid #000;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+.card-in-hand {
+    margin-left: -35px; /* Aquí está el truco: se pisan unas a otras */
+    transition: transform 0.2s ease, margin 0.2s ease;
+    position: relative;
 }
 
-.card-in-hand img:hover {
-    transform: translateY(-20px) scale(1.1);
+.card-in-hand:first-child {
+    margin-left: 0; /* La primera no se pisa con nada */
+}
+
+.card-in-hand img {
+    height: 160px;
+    border-radius: 6px;
+    cursor: grab;
+    border: 1px solid #000;
+    box-shadow: -4px 4px 8px rgba(0,0,0,0.6);
+}
+
+/* Al pasar el ratón, la carta se levanta y se separa de las demás */
+.card-in-hand:hover {
+    transform: translateY(-20px) scale(1.15);
+    margin-left: 10px;
+    margin-right: 25px;
     z-index: 100;
+}
+
+/* Controles de malus */
+.malus-controls a {
+    cursor: pointer;
+    background: rgba(255,255,255,0.1);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+.malus-controls a:hover { background: rgba(255,255,255,0.3); }
+.malus-val { font-weight: bold; font-size: 18px; width: 25px; text-align: center; }
+
+/* --- Normalización de miniaturas de cartas en listas (personaje-sheet) --- */
+.mystery-paper-theme .deck-section img.card-thumbnail {
+    width: 32px !important;    /* Ancho fijo normalizado */
+    height: 48px !important;   /* Alto fijo normalizado (ratio 2:3 típico de cartas) */
+    object-fit: cover;        /* SECRETOMÁGICO: Mantiene la proporción, recortando si es necesario, pero nunca deformando */
+    border-radius: 3px;
+    margin-right: 10px;
+    border: 1px solid #000;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    flex: 0 0 auto; /* Evita que el flexbox la deforme */
+    display: block;
+}
+
+/* Asegurar que el contenedor flex alinea el texto con la miniatura rectangular */
+.mystery-paper-theme .deck-section .skill-main-info {
+    align-items: center;
 }
