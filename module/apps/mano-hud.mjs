@@ -348,6 +348,26 @@ export class ManoHUD extends Application {
         // --- DRAG & DROP ---
         html.find('.card-in-hand, .soul-image-container').on('dragstart', this._onDragStart.bind(this));
 
+        // --- VER CARTA EN GRANDE (Clic Derecho) ---
+        html.find('.card-in-hand').on('contextmenu', ev => {
+            ev.preventDefault(); // Evita que salga el menú contextual de Windows/Navegador
+
+            const itemId = ev.currentTarget.dataset.itemId;
+            if (!itemId) return;
+
+            const item = this.actor.items.get(itemId);
+            if (item) {
+                // OPCIÓN A: Pop-up visual (Solo la imagen de la carta en grande, muy inmersivo)
+                new ImagePopout(item.img, {
+                    title: item.name,
+                    uuid: item.uuid
+                }).render(true);
+
+                // OPCIÓN B: Abrir la ficha completa de la carta (Descomenta la línea de abajo si prefieres esta)
+                // item.sheet.render(true);
+            }
+        });
+
         // --- GESTIÓN DE VIDA DEL ALMA ---
         html.find('.soul-life-input').change(async ev => {
             const newValue = parseInt(ev.currentTarget.value);
