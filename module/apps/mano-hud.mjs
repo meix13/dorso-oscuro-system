@@ -32,28 +32,30 @@ export class ManoHUD extends Application {
         const eliminadas = game.cards.get(this.actor.system.eliminadasId);
         const enJuego = game.cards.get(this.actor.system.enJuegoId);
 
-        // Guardamos los conteos FÍSICOS individuales
-        const quedanEnMazo = deck ? deck.cards.size : 0;
-        const enMano = hand ? hand.cards.size : 0;
-        const enDescarte = discard ? discard.cards.size : 0;
-        const eliminadasTotal = eliminadas ? eliminadas.cards.size : 0;
-        const enMesa = enJuego ? enJuego.cards.size : 0;
+        // --- LA MAGIA NATIVA DE FOUNDRY ---
+        // availableCards es un Array con las cartas que NO tienen marcado 'Drawn'
+        const numMazoDisponible = deck ? deck.availableCards.length : 0;
+        const numDescarte = discard ? discard.cards.size : 0;
+        const numEliminadas = eliminadas ? eliminadas.cards.size : 0;
 
         data.mano = hand ? hand.cards : [];
-        data.conteoMazo = quedanEnMazo;
-        data.conteoDescarte = enDescarte;
-        data.conteoEliminadas = eliminadasTotal;
 
+        // Estos son los números que lee el HTML
+        data.conteoMazo = numMazoDisponible;
+        data.conteoDescarte = numDescarte;
+        data.conteoEliminadas = numEliminadas;
 
-        // 2. --- CÁLCULO DINÁMICO DEL LÍMITE DE MANO ---
+        // EL TOTAL ES ABSOLUTO: El Mazo nunca pierde cartas físicamente,
+        // así que su "size" es siempre el total de tu baraja. ¡Se acabó sumar pilas!
+        data.totalMazo = deck ? deck.cards.size : 0;
+
+        // --- CÁLCULO DINÁMICO DEL LÍMITE DE MANO ---
         let baseLimit = 4;
         let bonusTotal = 0;
 
-        // A) Bonus del Alma Activa
         const activeSoul = this.actor.items.get(this.actor.system.almaActivaId);
         if (activeSoul) bonusTotal += (activeSoul.system.limiteManoBonus || 0);
 
-        // B) Bonus de Objetos en el Tablero (solo los que están "En Juego")
         const objetosEnMesa = canvas.tokens.placeables.filter(t => {
             const f = t.document.flags.dorso_oscuro;
             return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_objeto";
@@ -65,11 +67,7 @@ export class ManoHUD extends Application {
         }
 
         data.totalLimiteMano = baseLimit + bonusTotal;
-
-        // CÁLCULO DEL TOTAL (INAMOVIBLE)
-        // Al sumar dónde están las cartas en este instante, el total nunca cambia.
-        data.totalMazo = quedanEnMazo + enMano + enDescarte + eliminadasTotal + enMesa;
-        data.activeSoul = this.actor.items.get(this.actor.system.almaActivaId);
+        data.activeSoul = activeSoul;
 
         return data;
     }
@@ -138,10 +136,9 @@ export class ManoHUD extends Application {
         });
 
 
-        // --- BOTONES DE ROBO ---
+        // --- BOTONES DE ROBO (NATIVO FOUNDRY - UN SOLO CLIC) ---
         html.find('.draw-cards').click(async ev => {
-            // Usamos el cerrojo global de la clase
-            if (ManoHUD.isProcessing) return ui.notifications.warn("Barajando y procesando cartas, espera un instante...");
+            if (ManoHUD.isProcessing) return ui.notifications.warn("Procesando cartas, espera un instante...");
             ManoHUD.isProcessing = true;
 
             try {
@@ -161,69 +158,62 @@ export class ManoHUD extends Application {
                 }
 
                 if (numARobar <= 0) {
-                    ui.notifications.warn("Mano llena o no has pedido cartas.");
-                    return;
+                    ManoHUD.isProcessing = false;
+                    return ui.notifications.warn("Mano llena o no has pedido cartas.");
                 }
 
-                // --- LÓGICA SECUENCIAL DE ROBO BLINDADA ---
                 let cartasRobadas = 0;
 
-                // PASO 1: Robar lo que haya disponible en el mazo
-                if (deck.cards.size > 0) {
-                    const aRobarAhora = Math.min(numARobar, deck.cards.size);
-                    const cartasParaMover = deck.cards.contents.slice(0, aRobarAhora).map(c => c.id);
-                    await deck.pass(hand, cartasParaMover);
-                    numARobar -= aRobarAhora;
+                // --- PASO 1: Robamos todo lo que podamos de las disponibles en el mazo ---
+                const aRobarAhora = Math.min(numARobar, deck.availableCards.length);
+                if (aRobarAhora > 0) {
+                    await deck.shuffle();
+                    await hand.draw(deck, aRobarAhora);
                     cartasRobadas += aRobarAhora;
+                    numARobar -= aRobarAhora;
                 }
 
-                // PASO 2: Si aún faltan cartas, reciclamos el descarte
+                // --- PASO 2: Si nos siguen faltando cartas, reciclamos automáticamente ---
                 if (numARobar > 0) {
                     if (discard.cards.size > 0) {
-                        ui.notifications.info("Mazo vacío. Recuperando el Descarte y barajando...");
+                        ui.notifications.info("Mazo vacío. Reciclando el descarte y robando el resto...");
 
-                        // Movemos TODO el descarte al mazo
-                        const cartasDescarteIds = discard.cards.map(c => c.id);
-                        await discard.pass(deck, cartasDescarteIds);
+                        // Devolvemos el descarte al mazo (Foundry les quita el check 'Drawn' internamente)
+                        const idsDescarte = discard.cards.map(c => c.id);
+                        await discard.pass(deck, idsDescarte);
 
-                        // RESPIRO VITAL 1: Dejamos que Foundry termine de asentar los IDs en la base de datos
-                        await new Promise(resolve => setTimeout(resolve, 500));
-
+                        // Barajamos
                         await deck.shuffle();
 
-                        // RESPIRO VITAL 2: Tras barajar, volvemos a esperar
-                        await new Promise(resolve => setTimeout(resolve, 300));
+                        // RESPIRO VITAL: Le damos a la base de datos 0.4 segundos para que asiente
+                        // los checks quitados y el nuevo orden antes de volver a robar.
+                        await new Promise(resolve => setTimeout(resolve, 400));
 
-                        // RE-LEEMOS EL MAZO para asegurarnos de que usamos los IDs frescos y reales
-                        const deckActualizado = game.cards.get(this.actor.system.deckId);
-                        const aRobarFinal = Math.min(numARobar, deckActualizado.cards.size);
-
+                        // Robamos lo que nos faltaba (o lo que se pueda si el descarte era muy pequeño)
+                        const aRobarFinal = Math.min(numARobar, deck.availableCards.length);
                         if (aRobarFinal > 0) {
-                            const cartasFinales = deckActualizado.cards.contents.slice(0, aRobarFinal).map(c => c.id);
-                            await deckActualizado.pass(hand, cartasFinales);
+                            await hand.draw(deck, aRobarFinal);
                             cartasRobadas += aRobarFinal;
                             numARobar -= aRobarFinal;
                         }
                     }
                 }
 
+                // --- AVISOS FINALES ---
                 if (numARobar > 0) {
-                    ui.notifications.warn(`Solo pudiste robar ${cartasRobadas} carta(s). No hay más en el descarte.`);
+                    ui.notifications.warn(`Solo pudiste robar ${cartasRobadas} carta(s). No hay más cartas en el juego.`);
                 } else if (cartasRobadas > 0) {
-                    ui.notifications.info(`Has robado ${cartasRobadas} carta(s).`);
+                    ui.notifications.info(`Has robado ${cartasRobadas} carta(s) con éxito.`);
                 }
 
             } catch (error) {
                 console.error("Dorso Oscuro | Error crítico en el robo:", error);
-                ui.notifications.error("Hubo un error de sincronización al robar. Recarga (F5) por seguridad.");
+                ui.notifications.error("Hubo un error al robar. Recarga (F5) por seguridad.");
             } finally {
-                // Liberamos el cerrojo siempre
                 ManoHUD.isProcessing = false;
                 this.render();
             }
         });
-
-
 
         // --- FIN DE TURNO ---
         html.find('.end-turn-btn').click(async ev => {
@@ -527,7 +517,8 @@ export class ManoHUD extends Application {
                 const discard = game.cards.get(this.actor.system.discardId);
 
                 if (hand && discard) {
-                    // Ya no filtramos. Lo enviamos todo de golpe al descarte.
+                    // Ya no filtramos. Mandamos las seleccionadas directo al descarte.
+                    // Usamos .pass() porque aquí sí estamos mandando IDs específicos seleccionados por el jugador
                     await hand.pass(discard, cartasADescartarIds);
                     ui.notifications.info(`Has descartado ${cartasADescartarIds.length} carta(s) voluntariamente.`);
                 }
@@ -539,7 +530,7 @@ export class ManoHUD extends Application {
                 await this.actor.update({"system.energia.value": 7});
             }
 
-            // 3. Limpiar poderes de la mesa (¡AQUÍ SÍ SE APLICA EL "DESAPARECE" PORQUE LO GESTIONA sistema.js!)
+            // 3. Limpiar poderes de la mesa (El Hook de sistema.js aplicará "Desaparece" si corresponde)
             const tokensABorrar = canvas.tokens.placeables.filter(t => {
                 const f = t.document.flags.dorso_oscuro;
                 return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_poder";
@@ -550,7 +541,7 @@ export class ManoHUD extends Application {
                 await canvas.scene.deleteEmbeddedDocuments("Token", ids);
 
                 // Respiro para la aspiradora
-                await new Promise(resolve => setTimeout(resolve, 400));
+                await new Promise(resolve => setTimeout(resolve, 300));
             }
 
         } catch (error) {
