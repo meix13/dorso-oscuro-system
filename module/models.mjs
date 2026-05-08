@@ -29,7 +29,8 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
             notas: new fields.StringField({initial: ""}),
             // --- SISTEMA DE CARTAS ---
             energia: new fields.SchemaField({
-                value: new fields.NumberField({initial: 0, integer: true, min: 0}), // Máximo 7 por tus reglas
+                value: new fields.NumberField({initial: 0, integer: true, min: 0}),
+                max: new fields.NumberField({initial: 7, integer: true}) // ¡NUEVO! Foundry necesita esto para saber dónde está el 100% de la barra azul
             }),
             merma: new fields.NumberField({initial: 0, integer: true, min: 0}),
             decadencia: new fields.NumberField({initial: 0, integer: true, min: 0}),
@@ -75,7 +76,8 @@ export class CartaAlmaData extends foundry.abstract.TypeDataModel {
             energiaBase: new fields.NumberField({initial: 1, integer: true, min: 0}), // Energía que genera por turno
             elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
             energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            descripcion: new fields.HTMLField()
+            descripcion: new fields.HTMLField(),
+            limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0})
         };
     }
 }
@@ -92,7 +94,9 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             esInstantanea: new fields.BooleanField({initial: false}),
             desaparece: new fields.BooleanField({initial: false}),
             descripcion: new fields.HTMLField(),
-            enBanquillo: new fields.BooleanField({initial: false})
+            enBanquillo: new fields.BooleanField({initial: false}),
+            limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0})
         };
     }
 }

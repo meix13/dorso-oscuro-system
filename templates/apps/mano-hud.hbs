@@ -39,17 +39,39 @@
         </div>
     </div>
 
-    {{!-- 2. COLUMNA: ENERGÍA --}}
-    <div class="hud-column flexcol" style="flex: 0 0 110px; border-right: 1px solid #444; padding: 0 10px; justify-content: center; text-align: center;">
-        <label style="font-size: 12px; font-weight: bold; margin-bottom: 10px;">ENERGÍA</label>
-        <div class="energy-display" style="margin-bottom: 10px;">
-            <span class="value" style="color: #00aaff; text-shadow: 0 0 8px #00aaff; font-size: 32px; font-weight: bold;">{{system.energia.value}}</span>
+    {{!-- 2. COLUMNA: VIDA Y ENERGÍA --}}
+    <div class="hud-column flexcol" style="flex: 0 0 120px; border-right: 1px solid #444; padding: 0 10px; justify-content: center; text-align: center;">
+
+        {{!-- VIDA DEL ALMA --}}
+        {{#if activeSoul}}
+            <div class="soul-life-box flexcol" style="margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px;">
+                <label style="font-size: 11px; font-weight: bold; margin-bottom: 5px; color: #ff6666;">VIDA ALMA</label>
+                <div class="flexrow" style="align-items: center; justify-content: center; gap: 2px;">
+                    <input type="number" class="soul-life-input" value="{{activeSoul.system.vida.value}}"
+                           style="width: 50px; height: 30px; text-align: center; background: rgba(50,0,0,0.4); color: #ff4444; border: 1px solid #662222; font-weight: bold; font-size: 18px;"
+                           title="Vida actual del Alma">
+                    <span style="font-size: 18px; color: #aaa; font-weight: bold;">/{{activeSoul.system.vida.max}}</span>
+                </div>
+            </div>
+        {{else}}
+            <div class="soul-life-box flexcol" style="margin-bottom: 10px; border-bottom: 1px solid #444; padding-bottom: 10px; opacity: 0.3;">
+                <label style="font-size: 11px; font-weight: bold; color: #888;">SIN ALMA</label>
+                <div style="font-size: 18px; color: #444;">-- / --</div>
+            </div>
+        {{/if}}
+
+        {{!-- ENERGÍA --}}
+        <div class="energy-section flexcol">
+            <label style="font-size: 11px; font-weight: bold; margin-bottom: 5px;">ENERGÍA</label>
+            <div class="energy-display" style="margin-bottom: 5px;">
+                <span class="value" style="color: #00aaff; text-shadow: 0 0 8px #00aaff; font-size: 30px; font-weight: bold;">{{system.energia.value}}</span>
+            </div>
+            <div class="flexrow" style="gap: 5px; margin-bottom: 5px;">
+                <button class="energy-control" data-action="minus" style="flex: 1; height: 24px; line-height: 10px;">-</button>
+                <button class="energy-control" data-action="plus" style="flex: 1; height: 24px; line-height: 10px;">+</button>
+            </div>
+            <button class="energy-control collect-btn" data-action="collect" style="background: #003366; color: white; font-size: 10px; padding: 4px 0; font-weight: bold;">RECOLECTAR</button>
         </div>
-        <div class="flexrow" style="gap: 10px; margin-bottom: 10px;">
-            <button class="energy-control" data-action="minus" style="flex: 1; font-weight: bold;">-</button>
-            <button class="energy-control" data-action="plus" style="flex: 1; font-weight: bold;">+</button>
-        </div>
-        <button class="energy-control collect-btn" data-action="collect" style="background: #003366; color: white; font-weight: bold; padding: 5px 0;">RECOLECTAR</button>
     </div>
 
     {{!-- 3. COLUMNA: LA MANO --}}
@@ -73,7 +95,12 @@
                 <button class="draw-cards" data-count="4">4</button>
                 <button class="draw-cards" data-count="5">5</button>
             </div>
-            <button class="draw-cards" data-count="limit" style="margin-top: 5px; font-size: 11px;">HASTA EL LÍMITE</button>
+            <button class="draw-cards" data-count="limit" style="margin-top: 5px; font-size: 11px; position: relative;">
+                HASTA EL LÍMITE
+                <span style="background: #444; color: gold; padding: 1px 4px; border-radius: 3px; margin-left: 5px;">
+                    {{totalLimiteMano}}
+                </span>
+            </button>
         </div>
 
         {{!-- MAZOS EN LÍNEA --}}

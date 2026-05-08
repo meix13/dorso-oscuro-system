@@ -301,7 +301,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         // 1. Crear el Mazo (Deck)
         const mazoData = {
             name: `Mazo: ${name}`,
-            type: "deck",
+            type: "pile",
             cards: actor.items
                 // CORRECCIÓN: Quitamos carta_alma de aquí. ¡Solo poderes y objetos!
                 .filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo)

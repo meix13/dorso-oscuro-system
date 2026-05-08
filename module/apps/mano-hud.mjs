@@ -1,6 +1,7 @@
 // module/apps/mano-hud.mjs
 
 export class ManoHUD extends Application {
+    static isProcessing = false;
     constructor(actor, options = {}) {
         super(options);
         this.actor = actor;
@@ -24,32 +25,57 @@ export class ManoHUD extends Application {
         data.actor = this.actor;
         data.system = this.actor.system;
 
-        // Obtenemos todos los contenedores de cartas
+        // Obtenemos los contenedores
         const hand = game.cards.get(this.actor.system.handId);
         const deck = game.cards.get(this.actor.system.deckId);
         const discard = game.cards.get(this.actor.system.discardId);
         const eliminadas = game.cards.get(this.actor.system.eliminadasId);
         const enJuego = game.cards.get(this.actor.system.enJuegoId);
 
-        // Guardamos los conteos individuales
+        // Guardamos los conteos FÍSICOS individuales
+        const quedanEnMazo = deck ? deck.cards.size : 0;
+        const enMano = hand ? hand.cards.size : 0;
+        const enDescarte = discard ? discard.cards.size : 0;
+        const eliminadasTotal = eliminadas ? eliminadas.cards.size : 0;
+        const enMesa = enJuego ? enJuego.cards.size : 0;
+
         data.mano = hand ? hand.cards : [];
-        data.conteoMazo = deck ? deck.cards.size : 0;
-        data.conteoDescarte = discard ? discard.cards.size : 0;
-        data.conteoEliminadas = eliminadas ? eliminadas.cards.size : 0;
-        data.conteoEnJuego = enJuego ? enJuego.cards.size : 0;
+        data.conteoMazo = quedanEnMazo;
+        data.conteoDescarte = enDescarte;
+        data.conteoEliminadas = eliminadasTotal;
 
-        // --- CÁLCULO DEL TOTAL ---
-        // Sumamos absolutamente todas las cartas que pertenecen al sistema de juego actual
-        data.totalMazo = data.conteoMazo +
-            data.conteoDescarte +
-            data.conteoEliminadas +
-            data.conteoEnJuego +
-            (hand ? hand.cards.size : 0);
 
+        // 2. --- CÁLCULO DINÁMICO DEL LÍMITE DE MANO ---
+        let baseLimit = 4;
+        let bonusTotal = 0;
+
+        // A) Bonus del Alma Activa
+        const activeSoul = this.actor.items.get(this.actor.system.almaActivaId);
+        if (activeSoul) bonusTotal += (activeSoul.system.limiteManoBonus || 0);
+
+        // B) Bonus de Objetos en el Tablero (solo los que están "En Juego")
+        const objetosEnMesa = canvas.tokens.placeables.filter(t => {
+            const f = t.document.flags.dorso_oscuro;
+            return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_objeto";
+        });
+
+        for (let t of objetosEnMesa) {
+            const item = this.actor.items.get(t.document.flags.dorso_oscuro.itemId);
+            if (item) bonusTotal += (item.system.limiteManoBonus || 0);
+        }
+
+        data.totalLimiteMano = baseLimit + bonusTotal;
+
+        // CÁLCULO DEL TOTAL (INAMOVIBLE)
+        // Al sumar dónde están las cartas en este instante, el total nunca cambia.
+        data.totalMazo = quedanEnMazo + enMano + enDescarte + eliminadasTotal + enMesa;
         data.activeSoul = this.actor.items.get(this.actor.system.almaActivaId);
 
         return data;
     }
+
+
+
     activateListeners(html) {
         super.activateListeners(html);
 
@@ -92,6 +118,7 @@ export class ManoHUD extends Application {
 
             // UN SOLO UPDATE AL FINAL: Así evitamos que se pisen los datos
             await actor.update({"system.energia.value": nuevoValor});
+            await this._refreshTokenVisuals();
             this.render();
         });
 
@@ -105,6 +132,7 @@ export class ManoHUD extends Application {
             val = action === "plus" ? val + 1 : Math.max(val - 1, 0);
 
             await this.actor.update({[`system.${field}`]: val});
+            await this._refreshTokenVisuals();
             this._updateTokenVisuals(field, val);
             this.render();
         });
@@ -112,97 +140,149 @@ export class ManoHUD extends Application {
 
         // --- BOTONES DE ROBO ---
         html.find('.draw-cards').click(async ev => {
-            const countStr = ev.currentTarget.dataset.count;
-            const hand = game.cards.get(this.actor.system.handId);
-            const deck = game.cards.get(this.actor.system.deckId);
-            const discard = game.cards.get(this.actor.system.discardId);
+            // Usamos el cerrojo global de la clase
+            if (ManoHUD.isProcessing) return ui.notifications.warn("Barajando y procesando cartas, espera un instante...");
+            ManoHUD.isProcessing = true;
 
-            if (!hand || !deck || !discard) return;
+            try {
+                const countStr = ev.currentTarget.dataset.count;
+                const hand = game.cards.get(this.actor.system.handId);
+                const deck = game.cards.get(this.actor.system.deckId);
+                const discard = game.cards.get(this.actor.system.discardId);
 
-            let numARobar = 0;
-            if (countStr === "limit") {
-                const limiteMano = 4; // Aquí en el futuro sumaremos los bonos de equipo
-                numARobar = Math.max(0, limiteMano - hand.cards.size);
-            } else {
-                numARobar = parseInt(countStr);
-            }
+                if (!hand || !deck || !discard) return;
 
-            if (numARobar <= 0) {
-                return ui.notifications.warn("Ya tienes la mano llena o no has pedido cartas.");
-            }
+                let numARobar = 0;
+                if (countStr === "limit") {
+                    const currentData = await this.getData();
+                    numARobar = Math.max(0, currentData.totalLimiteMano - hand.cards.size);
+                } else {
+                    numARobar = parseInt(countStr);
+                }
 
-            // --- LÓGICA DE ROBO FÍSICO (Sin clonaciones de Foundry) ---
-            let cartasRobadas = 0;
+                if (numARobar <= 0) {
+                    ui.notifications.warn("Mano llena o no has pedido cartas.");
+                    return;
+                }
 
-            while (numARobar > 0) {
+                // --- LÓGICA SECUENCIAL DE ROBO BLINDADA ---
+                let cartasRobadas = 0;
 
-                // 1. Miramos cuántas cartas físicas quedan en el mazo
+                // PASO 1: Robar lo que haya disponible en el mazo
                 if (deck.cards.size > 0) {
                     const aRobarAhora = Math.min(numARobar, deck.cards.size);
-
-                    // Extraemos los IDs exactos de las cartas superiores
                     const cartasParaMover = deck.cards.contents.slice(0, aRobarAhora).map(c => c.id);
-
-                    // PASAMOS FÍSICAMENTE las cartas a la mano (esto las borra del mazo)
                     await deck.pass(hand, cartasParaMover);
-
                     numARobar -= aRobarAhora;
                     cartasRobadas += aRobarAhora;
                 }
 
-                // 2. Si faltan cartas y el mazo se ha vaciado
+                // PASO 2: Si aún faltan cartas, reciclamos el descarte
                 if (numARobar > 0) {
                     if (discard.cards.size > 0) {
                         ui.notifications.info("Mazo vacío. Recuperando el Descarte y barajando...");
 
-                        // Pasamos todas las cartas del descarte al mazo
+                        // Movemos TODO el descarte al mazo
                         const cartasDescarteIds = discard.cards.map(c => c.id);
                         await discard.pass(deck, cartasDescarteIds);
 
-                        // Barajamos el mazo recién llenado
+                        // RESPIRO VITAL 1: Dejamos que Foundry termine de asentar los IDs en la base de datos
+                        await new Promise(resolve => setTimeout(resolve, 500));
+
                         await deck.shuffle();
 
-                    } else {
-                        ui.notifications.error(`Solo pudiste robar ${cartasRobadas} carta(s). No hay más disponibles.`);
-                        break;
+                        // RESPIRO VITAL 2: Tras barajar, volvemos a esperar
+                        await new Promise(resolve => setTimeout(resolve, 300));
+
+                        // RE-LEEMOS EL MAZO para asegurarnos de que usamos los IDs frescos y reales
+                        const deckActualizado = game.cards.get(this.actor.system.deckId);
+                        const aRobarFinal = Math.min(numARobar, deckActualizado.cards.size);
+
+                        if (aRobarFinal > 0) {
+                            const cartasFinales = deckActualizado.cards.contents.slice(0, aRobarFinal).map(c => c.id);
+                            await deckActualizado.pass(hand, cartasFinales);
+                            cartasRobadas += aRobarFinal;
+                            numARobar -= aRobarFinal;
+                        }
                     }
                 }
-            }
 
-            if (cartasRobadas > 0) {
-                ui.notifications.info(`Has robado ${cartasRobadas} carta(s).`);
+                if (numARobar > 0) {
+                    ui.notifications.warn(`Solo pudiste robar ${cartasRobadas} carta(s). No hay más en el descarte.`);
+                } else if (cartasRobadas > 0) {
+                    ui.notifications.info(`Has robado ${cartasRobadas} carta(s).`);
+                }
+
+            } catch (error) {
+                console.error("Dorso Oscuro | Error crítico en el robo:", error);
+                ui.notifications.error("Hubo un error de sincronización al robar. Recarga (F5) por seguridad.");
+            } finally {
+                // Liberamos el cerrojo siempre
+                ManoHUD.isProcessing = false;
+                this.render();
             }
-            this.render();
         });
 
 
 
         // --- FIN DE TURNO ---
         html.find('.end-turn-btn').click(async ev => {
-            let currentEnergy = this.actor.system.energia.value;
+            const hand = game.cards.get(this.actor.system.handId);
+            const cartasEnMano = hand ? hand.cards.contents : [];
 
-            // 1. Limpiar energía sobrante
-            if (currentEnergy > 7) {
-                await this.actor.update({"system.energia.value": 7});
-                ui.notifications.info("Energía reseteada a 7.");
+            // Si no le quedan cartas en la mano, acabamos el turno directamente
+            if (cartasEnMano.length === 0) {
+                return this._ejecutarFinDeTurno([]);
             }
 
-            // 2. LIMPIAR MESA (Solo los poderes)
-            // Buscamos todos los tokens en la escena actual que pertenezcan a este actor y sean cartas de poder
-            const tokensABorrar = canvas.tokens.placeables.filter(t => {
-                const f = t.document.flags.dorso_oscuro;
-                return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_poder";
+            // Si tiene cartas, construimos el cuadro de diálogo visual
+            let cardsHtml = `<div class="flexrow" style="flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px;">`;
+            cartasEnMano.forEach(c => {
+                cardsHtml += `
+                    <div class="discard-card-option" data-card-id="${c.id}" style="cursor: pointer; border: 2px solid transparent; border-radius: 5px; width: 80px; transition: all 0.2s;">
+                        <img src="${c.faces[0].img}" style="width: 100%; border-radius: 3px; pointer-events: none;">
+                    </div>
+                `;
             });
+            cardsHtml += `</div>`;
+            cardsHtml += `<p style="text-align: center; color: #ccc; font-size: 13px;">Haz clic en las cartas que quieras descartar. Se pondrán rojas.</p>`;
 
-            if (tokensABorrar.length > 0) {
-                const ids = tokensABorrar.map(t => t.id);
-                await canvas.scene.deleteEmbeddedDocuments("Token", ids);
-                ui.notifications.info("Poderes de la mesa enviados al olvido.");
-            }
-
-            this.render();
+            new Dialog({
+                title: "¿Descartar cartas?",
+                content: cardsHtml,
+                buttons: {
+                    end: {
+                        icon: '<i class="fas fa-hourglass-end"></i>',
+                        label: "Finalizar Turno",
+                        callback: async (htmlContent) => {
+                            // Recogemos los IDs de las cartas que el jugador ha marcado en rojo
+                            const selectedIds = [];
+                            htmlContent.find('.discard-card-option.selected').each(function() {
+                                selectedIds.push($(this).data('cardId'));
+                            });
+                            // Ejecutamos el cierre pasándole las cartas seleccionadas
+                            await this._ejecutarFinDeTurno(selectedIds);
+                        }
+                    },
+                    cancel: {
+                        icon: '<i class="fas fa-times"></i>',
+                        label: "Cancelar Acción"
+                    }
+                },
+                render: (htmlContent) => {
+                    // Animación y marcado de las cartas al hacerles clic
+                    htmlContent.find('.discard-card-option').click(function() {
+                        $(this).toggleClass('selected');
+                        if ($(this).hasClass('selected')) {
+                            $(this).css({'border-color': '#ff4444', 'opacity': '0.6', 'transform': 'scale(0.95)'});
+                        } else {
+                            $(this).css({'border-color': 'transparent', 'opacity': '1', 'transform': 'scale(1)'});
+                        }
+                    });
+                },
+                default: "end"
+            }, { width: 500 }).render(true);
         });
-
 
 // --- CERRAR MESA (Finalizar Partida de verdad) ---
         html.find('.end-combat-btn').click(async ev => {
@@ -219,8 +299,13 @@ export class ManoHUD extends Application {
                 yes: async () => {
                     const actor = this.actor;
 
-                    // 1. Limpiar TODAS las cartas de este jugador del tablero (Alma, Poderes, Objetos)
-                    // Fíjate que aquí ya no filtramos por tipo de carta, así que borra todas.
+                    // 0. ¡TU IDEA! Borramos el Actor Temporal del Alma
+                    const tempActors = game.actors.filter(a => a.flags.dorso_oscuro?.isTempAlma && a.flags.dorso_oscuro?.ownerId === actor.id);
+                    for (let temp of tempActors) {
+                        await temp.delete();
+                    }
+
+                    // 1. Limpiar TODAS las cartas de este jugador del tablero
                     const tokensABorrar = canvas.tokens.placeables.filter(t => {
                         const f = t.document.flags.dorso_oscuro;
                         return f?.isCard && f?.actorId === actor.id;
@@ -229,6 +314,10 @@ export class ManoHUD extends Application {
                     if (tokensABorrar.length > 0) {
                         const ids = tokensABorrar.map(t => t.id);
                         await canvas.scene.deleteEmbeddedDocuments("Token", ids);
+
+                        // ¡EL RESPIRO MAGICO! Esperamos medio segundo para que la aspiradora (deleteToken)
+                        // guarde las cartas ANTES de que el paso 2 borre las pilas de la base de datos.
+                        await new Promise(resolve => setTimeout(resolve, 500));
                     }
 
                     // 2. Borrar los contenedores de Cards de la barra lateral de Foundry
@@ -268,6 +357,46 @@ export class ManoHUD extends Application {
 
         // --- DRAG & DROP ---
         html.find('.card-in-hand, .soul-image-container').on('dragstart', this._onDragStart.bind(this));
+
+        // --- GESTIÓN DE VIDA DEL ALMA ---
+        html.find('.soul-life-input').change(async ev => {
+            const newValue = parseInt(ev.currentTarget.value);
+            const almaId = this.actor.system.almaActivaId;
+            const activeSoul = this.actor.items.get(almaId);
+
+            if (activeSoul) {
+                // Si el valor es mayor que el máximo, lo capamos (opcional según tus reglas)
+                const cappedValue = Math.min(newValue, activeSoul.system.vida.max);
+
+                await activeSoul.update({"system.vida.value": cappedValue});
+                await this._refreshTokenVisuals();
+                ui.notifications.info(`Vida de ${activeSoul.name} actualizada.`);
+            }
+            this.render();
+        });
+
+    }
+// --- BOTONES DE LA CABECERA (Añadir Minimizar) ---
+    _getHeaderButtons() {
+        // Recuperamos los botones por defecto (el de "Cerrar")
+        let buttons = super._getHeaderButtons();
+
+        // Insertamos nuestro botón de Minimizar al principio de la lista
+        buttons.unshift({
+            label: "Minimizar",
+            class: "minimize-hud",
+            icon: "fas fa-minus",
+            onclick: ev => {
+                // Si ya está minimizada, la maximiza. Si no, la minimiza.
+                if (this._minimized) {
+                    this.maximize();
+                } else {
+                    this.minimize();
+                }
+            }
+        });
+
+        return buttons;
     }
 
     // Método para poner iconos en el token del tablero
@@ -330,4 +459,106 @@ export class ManoHUD extends Application {
 
         event.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
     }
+
+    // --- ACTUALIZAR VISUALES DEL TOKEN EN EL TABLERO ---
+    async _refreshTokenVisuals() {
+        const actor = this.actor;
+
+        const almaToken = canvas.tokens.placeables.find(t => {
+            const f = t.document.flags.dorso_oscuro;
+            return f?.isCard && f?.actorId === actor.id && f?.type === "carta_alma";
+        });
+
+        if (!almaToken) return;
+
+        const almaItem = actor.items.get(actor.system.almaActivaId);
+
+        // 1. Actualizamos el ACTOR TEMPORAL real
+        if (almaToken.actor) {
+            await almaToken.actor.update({
+                "system.hp.value": almaItem ? almaItem.system.vida.value : 0,
+                "system.hp.max": almaItem ? almaItem.system.vida.max : 10,
+                "system.energia.value": actor.system.energia.value
+            });
+        }
+
+        // 2. CONSTRUIMOS EL HUD DE TEXTO DINÁMICO
+        const vidaActual = almaItem ? almaItem.system.vida.value : 0;
+        const energiaActual = actor.system.energia.value;
+        const nombreCarta = almaItem ? almaItem.name : "Alma";
+
+        // Base: Vida y Energía siempre visibles
+        let nombreHUD = `❤️ ${vidaActual}  |  ⚡ ${energiaActual}`;
+
+        // Añadimos Merma solo si es mayor que 0
+        if (actor.system.merma > 0) {
+            nombreHUD += `  |  ⏬ ${actor.system.merma}`; // ¡Cambiado a la doble flecha!
+        }
+
+        // Añadimos Decadencia solo si es mayor que 0
+        if (actor.system.decadencia > 0) {
+            nombreHUD += `  |  🩸 ${actor.system.decadencia}`;
+        }
+
+        // Cerramos con el nombre de la carta
+        nombreHUD += `  |  ${nombreCarta}`;
+
+        // 3. Iconos de estado visuales (los dejamos por si la gente hace zoom out)
+        const effects = [];
+        if (actor.system.merma > 0) effects.push("icons/svg/downgrade.svg");
+        if (actor.system.decadencia > 0) effects.push("icons/svg/blood.svg");
+
+        // Actualizamos el Token
+        await almaToken.document.update({
+            name: nombreHUD,
+            effects: effects
+        });
+    }
+
+    // --- LÓGICA INTERNA DE FINALIZAR TURNO ---
+    async _ejecutarFinDeTurno(cartasADescartarIds = []) {
+        if (ManoHUD.isProcessing) return;
+        ManoHUD.isProcessing = true;
+
+        try {
+            // 1. Procesar los descartes de la mano (TODO VA AL DESCARTE NORMAL)
+            if (cartasADescartarIds.length > 0) {
+                const hand = game.cards.get(this.actor.system.handId);
+                const discard = game.cards.get(this.actor.system.discardId);
+
+                if (hand && discard) {
+                    // Ya no filtramos. Lo enviamos todo de golpe al descarte.
+                    await hand.pass(discard, cartasADescartarIds);
+                    ui.notifications.info(`Has descartado ${cartasADescartarIds.length} carta(s) voluntariamente.`);
+                }
+            }
+
+            // 2. Limpiar energía sobrante
+            let currentEnergy = this.actor.system.energia.value;
+            if (currentEnergy > 7) {
+                await this.actor.update({"system.energia.value": 7});
+            }
+
+            // 3. Limpiar poderes de la mesa (¡AQUÍ SÍ SE APLICA EL "DESAPARECE" PORQUE LO GESTIONA sistema.js!)
+            const tokensABorrar = canvas.tokens.placeables.filter(t => {
+                const f = t.document.flags.dorso_oscuro;
+                return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_poder";
+            });
+
+            if (tokensABorrar.length > 0) {
+                const ids = tokensABorrar.map(t => t.id);
+                await canvas.scene.deleteEmbeddedDocuments("Token", ids);
+
+                // Respiro para la aspiradora
+                await new Promise(resolve => setTimeout(resolve, 400));
+            }
+
+        } catch (error) {
+            console.error("Dorso Oscuro | Error en el fin de turno:", error);
+        } finally {
+            ManoHUD.isProcessing = false;
+            this.render();
+        }
+    }
+
 }
