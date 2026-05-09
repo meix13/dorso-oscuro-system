@@ -3,9 +3,18 @@ import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData } from ".
 import { PersonajeSheet } from "./sheets/personaje-sheet.mjs";
 import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
 import { CartaSheet } from "./sheets/carta-sheet.mjs";
+import { ManoHUD } from "./apps/mano-hud.mjs";
+import { DJHUD } from "./apps/dj-hud.mjs";
 
 Hooks.once('init', async function() {
     console.log("Dorso Oscuro | Inicializando");
+
+    // --- APAGAR LA REGLA DE ARRASTRE NATIVA (ESTILO JUEGO DE MESA) ---
+    if (CONFIG.Token && CONFIG.Token.rulerClass) {
+        Object.defineProperty(CONFIG.Token.rulerClass.prototype, "isVisible", {
+            get: function() { return false; }
+        });
+    }
 
     CONFIG.Actor.dataModels.personaje = PersonajeData;
 
@@ -143,6 +152,7 @@ Hooks.once('init', async function() {
                 x: data.x - (canvas.grid.size * width) / 2,
                 y: data.y - (canvas.grid.size * height) / 2,
                 actorLink: true,
+                lockRotation: true,
                 displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
                 displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
                 flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id } }
@@ -214,4 +224,98 @@ Hooks.once('init', async function() {
         }
     });
 
+    // --- BOTÓN DE ACCESO RÁPIDO A LA MESA DE JUEGO (FOUNDRY V14) ---
+    Hooks.on("getSceneControlButtons", (controls) => {
+        const tokenControls = controls.tokens;
+
+        // --- BOTÓN EXCLUSIVO DEL DJ ---
+        if (game.user.isGM) {
+            const botonDJ = {
+                name: "panel-dj",
+                title: "Panel del Director",
+                icon: "fas fa-dragon", // Un dragón para diferenciarlo
+                button: true,
+                onClick: () => {
+                    new DJHUD().render(true);
+                }
+            };
+
+            // Inyectamos de forma segura según la arquitectura (igual que el otro)
+            if (Array.isArray(tokenControls.tools)) {
+                if (!tokenControls.tools.find(t => t.name === "panel-dj")) tokenControls.tools.push(botonDJ);
+            } else {
+                if (!tokenControls.tools["panel-dj"]) tokenControls.tools["panel-dj"] = botonDJ;
+            }
+        }
+
+        if (tokenControls && tokenControls.tools) {
+
+            const botonMesa = {
+                name: "abrir-mesa",
+                title: "Mesa de Juego",
+                icon: "fas fa-gamepad",
+                button: true,
+                // ¡CAMBIO CLAVE! Añadimos 'async' aquí
+                onClick: async () => {
+                    const actor = game.user.character;
+                    if (actor) {
+                        // Si no tiene mazo, lo generamos automáticamente
+                        if (!actor.system.deckId) {
+                            ui.notifications.info("Generando tu Mesa de Juego por primera vez. Un momento...");
+
+                            try {
+                                // Llamamos a la función mágica de tu ficha de personaje "por debajo"
+                                if (typeof actor.sheet._registrarMazoDeJuego === 'function') {
+                                    await actor.sheet._registrarMazoDeJuego();
+
+                                    // Le damos medio segundo a la base de datos para asentar los IDs
+                                    await new Promise(resolve => setTimeout(resolve, 500));
+
+                                    // Abrimos la mesa
+                                    new ManoHUD(actor).render(true);
+                                } else {
+                                    ui.notifications.error("No se pudo autogenerar. Por favor, abre tu ficha de personaje manualmente.");
+                                }
+                            } catch (error) {
+                                console.error("Dorso Oscuro | Error al autogenerar mazos:", error);
+                                ui.notifications.error("Hubo un error al crear las cartas. Ábrelo desde tu ficha.");
+                            }
+                        } else {
+                            // Si ya tiene mazo, abre la mesa del tirón
+                            new ManoHUD(actor).render(true);
+                        }
+                    } else {
+                        ui.notifications.error("Tu cuenta no tiene personaje asignado.");
+                    }
+                }
+            };
+
+            if (Array.isArray(tokenControls.tools)) {
+                if (!tokenControls.tools.find(t => t.name === "abrir-mesa")) {
+                    tokenControls.tools.push(botonMesa);
+                }
+            } else {
+                if (!tokenControls.tools["abrir-mesa"]) {
+                    tokenControls.tools["abrir-mesa"] = botonMesa;
+                }
+            }
+        }
+    });
+
+    Hooks.once("ready", async () => {
+        // --- APAGAR ROTACIÓN AUTOMÁTICA DEL CORE (V13/V14) ---
+        // Solo lo ejecuta el DJ para no saturar la base de datos con los jugadores
+        if (game.user.isGM) {
+            const settingKey = "automaticTokenRotation"; // El nombre interno del ajuste
+
+            // Comprobamos que el ajuste existe en esta versión de Foundry
+            if (game.settings.settings.has(`core.${settingKey}`)) {
+                // Si está encendido (true), lo apagamos a la fuerza
+                if (game.settings.get("core", settingKey) === true) {
+                    await game.settings.set("core", settingKey, false);
+                    console.log("Dorso Oscuro | Ajuste del Core: Rotación automática desactivada nativamente.");
+                }
+            }
+        }
+    });
 });

@@ -77,7 +77,7 @@
     {{!-- 3. COLUMNA: LA MANO --}}
     <div class="hud-hand-area" style="flex: 1; padding: 0 20px; display: flex; flex-direction: column; justify-content: center;">
 
-        <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; flex-direction: row; justify-content: center; align-items: center; flex-wrap: nowrap; overflow: visible; padding-top: 30px; margin-bottom: 10px;">
             {{#each mano as |item|}}
                 <div class="card-in-hand item" data-item-id="{{item.flags.dorso_oscuro.itemId}}" draggable="true">
                     <img src="{{item.faces.[0].img}}" title="{{item.name}}" draggable="false">

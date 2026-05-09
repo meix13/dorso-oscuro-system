@@ -346,11 +346,11 @@ form.mystery-paper-theme {
     background: rgba(0,0,0,0.4);
     border-radius: 10px;
 }
-
 .card-in-hand {
-    margin-left: -35px; /* Aquí está el truco: se pisan unas a otras */
-    transition: transform 0.2s ease, margin 0.2s ease;
+    margin-left: -35px; /* Se pisan unas a otras */
+    transition: transform 0.2s ease, z-index 0s; /* Z-index instantáneo para que no haya parpadeos */
     position: relative;
+    z-index: 1; /* Nivel base */
 }
 
 .card-in-hand:first-child {
@@ -365,12 +365,10 @@ form.mystery-paper-theme {
     box-shadow: -4px 4px 8px rgba(0,0,0,0.6);
 }
 
-/* Al pasar el ratón, la carta se levanta y se separa de las demás */
+/* Al pasar el ratón, la carta se levanta por ENCIMA de las demás sin empujarlas */
 .card-in-hand:hover {
-    transform: translateY(-20px) scale(1.15);
-    margin-left: 10px;
-    margin-right: 25px;
-    z-index: 100;
+    transform: translateY(-30px) scale(1.15); /* Sube un poco más y crece */
+    z-index: 100 !important; /* Salta al primer plano */
 }
 
 /* Controles de malus */
