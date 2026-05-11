@@ -285,58 +285,59 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
     }
 
 
-    // Nueva función para preparar los objetos "Cards" de Foundry
+    //  función para preparar los objetos "Cards" de Foundry
     async _registrarMazoDeJuego() {
         const actor = this.actor;
-        const name = actor.name;
 
+        // --- 1. GESTIÓN DE CARPETAS PARA CARTAS ---
+        let rootFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
+        if (!rootFolder) rootFolder = await Folder.create({ name: "PARTIDAS", type: "Cards" });
 
-        // Limpiamos mazos viejos
-        if (actor.system.deckId) await game.cards.get(actor.system.deckId)?.delete();
-        if (actor.system.handId) await game.cards.get(actor.system.handId)?.delete();
-        if (actor.system.discardId) await game.cards.get(actor.system.discardId)?.delete();
-        if (actor.system.eliminadasId) await game.cards.get(actor.system.eliminadasId)?.delete();
-        if (actor.system.enJuegoId) await game.cards.get(actor.system.enJuegoId)?.delete(); // NUEVO
+        let actorCardsFolder = game.folders.find(f => f.name === actor.name && f.type === "Cards" && f.folder?.id === rootFolder.id);
+        if (!actorCardsFolder) actorCardsFolder = await Folder.create({ name: actor.name, type: "Cards", folder: rootFolder.id });
 
-        // 1. Crear el Mazo (Deck)
-        const mazoData = {
-            name: `Mazo: ${name}`,
-            type: "deck",
-            cards: actor.items
-                // CORRECCIÓN: Quitamos carta_alma de aquí. ¡Solo poderes y objetos!
-                .filter(i => (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo)
-                .map(i => {
-                    const reverso = "img_varias/cards/cartas_v2/reverso_carta1.png"; // Ya no hace falta comprobar si es alma
-                    return {
-                        name: i.name,
-                        type: "base",
-                        faces: [{ name: i.name, img: i.img }],
-                        back: { name: "Dorso", img: reverso },
-                        face: 0,
-                        flags: { dorso_oscuro: { itemId: i.id } }
-                    };
-                })
+        const folderId = actorCardsFolder.id;
+
+        // --- 2. CREACIÓN DE LAS 5 PILAS (Con carpeta asignada) ---
+        const createStack = async (name, type) => {
+            return await Cards.create({
+                name: `[${name}] ${actor.name}`,
+                type: type,
+                folder: folderId // <--- Asignamos la carpeta aquí
+            });
         };
-        const deck = await Cards.create(mazoData);
 
-        // 2. Crear las otras pilas
-        const hand = await Cards.create({ name: `Mano: ${name}`, type: "hand" });
-        const discard = await Cards.create({ name: `Descarte: ${name}`, type: "pile" });
-        const eliminadas = await Cards.create({ name: `Eliminadas: ${name}`, type: "pile" });
-        const enJuego = await Cards.create({ name: `En Juego: ${name}`, type: "pile" }); // NUEVO
+        const deck = await createStack("Mazo", "deck");
+        const hand = await createStack("Mano", "hand");
+        const discard = await createStack("Descarte", "pile");
+        const banished = await createStack("Eliminadas", "pile");
+        const inPlay = await createStack("En Juego", "pile");
 
-        // Guardar IDs y barajar
+
+
+        // --- 3. POBLAR EL MAZO ---
+        // Filtramos poderes y objetos que NO estén en el banquillo
+        const itemsCartas = actor.items.filter(i =>
+            (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo
+        );
+
+        const cardsData = itemsCartas.map(item => ({
+            name: item.name,
+            faces: [{ img: item.img, name: item.name }],
+            back: { img: "img_varias/cards/cartas_v2/reverso_carta1.png" },
+            flags: { dorso_oscuro: { itemId: item.id } }
+        }));
+
+        await deck.createEmbeddedDocuments("Card", cardsData);
+
+        // --- 4. GUARDAR IDs EN EL ACTOR ---
         await actor.update({
             "system.deckId": deck.id,
             "system.handId": hand.id,
             "system.discardId": discard.id,
-            "system.eliminadasId": eliminadas.id,
-            "system.enJuegoId": enJuego.id // NUEVO
+            "system.eliminadasId": banished.id,
+            "system.enJuegoId": inPlay.id
         });
-
-        await deck.shuffle();
-        ui.notifications.info(`Baraja de ${name} preparada.`);
-
     }
 
 

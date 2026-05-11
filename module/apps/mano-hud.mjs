@@ -294,65 +294,38 @@ export class ManoHUD extends Application {
 
 // --- CERRAR MESA (Finalizar Partida de verdad) ---
         html.find('.end-combat-btn').click(async ev => {
+
             Dialog.confirm({
-                title: "⚠️ FINALIZAR COMBATE ⚠️",
-                content: `
-                    <div style="text-align: center; padding: 10px;">
-                        <h3 style="color: red; border-bottom: 1px solid red; padding-bottom: 5px;">¡ATENCIÓN!</h3>
-                        <p>Estás a punto de <b>CERRAR LA MESA</b>.</p>
-                        <p>Esto borrará tu mazo actual, tu mano, tu descarte, y <b>recogerá TODAS tus cartas del tablero (incluyendo tu Alma y Objetos)</b>.</p>
-                        <p><i>¿Estás completamente seguro de que quieres terminar la partida y resetear todo?</i></p>
-                    </div>
-                `,
+                title: "Recoger Mesa",
+                content: "¿Quieres recoger todas tus cartas? Se borrarán tus mazos y tu carpeta de esta partida.",
                 yes: async () => {
-                    const actor = this.actor;
-
-                    // 0. ¡TU IDEA! Borramos el Actor Temporal del Alma
-                    const tempActors = game.actors.filter(a => a.flags.dorso_oscuro?.isTempAlma && a.flags.dorso_oscuro?.ownerId === actor.id);
-                    for (let temp of tempActors) {
-                        await temp.delete();
+                    // 1. Borrar Pilas de Cartas
+                    const pilas = ["deckId", "handId", "discardId", "enJuegoId", "eliminadasId"];
+                    for (let key of pilas) {
+                        const id = this.actor.system[key];
+                        if (id) {
+                            const stack = game.cards.get(id);
+                            if (stack) await stack.delete();
+                        }
                     }
 
-                    // 1. Limpiar TODAS las cartas de este jugador del tablero
-                    const tokensABorrar = canvas.tokens.placeables.filter(t => {
-                        const f = t.document.flags.dorso_oscuro;
-                        return f?.isCard && f?.actorId === actor.id;
-                    });
+                    // 2. Borrar Carpeta de Cartas
+                    const rootCardsFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
+                    const actorCardsFolder = game.folders.find(f => f.name === this.actor.name && f.type === "Cards" && f.folder?.id === rootCardsFolder?.id);
+                    if (actorCardsFolder) await actorCardsFolder.delete();
 
-                    if (tokensABorrar.length > 0) {
-                        const ids = tokensABorrar.map(t => t.id);
-                        await canvas.scene.deleteEmbeddedDocuments("Token", ids);
-
-                        // ¡EL RESPIRO MAGICO! Esperamos medio segundo para que la aspiradora (deleteToken)
-                        // guarde las cartas ANTES de que el paso 2 borre las pilas de la base de datos.
-                        await new Promise(resolve => setTimeout(resolve, 500));
-                    }
-
-                    // 2. Borrar los contenedores de Cards de la barra lateral de Foundry
-                    if (actor.system.deckId) await game.cards.get(actor.system.deckId)?.delete();
-                    if (actor.system.handId) await game.cards.get(actor.system.handId)?.delete();
-                    if (actor.system.discardId) await game.cards.get(actor.system.discardId)?.delete();
-                    if (actor.system.eliminadasId) await game.cards.get(actor.system.eliminadasId)?.delete();
-                    if (actor.system.enJuegoId) await game.cards.get(actor.system.enJuegoId)?.delete();
-
-                    // 3. Limpiar los IDs en el actor y resetear stats
-                    await actor.update({
+                    // 3. Resetear IDs en el actor
+                    await this.actor.update({
                         "system.deckId": "",
                         "system.handId": "",
                         "system.discardId": "",
-                        "system.eliminadasId": "",
-                        "system.almaActivaId": "", // Vaciamos el alma para la próxima partida
-                        "system.energia.value": 0,
-                        "system.merma": 0,
-                        "system.decadencia": 0,
-                        "system.enJuegoId": "", // Reseteamos el ID
+                        "system.enJuegoId": "",
+                        "system.eliminadasId": ""
                     });
 
-                    ui.notifications.warn(`La mesa de ${actor.name} ha sido recogida por completo.`);
+                    ui.notifications.info(`La mesa de ${this.actor.name} ha sido recogida por completo.`);
                     this.close();
-                },
-                no: () => {},
-                defaultYes: false // CRÍTICO: Hace que el botón por defecto sea "No" para evitar dobles clics o pulsaciones de Enter accidentales.
+                }
             });
         });
 

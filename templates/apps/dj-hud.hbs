@@ -1,6 +1,6 @@
 <div class="dj-hud-container flexcol" style="height: 100%; padding: 10px; background: rgba(20,20,20,0.95); color: white; border: 2px solid #8b0000; border-radius: 8px;">
 
-    {{!-- NAVEGACIÓN (PESTAÑAS) - Ajustada para que no ocupe toda la pantalla --}}
+    {{!-- NAVEGACIÓN (PESTAÑAS) --}}
     <nav class="dj-tabs tabs" data-group="primary" style="display: flex; justify-content: center; gap: 30px; font-size: 20px; border-bottom: 2px solid #8b0000; margin-bottom: 15px; padding-bottom: 10px; font-weight: bold; flex: 0 0 auto;">
         <a class="item" data-tab="radar" style="cursor: pointer; padding-bottom: 5px; color: #ff4444;"><i class="fas fa-eye"></i> RADAR DE ALMAS</a>
         <a class="item" data-tab="criatura" style="cursor: pointer; padding-bottom: 5px; color: #ffaa00;"><i class="fas fa-dragon"></i> LA CRIATURA</a>
@@ -9,7 +9,7 @@
     <section class="dj-body" style="flex: 1; overflow-y: auto;">
 
         {{!-- ==============================================
-              PESTAÑA 1: RADAR DE ALMAS (Lo que ya teníamos)
+              PESTAÑA 1: RADAR DE ALMAS
               ============================================== --}}
         <div class="tab" data-group="primary" data-tab="radar">
             <div class="players-grid flexrow" style="gap: 15px; flex-wrap: wrap; justify-content: center; align-items: flex-start;">
@@ -102,46 +102,80 @@
         </div>
 
         {{!-- ==============================================
-              PESTAÑA 2: LA CRIATURA (Para el siguiente paso)
+              PESTAÑA 2: LA CRIATURA
               ============================================== --}}
         <div class="tab" data-group="primary" data-tab="criatura">
             <div class="boss-section-container flexcol" style="height: 100%; padding: 10px;">
 
                 {{#if activeBoss}}
+                    <div class="active-boss-panel flexrow" style="gap: 20px; align-items: flex-start;">
 
-                     {{!-- Izquierda: El Boss y sus stats --}}
-                    <div class="boss-sidebar flexcol" style="flex: 0 0 250px; background: rgba(139,0,0,0.2); border: 1px solid #8b0000; padding: 10px; border-radius: 8px; text-align: center;">
-                        <h3 style="color: gold; margin-bottom: 10px; border-bottom: 1px solid gold;">{{activeBoss.name}}</h3>
+                        {{!-- IZQUIERDA: EL BOSS --}}
+                        <div class="boss-sidebar flexcol" style="flex: 0 0 250px; background: rgba(139,0,0,0.2); border: 1px solid #8b0000; padding: 10px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: gold; margin-bottom: 10px; border-bottom: 1px solid gold;">{{activeBoss.name}}</h3>
 
-                        {{!-- Contenedor del Boss    --}}
-                        <div class="boss-card-container item" data-item-id="{{bossAlma.id}}" style="position: relative; margin: 0 auto 15px auto; width: 170px; cursor: grab;" draggable="true">
+                            {{!-- Retrato de la criatura arrastrable --}}
+                            <div class="boss-card-container item" data-item-id="{{bossAlma.id}}" style="position: relative; margin: 0 auto 15px auto; width: 210px; cursor: grab;" draggable="true">
+                                <img src="{{activeBoss.img}}" style="width: 100%; height: 300px; object-fit: cover; border: 2px solid gold; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.7);">
 
-                            <img src="{{activeBoss.img}}" style="width: 100%; height: 240px; object-fit: cover; border: 2px solid gold; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.7);">
-
-                            {{!-- Etiqueta visual para que el DJ sepa que caerá boca abajo --}}
-                            <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: gold; padding: 2px 5px; border-radius: 3px; font-size: 10px; border: 1px solid gold;">
-                                <i class="fas fa-eye-slash"></i> OCULTA
+                                {{!-- Etiqueta visual Oculta Reactiva --}}
+                                {{#if bossIsFaceDown}}
+                                    <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: gold; padding: 2px 5px; border-radius: 3px; font-size: 11px; border: 1px solid gold;">
+                                        <i class="fas fa-eye-slash"></i> OCULTA
+                                    </div>
+                                {{/if}}
                             </div>
+
+                            {{!-- VIDA (Sin Energía) --}}
+                            <div style="background: #400; padding: 8px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #822;">
+                                <span style="font-size: 11px; color: #ff6666; font-weight: bold;">PUNTOS DE VIDA</span><br>
+                                <b style="font-size: 22px; color: white;">{{bossAlma.system.vida.value}}</b> <span style="color: #888; font-size: 14px;">/ {{bossAlma.system.vida.max}}</span>
+                            </div>
+
+                            <button class="close-boss-game" style="background: #222; color: #ff4444; border: 1px solid #ff4444; font-weight: bold; padding: 8px; cursor: pointer; width: 100%;">
+                                <i class="fas fa-skull"></i> FINALIZAR ENCUENTRO
+                            </button>
                         </div>
 
-                        {{!-- Vida y Energía del Boss --}}
-                        <div class="flexrow" style="gap: 10px; margin-bottom: 15px;">
-                            <div style="background: #400; flex: 1; padding: 5px; border-radius: 4px;">
-                                <span style="font-size: 10px; color: #ff6666;">VIDA</span><br>
-                                <b style="font-size: 18px;">{{bossAlma.system.vida.value}}</b>
-                            </div>
-                            <div style="background: #004; flex: 1; padding: 5px; border-radius: 4px;">
-                                <span style="font-size: 10px; color: #66ccff;">ENERGÍA</span><br>
-                                <b style="font-size: 18px;">{{activeBoss.system.energia.value}}</b>
-                            </div>
-                        </div>
+                        {{!-- DERECHA: MANO DIVIDIDA --}}
+                        <div class="boss-actions flexcol" style="flex: 1; gap: 20px;">
 
-                        <button class="close-boss-game" style="background: #222; color: #ff4444; border: 1px solid #ff4444; font-weight: bold; padding: 8px; cursor: pointer;">
-                            <i class="fas fa-skull"></i> FINALIZAR ENCUENTRO
-                        </button>
+                            {{!-- CABECERA DE CONTROL (Solo Robar Todo y Fin Turno) --}}
+                            <div class="flexrow" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 5px; border: 1px solid #444; justify-content: space-between; align-items: center;">
+                                <div style="color: #ccc;">Mazo de la Criatura: <b style="color: white;">{{bossMazoSize}}</b> cartas</div>
+                                <div class="flexrow" style="gap: 5px; width: auto;">
+                                    <button class="boss-draw-all" style="background: #8b0000; color: white; border: 1px solid #a00; padding: 4px 10px; font-size: 12px; cursor: pointer;"><i class="fas fa-layer-group"></i> ROBAR TODO</button>
+                                    <button class="boss-end-turn" style="background: #225522; color: white; border: 1px solid #383; padding: 4px 10px; font-size: 12px; cursor: pointer;"><i class="fas fa-check-double"></i> FIN TURNO</button>
+                                </div>
+                            </div>
+                            {{!-- SECCIÓN PODERES --}}
+                            <div class="hand-section">
+                                <h4 style="color: #ffaa00; border-bottom: 1px solid #ffaa00; margin-bottom: 10px; padding-bottom: 5px;"><i class="fas fa-bolt"></i> PODERES EN MANO ({{bossPoderes.length}})</h4>
+                                <div class="boss-hand flexrow" style="flex-wrap: wrap; gap: 10px;">
+                                    {{#each bossPoderes as |c|}}
+                                        <div class="boss-card-container item" data-item-id="{{c.id}}" style="width: 100px; height: 140px; flex: 0 0 auto; cursor: grab;" draggable="true">
+                                            {{!-- AÑADIDO: pointer-events: none; y draggable="false" --}}
+                                            <img src="{{c.faces.[0].img}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none;" draggable="false">
+                                        </div>
+                                    {{/each}}
+                                </div>
+                            </div>
+
+                            {{!-- SECCIÓN OBJETOS --}}
+                            <div class="hand-section">
+                                <h4 style="color: #00ccff; border-bottom: 1px solid #00ccff; margin-bottom: 10px; padding-bottom: 5px;"><i class="fas fa-suitcase"></i> OBJETOS EN MANO ({{bossObjetos.length}})</h4>
+                                <div class="boss-hand flexrow" style="flex-wrap: wrap; gap: 10px;">
+                                    {{#each bossObjetos as |c|}}
+                                        <div class="boss-card-container item" data-item-id="{{c.id}}" style="width: 100px; height: 140px; flex: 0 0 auto; cursor: grab;" draggable="true">
+                                            {{!-- AÑADIDO: pointer-events: none; y draggable="false" --}}
+                                            <img src="{{c.faces.[0].img}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none;" draggable="false">
+                                        </div>
+                                    {{/each}}
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
-
-
                 {{else}}
                 {{!-- MODO SELECCIÓN: Rejilla de Criaturas disponibles --}}
                     <h3 style="text-align: center; color: #ffaa00; margin-bottom: 20px;">SELECCIONA UNA CRIATURA PARA EL ENCUENTRO</h3>

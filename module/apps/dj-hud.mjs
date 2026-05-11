@@ -21,7 +21,7 @@ export class DJHUD extends Application {
     async getData() {
         const data = await super.getData();
 
-        // 1. RADAR DE JUGADORES (Se mantiene igual)
+        // 1. RADAR DE JUGADORES
         const personajes = game.actors.filter(a => a.type === "personaje" && a.hasPlayerOwner && a.system.almaActivaId);
         data.jugadores = personajes.map(actor => {
             const alma = actor.items.get(actor.system.almaActivaId);
@@ -43,7 +43,6 @@ export class DJHUD extends Application {
         });
 
         // 2. SECCIÓN DE CRIATURA
-        // Buscamos si ya existe una criatura activa (un actor temporal con nuestra flag)
         const criaturaActiva = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
 
         if (criaturaActiva) {
@@ -51,10 +50,24 @@ export class DJHUD extends Application {
             data.bossAlma = criaturaActiva.items.find(i => i.type === "carta_alma");
             const hand = game.cards.get(criaturaActiva.system.handId);
             const deck = game.cards.get(criaturaActiva.system.deckId);
-            data.bossMano = hand?.cards || [];
+
+            // Separación de Poderes y Objetos en la mano
+            const manoTotal = hand?.cards || [];
+            data.bossPoderes = manoTotal.filter(c => {
+                const item = criaturaActiva.items.get(c.getFlag("dorso_oscuro", "itemId"));
+                return item?.type === "carta_poder";
+            });
+            data.bossObjetos = manoTotal.filter(c => {
+                const item = criaturaActiva.items.get(c.getFlag("dorso_oscuro", "itemId"));
+                return item?.type === "carta_objeto";
+            });
+
             data.bossMazoSize = deck?.availableCards.length || 0;
+            const token = canvas.tokens.placeables.find(t => t.actor?.id === criaturaActiva.id);
+            data.bossIsFaceDown = token ? token.document.getFlag("dorso_oscuro", "isFaceDown") : true;
+
         } else {
-            // Si no hay activa, listamos todas las "Almas de Criatura" de la biblioteca del DJ
+            // Catálogo de criaturas para seleccionar
             data.disponibles = game.items.filter(i => i.type === "carta_alma" && i.system.esCriatura);
         }
 
@@ -64,49 +77,68 @@ export class DJHUD extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
-        // SELECTOR DE CRIATURA
+        // --- SELECTOR DE CRIATURA ---
         html.find('.select-boss').click(async ev => {
             const bossId = ev.currentTarget.dataset.id;
             const bossTemplate = game.items.get(bossId);
 
             ui.notifications.info(`Invocando a ${bossTemplate.name}...`);
 
-            // --- 1. GESTIÓN DE CARPETAS (CARTAS/CRIATURAS) ---
+            // --- 1. LOCALIZAR LA RAÍZ DE LA CRIATURA ---
+            const carpetaAlma = bossTemplate.folder;
+            // CORRECCIÓN: Foundry usa .folder para ver quién es el padre, no .parent
+            const carpetaRaizBoss = carpetaAlma?.folder;
+
+            let itemsParaElBoss = [];
+            if (carpetaRaizBoss) {
+                // Buscamos todos los ítems que cuelguen de la carpeta raíz o de sus subcarpetas
+                itemsParaElBoss = game.items.filter(i => {
+                    let f = i.folder;
+                    while (f) {
+                        if (f.id === carpetaRaizBoss.id) return true;
+                        f = f.folder; // CORRECCIÓN: Subimos al siguiente padre
+                    }
+                    return false;
+                });
+            } else {
+                // Si no hay estructura, al menos nos llevamos el alma seleccionada
+                itemsParaElBoss = [bossTemplate];
+            }
+
+            // --- 2. GESTIÓN DE CARPETAS DE ACTORES (CARTAS/CRIATURAS) ---
             let rootFolder = game.folders.find(f => f.name === "CARTAS" && f.type === "Actor");
             if (!rootFolder) rootFolder = await Folder.create({ name: "CARTAS", type: "Actor" });
 
             let subFolder = game.folders.find(f => f.name === "CRIATURAS" && f.type === "Actor" && f.folder?.id === rootFolder.id);
             if (!subFolder) subFolder = await Folder.create({ name: "CRIATURAS", type: "Actor", folder: rootFolder.id });
 
-            // --- 2. CONSTRUCCIÓN DE LA URL DEL DORSO ---
-            // Usamos el nombre de la plantilla de la criatura para la ruta
-            const nombreLimpio = bossTemplate.name;
+            // --- 3. CREACIÓN DEL BOSS (Con su Vida Maxima) ---
+            const nombreLimpio = bossTemplate.name.toLowerCase().trim();
             const dorsoUrl = `img_varias/cards/cartas_v3/criaturas/${nombreLimpio}/${nombreLimpio}_dorso_cartas.jpg`;
 
-            // --- 3. CREACIÓN DEL ACTOR TEMPORAL ---
             const bossActor = await Actor.create({
                 name: `[BOSS] ${bossTemplate.name}`,
                 type: "personaje",
                 img: bossTemplate.img,
-                folder: subFolder.id, // Lo metemos en la subcarpeta
-                flags: {
-                    dorso_oscuro: {
-                        isBossSession: true,
-                        dorsoUrl: dorsoUrl // Guardamos el dorso específico aquí
-                    }
-                }
+                folder: subFolder.id,
+                flags: { dorso_oscuro: { isBossSession: true, dorsoUrl: dorsoUrl } }
             });
 
-            // ... (Resto de la lógica de pasar ítems y registrar mazo se mantiene igual)
-            const cartasRelacionadas = bossTemplate.folder?.id ? game.items.filter(i => i.folder?.id === bossTemplate.folder.id) : [bossTemplate];
-            const itemsToCreate = cartasRelacionadas.map(i => i.toObject());
+            const itemsToCreate = itemsParaElBoss.map(i => i.toObject());
             await bossActor.createEmbeddedDocuments("Item", itemsToCreate);
 
             const dummySheet = new PersonajeSheet(bossActor);
             await dummySheet._registrarMazoDeJuego();
 
+            // Llenamos la vida del Boss y de su carta al máximo
             const almaNueva = bossActor.items.find(i => i.name === bossTemplate.name);
-            await bossActor.update({"system.almaActivaId": almaNueva.id});
+            await almaNueva.update({ "system.vida.value": almaNueva.system.vida.max });
+
+            await bossActor.update({
+                "system.almaActivaId": almaNueva.id,
+                "system.hp.value": almaNueva.system.vida.max,
+                "system.hp.max": almaNueva.system.vida.max
+            });
 
             this.render(true);
         });
@@ -114,10 +146,16 @@ export class DJHUD extends Application {
         // --- ZOOM DE CARTA (CLIC DERECHO) ---
         html.find('.boss-card-container').on('contextmenu', ev => {
             ev.preventDefault();
-            const itemId = ev.currentTarget.dataset.itemId;
+            let itemId = ev.currentTarget.dataset.itemId;
             const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
-            const item = actor?.items.get(itemId);
+            if (!actor || !itemId) return;
 
+            // Traductor de ID: Si es una carta de la mano, buscamos el ID del Item original
+            const hand = game.cards.get(actor.system.handId);
+            const card = hand?.cards.get(itemId);
+            if (card) itemId = card.getFlag("dorso_oscuro", "itemId");
+
+            const item = actor.items.get(itemId);
             if (item) {
                 new ImagePopout(item.img, {
                     title: item.name,
@@ -128,9 +166,14 @@ export class DJHUD extends Application {
 
         // --- DRAG & DROP: SIEMPRE BOCA ABAJO PARA EL DJ ---
         html.find('.boss-card-container').on('dragstart', ev => {
-            const itemId = ev.currentTarget.dataset.itemId;
+            let itemId = ev.currentTarget.dataset.itemId;
             const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
             if (!actor || !itemId) return;
+
+            // Traductor de ID: Igual que en el zoom
+            const hand = game.cards.get(actor.system.handId);
+            const card = hand?.cards.get(itemId);
+            if (card) itemId = card.getFlag("dorso_oscuro", "itemId");
 
             const dorsoEspecial = actor.getFlag("dorso_oscuro", "dorsoUrl");
 
@@ -138,43 +181,52 @@ export class DJHUD extends Application {
                 type: "CartaDorsoOscuro",
                 actorId: actor.id,
                 itemId: itemId,
-                faceDown: true, // <--- AHORA SIEMPRE ES TRUE POR DEFECTO
+                faceDown: true, // Siempre oculta al caer
                 backImg: dorsoEspecial
             };
             ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         });
 
 
-
-        // BOTÓN CERRAR JUEGO (SUPER CONFIRMACIÓN)
+        // --- FINALIZAR ENCUENTRO (Borrado de Mazos + CARPETA) ---
         html.find('.close-boss-game').click(async ev => {
             Dialog.confirm({
-                title: "⚠️ FINALIZAR ENCUENTRO DE CRIATURA ⚠️",
-                content: "<p style='text-align:center;'>Esto eliminará la Criatura actual, sus mazos y sus cartas del tablero.<br><b>¿Estás seguro?</b></p>",
+                title: "⚠️ FINALIZAR ENCUENTRO ⚠️",
+                content: "<p style='text-align:center;'>Se eliminará la Criatura, sus mazos y su <b>carpeta de cartas</b>.<br>¿Estás seguro?</p>",
                 yes: async () => {
                     const boss = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
                     if (boss) {
-                        // Borramos sus tokens del tablero
+                        // 1. Borrar Tokens del tablero
                         const tokens = canvas.tokens.placeables.filter(t => t.actor?.id === boss.id);
-                        const ids = tokens.map(t => t.id);
-                        await canvas.scene.deleteEmbeddedDocuments("Token", ids);
+                        await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id));
 
-                        // Borramos sus mazos
-                        if (boss.system.deckId) await game.cards.get(boss.system.deckId)?.delete();
-                        if (boss.system.handId) await game.cards.get(boss.system.handId)?.delete();
-                        if (boss.system.discardId) await game.cards.get(boss.system.discardId)?.delete();
-                        if (boss.system.enJuegoId) await game.cards.get(boss.system.enJuegoId)?.delete();
+                        // 2. Identificar la Carpeta de Cartas antes de borrar las pilas
+                        const rootCardsFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
+                        const actorCardsFolder = game.folders.find(f => f.name === boss.name && f.type === "Cards" && f.folder?.id === rootCardsFolder?.id);
 
-                        // Borramos el actor temporal
+                        // 3. Borrar las 5 Pilas de Cartas (Cards)
+                        const pilas = ["deckId", "handId", "discardId", "enJuegoId", "eliminadasId"];
+                        for (let key of pilas) {
+                            const id = boss.system[key];
+                            if (id) {
+                                const stack = game.cards.get(id);
+                                if (stack) await stack.delete();
+                            }
+                        }
+
+                        // 4. Borrar la Carpeta ahora que está vacía
+                        if (actorCardsFolder) await actorCardsFolder.delete();
+
+                        // 5. Borrar el Actor temporal
                         await boss.delete();
-                        ui.notifications.warn("Encuentro finalizado. Criatura retirada.");
+                        ui.notifications.warn("Encuentro finalizado. Base de datos limpia.");
                     }
                     this.render(true);
                 }
             });
         });
 
-        // BOTONES DE CONTROL (Recuperamos la lógica completa)
+        // --- BOTONES DE CONTROL DEL RADAR ---
         html.find('.dj-control').click(async ev => {
             const btn = ev.currentTarget.dataset;
             const actor = game.actors.get(btn.actorId);
@@ -221,9 +273,104 @@ export class DJHUD extends Application {
             const almaId = btn.itemId || actor.system.almaActivaId;
             await this._sincronizarTokenAlma(actor.id, almaId);
         });
-    } // <-- Cierra activateListeners
 
-    // --- LÓGICA DE SINCRONIZACIÓN VISUAL DEL TABLERO
+// --- ROBAR TODO (Inteligente: Baraja SOLO el descarte) ---
+        html.find('.boss-draw-all').click(async ev => {
+            const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+            if (!actor) return;
+
+            const hand = game.cards.get(actor.system.handId);
+            const deck = game.cards.get(actor.system.deckId);
+            const discard = game.cards.get(actor.system.discardId);
+
+            if (!hand || !deck || !discard) return;
+
+            // 1. Si el mazo está vacío, pasamos SOLO las cartas del descarte al mazo
+            if (deck.availableCards.length === 0) {
+                if (discard.cards.size === 0) {
+                    ui.notifications.warn("No quedan cartas ni en el mazo ni en el descarte.");
+                    return;
+                }
+
+                // ¡LA CLAVE ESTÁ AQUÍ! Pasamos selectivamente en lugar de usar recall()
+                const idsParaDevolver = discard.cards.map(c => c.id);
+                await discard.pass(deck, idsParaDevolver);
+
+                await deck.shuffle();
+                ui.notifications.info("El mazo se ha barajado con las cartas del descarte.");
+            }
+
+            // 2. Robamos todo lo que haya en el mazo
+            if (deck.availableCards.length > 0) {
+                await hand.draw(deck, deck.availableCards.length);
+                ui.notifications.info("La criatura roba toda su reserva de cartas.");
+            }
+        });
+
+        // --- FINALIZAR TURNO (Solo afecta a los Poderes) ---
+        html.find('.boss-end-turn').click(async ev => {
+            const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+            if (!actor) return;
+
+            const enJuego = game.cards.get(actor.system.enJuegoId);
+            const discard = game.cards.get(actor.system.discardId);
+
+            // 1. Base de datos: Mover SOLO los poderes de "En Juego" a "Descarte"
+            if (enJuego && discard && enJuego.cards.size > 0) {
+                const poderesParaDescartar = enJuego.cards.filter(c => {
+                    const itemId = c.getFlag("dorso_oscuro", "itemId");
+                    const item = actor.items.get(itemId);
+                    return item?.type === "carta_poder"; // Excluimos carta_objeto
+                });
+
+                if (poderesParaDescartar.length > 0) {
+                    await enJuego.pass(discard, poderesParaDescartar.map(c => c.id));
+                }
+            }
+
+            // 2. Tablero: Borrar los tokens que sean Poderes
+            const tokens = canvas.tokens.placeables.filter(t => {
+                const f = t.document.flags.dorso_oscuro;
+                return f?.actorId === actor.id && f?.isCard && f?.type === "carta_poder";
+            });
+
+            if (tokens.length > 0) {
+                await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id));
+            }
+
+            ui.notifications.info("Turno finalizado. Los poderes lanzados van al descarte.");
+        });
+
+
+        // --- FINALIZAR TURNO ---
+        html.find('.boss-end-turn').click(async ev => {
+            const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+            if (!actor) return;
+
+            const enJuego = game.cards.get(actor.system.enJuegoId);
+            const discard = game.cards.get(actor.system.discardId);
+
+            // 1. Base de datos: Mover todas las cartas de "En Juego" a "Descarte"
+            if (enJuego && discard && enJuego.cards.size > 0) {
+                await enJuego.pass(discard, enJuego.cards.map(c => c.id));
+            }
+
+            // 2. Tablero: Borrar los tokens que sean cartas del Boss (dejando vivo el Alma)
+            const tokens = canvas.tokens.placeables.filter(t => {
+                const f = t.document.flags.dorso_oscuro;
+                return f?.actorId === actor.id && f?.isCard && f?.type !== "carta_alma";
+            });
+
+            if (tokens.length > 0) {
+                await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id));
+            }
+
+            ui.notifications.info("Turno finalizado. Cartas enviadas al descarte.");
+        });
+
+    }
+
+    // --- LÓGICA DE SINCRONIZACIÓN VISUAL DEL TABLERO ---
     async _sincronizarTokenAlma(actorId, almaId) {
         const actor = game.actors.get(actorId);
         const almaItem = actor.items.get(almaId);
@@ -262,6 +409,5 @@ export class DJHUD extends Application {
             name: nombreHUD,
             effects: effects
         });
-
     }
 }
