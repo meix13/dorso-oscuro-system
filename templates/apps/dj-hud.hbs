@@ -1,16 +1,22 @@
-<div class="dj-hud-container flexcol" style="height: 100%; padding: 10px; background: rgba(20,20,20,0.95); color: white; border: 2px solid #8b0000; border-radius: 8px;">
+<div class="dj-hud-container flexrow" style="height: 100%; background: rgba(20,20,20,0.95); color: white; border: 2px solid #8b0000; border-radius: 8px; overflow: hidden;">
 
-    {{!-- NAVEGACIÓN (PESTAÑAS) --}}
-    <nav class="dj-tabs tabs" data-group="primary" style="display: flex; justify-content: center; gap: 30px; font-size: 20px; border-bottom: 2px solid #8b0000; margin-bottom: 15px; padding-bottom: 10px; font-weight: bold; flex: 0 0 auto;">
-        <a class="item" data-tab="radar" style="cursor: pointer; padding-bottom: 5px; color: #ff4444;"><i class="fas fa-eye"></i> RADAR DE ALMAS</a>
-        <a class="item" data-tab="criatura" style="cursor: pointer; padding-bottom: 5px; color: #ffaa00;"><i class="fas fa-dragon"></i> LA CRIATURA</a>
+    {{!-- NAVEGACIÓN LATERAL (Forzada en columna vertical con fuente ajustada) --}}
+    <nav class="dj-tabs tabs" data-group="primary" style="display: flex; flex-direction: column !important; flex: 0 0 50px; background: rgba(139,0,0,0.15); border-right: 2px solid #8b0000; align-items: center; padding-top: 30px; gap: 60px;">
+
+        <a class="item" data-tab="radar" style="writing-mode: vertical-rl; transform: rotate(180deg); color: #ff4444; font-weight: bold; cursor: pointer; font-size: 11px; text-decoration: none; letter-spacing: 1px;">
+            <i class="fas fa-eye" style="margin-bottom: 10px; transform: rotate(90deg); font-size: 14px;"></i> JUGADORES
+        </a>
+
+        <a class="item" data-tab="criatura" style="writing-mode: vertical-rl; transform: rotate(180deg); color: #ffaa00; font-weight: bold; cursor: pointer; font-size: 11px; text-decoration: none; letter-spacing: 1px;">
+            <i class="fas fa-dragon" style="margin-bottom: 10px; transform: rotate(90deg); font-size: 14px;"></i> CRIATURA
+        </a>
+
     </nav>
 
-    <section class="dj-body" style="flex: 1; overflow-y: auto;">
+    {{!-- CUERPO DEL PANEL --}}
+    <section class="dj-body" style="flex: 1; padding: 15px; overflow-y: auto;">
 
-        {{!-- ==============================================
-              PESTAÑA 1: RADAR DE ALMAS
-              ============================================== --}}
+        {{!-- PESTAÑA 1: RADAR DE ALMAS --}}
         <div class="tab" data-group="primary" data-tab="radar">
             <div class="players-grid flexrow" style="gap: 15px; flex-wrap: wrap; justify-content: center; align-items: flex-start;">
 
@@ -18,7 +24,7 @@
                     {{#each jugadores as |jug|}}
                         <div class="player-card flexcol" style="background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #555; width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
 
-                            {{!-- DATOS DEL PERSONAJE Y ESTABILIDAD --}}
+                            {{!-- DATOS DEL PERSONAJE --}}
                             <div class="character-header flexrow" style="align-items: center; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 8px;">
                                 <img src="{{jug.actor.img}}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #888; margin-right: 8px;">
                                 <span style="font-size: 16px; font-weight: bold; color: #ddd; flex: 1;">{{jug.actor.name}}</span>
@@ -36,7 +42,7 @@
                                 </div>
                             </div>
 
-                            {{!-- CONTROLES DE ESTADOS (Interactivos para el DJ) --}}
+                            {{!-- CONTROLES --}}
                             <div class="status-controls grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px;">
                                 <div class="stat-box flexcol" style="background: rgba(80,0,0,0.4); border: 1px solid #622; padding: 4px; text-align: center; border-radius: 3px;">
                                     <div style="font-size: 10px; color:#aaa;"><i class="fas fa-heart" style="color: #ff4444;"></i> VIDA</div>
@@ -54,137 +60,115 @@
                                         <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="energia" data-action="plus"><i class="fas fa-plus-square"></i></a>
                                     </div>
                                 </div>
-                                <div class="stat-box flexcol" style="background: rgba(60,40,0,0.4); border: 1px solid #642; padding: 4px; text-align: center; border-radius: 3px;">
-                                    <div style="font-size: 10px; color:#aaa;"><i class="fas fa-angles-down" style="color: #aa5500;"></i> MERMA</div>
-                                    <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">
-                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="merma" data-action="minus"><i class="fas fa-minus-square"></i></a>
-                                        <b style="font-size: 14px; color: white;">{{jug.system.merma}}</b>
-                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="merma" data-action="plus"><i class="fas fa-plus-square"></i></a>
-                                    </div>
-                                </div>
-                                <div class="stat-box flexcol" style="background: rgba(40,0,20,0.4); border: 1px solid #424; padding: 4px; text-align: center; border-radius: 3px;">
-                                    <div style="font-size: 10px; color:#aaa;"><i class="fas fa-droplet" style="color: #aa0000;"></i> DECAD.</div>
-                                    <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">
-                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="decadencia" data-action="minus"><i class="fas fa-minus-square"></i></a>
-                                        <b style="font-size: 14px; color: white;">{{jug.system.decadencia}}</b>
-                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="decadencia" data-action="plus"><i class="fas fa-plus-square"></i></a>
-                                    </div>
-                                </div>
                             </div>
 
-                            {{!-- CONTROL DE ESTABILIDAD --}}
                             <div class="stat-box flexcol" style="margin-top: 10px; background: rgba(50,30,80,0.4); border: 1px solid #538; padding: 5px; text-align: center; border-radius: 5px;">
-                                <div style="font-size: 11px; color:#b388ff; font-weight: bold;"><i class="fas fa-brain"></i> ESTABILIDAD MENTAL</div>
                                 <div class="flexrow" style="align-items: center; justify-content: center; gap: 10px;">
                                     <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="estabilidad" data-action="minus" style="font-size: 18px; color: #ff6666;"><i class="fas fa-circle-minus"></i></a>
-                                    <b style="font-size: 20px; color: white;">{{jug.system.estabilidad}}</b> <span style="color: #666;">/22</span>
+                                    <b style="font-size: 20px; color: white;">{{jug.system.estabilidad}}</b>
                                     <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="estabilidad" data-action="plus" style="font-size: 18px; color: #66ff66;"><i class="fas fa-circle-plus"></i></a>
                                 </div>
                             </div>
-
-                            {{!-- ECONOMÍA DE CARTAS --}}
-                            <div class="cards-info flexrow" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #444; font-size: 11px; color: #aaa; text-align: center;">
-                                <div style="flex: 1;" title="En Mano"><i class="fas fa-hand-paper" style="color: #fff;"></i> <b style="color: white; font-size: 13px;">{{jug.cartas.mano}}</b></div>
-                                <div style="flex: 1;" title="En Mazo"><i class="fas fa-layer-group" style="color: #ccc;"></i> <b style="color: white; font-size: 13px;">{{jug.cartas.mazo}}</b></div>
-                                <div style="flex: 1;" title="Descarte"><i class="fas fa-trash-can" style="color: #888;"></i> <b style="color: white; font-size: 13px;">{{jug.cartas.descarte}}</b></div>
-                                <div style="flex: 1;" title="Eliminadas"><i class="fas fa-ban" style="color: #8b0000;"></i> <b style="color: white; font-size: 13px;">{{jug.cartas.eliminadas}}</b></div>
-                            </div>
-
                         </div>
                     {{/each}}
                 {{else}}
                     <div style="text-align: center; color: #888; font-style: italic; margin-top: 40px; font-size: 18px;">
                         <p><i class="fas fa-ghost" style="font-size: 40px; margin-bottom: 10px;"></i></p>
-                        Aún no hay ningún jugador con un Alma invocada en la mesa.
+                        Esperando invocaciones de Almas...
                     </div>
                 {{/if}}
             </div>
         </div>
 
-        {{!-- ==============================================
-              PESTAÑA 2: LA CRIATURA
-              ============================================== --}}
+        {{!-- PESTAÑA 2: LA CRIATURA --}}
         <div class="tab" data-group="primary" data-tab="criatura">
-            <div class="boss-section-container flexcol" style="height: 100%; padding: 10px;">
+            <div class="boss-section-container flexcol" style="height: 100%;">
 
                 {{#if activeBoss}}
                     <div class="active-boss-panel flexrow" style="gap: 20px; align-items: flex-start;">
 
-                        {{!-- IZQUIERDA: EL BOSS --}}
-                        <div class="boss-sidebar flexcol" style="flex: 0 0 250px; background: rgba(139,0,0,0.2); border: 1px solid #8b0000; padding: 10px; border-radius: 8px; text-align: center;">
-                            <h3 style="color: gold; margin-bottom: 10px; border-bottom: 1px solid gold;">{{activeBoss.name}}</h3>
+                        {{!-- IZQUIERDA: EL BOSS (Formato Ultra Compacto) --}}
+                        <div class="boss-sidebar flexcol" style="flex: 0 0 200px; background: rgba(139,0,0,0.2); border: 1px solid #8b0000; padding: 10px; border-radius: 8px; text-align: center;">
+                            <h3 style="color: gold; margin-bottom: 5px; border-bottom: 1px solid gold; font-size: 15px;">{{activeBoss.name}}</h3>
 
                             {{!-- Retrato de la criatura arrastrable --}}
-                            <div class="boss-card-container item" data-item-id="{{bossAlma.id}}" style="position: relative; margin: 0 auto 15px auto; width: 210px; cursor: grab;" draggable="true">
-                                <img src="{{activeBoss.img}}" style="width: 100%; height: 300px; object-fit: cover; border: 2px solid gold; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.7);">
+                            <div class="boss-card-container item" data-item-id="{{bossAlma.id}}" style="position: relative; margin: 0 auto 8px auto; width: 125px; cursor: grab;" draggable="true">
+                                <img src="{{activeBoss.img}}" style="width: 100%; height: 175px; object-fit: cover; border: 2px solid gold; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.7);" draggable="false">
 
                                 {{!-- Etiqueta visual Oculta Reactiva --}}
                                 {{#if bossIsFaceDown}}
-                                    <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: gold; padding: 2px 5px; border-radius: 3px; font-size: 11px; border: 1px solid gold;">
+                                    <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: gold; padding: 2px 5px; border-radius: 3px; font-size: 10px; border: 1px solid gold;">
                                         <i class="fas fa-eye-slash"></i> OCULTA
                                     </div>
                                 {{/if}}
                             </div>
 
-                            {{!-- VIDA (Sin Energía) --}}
-                            <div style="background: #400; padding: 8px; border-radius: 4px; margin-bottom: 15px; border: 1px solid #822;">
-                                <span style="font-size: 11px; color: #ff6666; font-weight: bold;">PUNTOS DE VIDA</span><br>
-                                <b style="font-size: 22px; color: white;">{{bossAlma.system.vida.value}}</b> <span style="color: #888; font-size: 14px;">/ {{bossAlma.system.vida.max}}</span>
+                            {{!-- VIDA (Compacta en una sola línea) --}}
+                            <div class="flexrow" style="background: #400; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #822; align-items: center; justify-content: space-between;">
+                                <span style="font-size: 11px; color: #ff6666; font-weight: bold;"><i class="fas fa-heart"></i> VIDA</span>
+                                <div style="text-align: right;">
+                                    <b style="font-size: 16px; color: white;">{{bossAlma.system.vida.value}}</b> <span style="color: #888; font-size: 11px;">/ {{bossAlma.system.vida.max}}</span>
+                                </div>
                             </div>
 
-                            <button class="close-boss-game" style="background: #222; color: #ff4444; border: 1px solid #ff4444; font-weight: bold; padding: 8px; cursor: pointer; width: 100%;">
-                                <i class="fas fa-skull"></i> FINALIZAR ENCUENTRO
+                            {{!-- BOTÓN (Reducido) --}}
+                            <button class="close-boss-game" style="background: #222; color: #ff4444; border: 1px solid #ff4444; font-weight: bold; padding: 4px; cursor: pointer; width: 100%; font-size: 11px;">
+                                <i class="fas fa-skull"></i> FIN ENCUENTRO
                             </button>
                         </div>
 
-                        {{!-- DERECHA: MANO DIVIDIDA --}}
-                        <div class="boss-actions flexcol" style="flex: 1; gap: 20px;">
+                        {{!-- DERECHA: MANO --}}
+                        <div class="boss-actions flexcol" style="flex: 1; gap: 15px;">
 
-                            {{!-- CABECERA DE CONTROL (Solo Robar Todo y Fin Turno) --}}
-                            <div class="flexrow" style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 5px; border: 1px solid #444; justify-content: space-between; align-items: center;">
-                                <div style="color: #ccc;">Mazo de la Criatura: <b style="color: white;">{{bossMazoSize}}</b> cartas</div>
+                            {{!-- CABECERA DE CONTROL --}}
+                            <div class="flexrow" style="background: rgba(0,0,0,0.4); padding: 8px; border-radius: 5px; border: 1px solid #444; justify-content: space-between; align-items: center; flex: 0 0 auto;">
+                                <div style="color: #ccc; font-size: 12px;">Mazo: <b style="color: white;">{{bossMazoSize}}</b></div>
                                 <div class="flexrow" style="gap: 5px; width: auto;">
-                                    <button class="boss-draw-all" style="background: #8b0000; color: white; border: 1px solid #a00; padding: 4px 10px; font-size: 12px; cursor: pointer;"><i class="fas fa-layer-group"></i> ROBAR TODO</button>
-                                    <button class="boss-end-turn" style="background: #225522; color: white; border: 1px solid #383; padding: 4px 10px; font-size: 12px; cursor: pointer;"><i class="fas fa-check-double"></i> FIN TURNO</button>
-                                </div>
-                            </div>
-                            {{!-- SECCIÓN PODERES --}}
-                            <div class="hand-section">
-                                <h4 style="color: #ffaa00; border-bottom: 1px solid #ffaa00; margin-bottom: 10px; padding-bottom: 5px;"><i class="fas fa-bolt"></i> PODERES EN MANO ({{bossPoderes.length}})</h4>
-                                <div class="boss-hand flexrow" style="flex-wrap: wrap; gap: 10px;">
-                                    {{#each bossPoderes as |c|}}
-                                        <div class="boss-card-container item" data-item-id="{{c.id}}" style="width: 100px; height: 140px; flex: 0 0 auto; cursor: grab;" draggable="true">
-                                            {{!-- AÑADIDO: pointer-events: none; y draggable="false" --}}
-                                            <img src="{{c.faces.[0].img}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none;" draggable="false">
-                                        </div>
-                                    {{/each}}
+                                    <button class="boss-draw-all" style="background: #8b0000; color: white; border: 1px solid #a00; padding: 4px 10px; font-size: 11px; cursor: pointer;"><i class="fas fa-layer-group"></i> ROBAR TODO</button>
+                                    <button class="boss-end-turn" style="background: #225522; color: white; border: 1px solid #383; padding: 4px 10px; font-size: 11px; cursor: pointer;"><i class="fas fa-check-double"></i> FIN TURNO</button>
                                 </div>
                             </div>
 
-                            {{!-- SECCIÓN OBJETOS --}}
-                            <div class="hand-section">
-                                <h4 style="color: #00ccff; border-bottom: 1px solid #00ccff; margin-bottom: 10px; padding-bottom: 5px;"><i class="fas fa-suitcase"></i> OBJETOS EN MANO ({{bossObjetos.length}})</h4>
-                                <div class="boss-hand flexrow" style="flex-wrap: wrap; gap: 10px;">
-                                    {{#each bossObjetos as |c|}}
-                                        <div class="boss-card-container item" data-item-id="{{c.id}}" style="width: 100px; height: 140px; flex: 0 0 auto; cursor: grab;" draggable="true">
-                                            {{!-- AÑADIDO: pointer-events: none; y draggable="false" --}}
-                                            <img src="{{c.faces.[0].img}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none;" draggable="false">
-                                        </div>
-                                    {{/each}}
+                            {{!-- CONTENEDOR DE DOS COLUMNAS (Poderes y Objetos) --}}
+                            <div class="flexrow" style="gap: 20px; align-items: flex-start; flex: 1;">
+
+                                {{!-- COLUMNA IZQUIERDA: PODERES --}}
+                                <div class="hand-section flexcol" style="flex: 1;">
+                                    <h4 style="color: #ffaa00; border-bottom: 1px solid #ffaa00; margin-bottom: 10px; font-size: 13px; padding-bottom: 3px;"><i class="fas fa-bolt"></i> PODERES ({{bossPoderes.length}})</h4>
+                                    <div class="boss-hand flexrow" style="flex-wrap: wrap; gap: 10px;">
+                                        {{#each bossPoderes as |c|}}
+                                            <div class="boss-card-container item" data-item-id="{{c.id}}" style="width: 90px; height: 125px; flex: 0 0 auto; cursor: grab;" draggable="true">
+                                                <img src="{{c.faces.[0].img}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none;" draggable="false">
+                                            </div>
+                                        {{/each}}
+                                    </div>
                                 </div>
+
+                                {{!-- COLUMNA DERECHA: OBJETOS --}}
+                                <div class="hand-section flexcol" style="flex: 1; border-left: 1px dashed #444; padding-left: 20px;">
+                                    <h4 style="color: #00ccff; border-bottom: 1px solid #00ccff; margin-bottom: 10px; font-size: 13px; padding-bottom: 3px;"><i class="fas fa-suitcase"></i> OBJETOS ({{bossObjetos.length}})</h4>
+                                    <div class="boss-hand flexrow" style="flex-wrap: wrap; gap: 10px;">
+                                        {{#each bossObjetos as |c|}}
+                                            <div class="boss-card-container item" data-item-id="{{c.id}}" style="width: 90px; height: 125px; flex: 0 0 auto; cursor: grab;" draggable="true">
+                                                <img src="{{c.faces.[0].img}}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); pointer-events: none;" draggable="false">
+                                            </div>
+                                        {{/each}}
+                                    </div>
+                                </div>
+
                             </div>
 
                         </div>
+
+
                     </div>
                 {{else}}
-                {{!-- MODO SELECCIÓN: Rejilla de Criaturas disponibles --}}
-                    <h3 style="text-align: center; color: #ffaa00; margin-bottom: 20px;">SELECCIONA UNA CRIATURA PARA EL ENCUENTRO</h3>
-                    <div class="creature-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px;">
+                    <h3 style="text-align: center; color: #ffaa00; margin-bottom: 20px;">SELECCIONA CRIATURA</h3>
+                    <div class="creature-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px;">
                         {{#each disponibles as |c|}}
-                            <div class="select-boss flexcol" data-id="{{c.id}}" style="cursor: pointer; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; border: 1px solid #444; transition: all 0.2s; text-align: center;">
-                                <img src="{{c.img}}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;">
-                                <b style="color: gold;">{{c.name}}</b>
-                                <div style="font-size: 11px; color: #888; margin-top: 5px;">{{c.system.elemento}} | HP: {{c.system.vida.max}}</div>
+                            <div class="select-boss flexcol" data-id="{{c.id}}" style="cursor: pointer; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border: 1px solid #444; transition: all 0.2s; text-align: center;">
+                                <img src="{{c.img}}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 5px;">
+                                <b style="color: gold; font-size: 12px;">{{c.name}}</b>
                             </div>
                         {{/each}}
                     </div>

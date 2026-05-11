@@ -10,10 +10,11 @@ export class DJHUD extends Application {
             id: "dj-hud",
             title: "Panel del Director de Juego",
             template: "systems/dorso_oscuro/templates/apps/dj-hud.hbs",
-            width: 1000,
-            height: 600,
+            width: 1200,
+            height: 350, // ¡Altura ajustada al nuevo formato!
             classes: ["dorso_oscuro", "dj-hud-app"],
             resizable: true,
+            minimizable: true,
             tabs: [{ navSelector: ".dj-tabs", contentSelector: ".dj-body", initial: "radar" }]
         });
     }
@@ -196,9 +197,16 @@ export class DJHUD extends Application {
                 yes: async () => {
                     const boss = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
                     if (boss) {
-                        // 1. Borrar Tokens del tablero
-                        const tokens = canvas.tokens.placeables.filter(t => t.actor?.id === boss.id);
-                        await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id));
+
+                        // 1. Borrar Tokens del tablero (Usamos los flags, que nunca fallan)
+                        const tokens = canvas.tokens.placeables.filter(t => {
+                            const f = t.document.flags.dorso_oscuro;
+                            return f?.actorId === boss.id && f?.isCard;
+                        });
+
+                        if (tokens.length > 0) {
+                            await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id));
+                        }
 
                         // 2. Identificar la Carpeta de Cartas antes de borrar las pilas
                         const rootCardsFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
@@ -285,24 +293,24 @@ export class DJHUD extends Application {
 
             if (!hand || !deck || !discard) return;
 
-            // 1. Si el mazo está vacío, pasamos SOLO las cartas del descarte al mazo
-            if (deck.availableCards.length === 0) {
+            // 1. Si el mazo está vacío, pasamos el descarte al mazo
+            // Usamos deck.cards.size para mayor precisión en tiempo real
+            if (deck.cards.size === 0) {
                 if (discard.cards.size === 0) {
                     ui.notifications.warn("No quedan cartas ni en el mazo ni en el descarte.");
                     return;
                 }
 
-                // ¡LA CLAVE ESTÁ AQUÍ! Pasamos selectivamente en lugar de usar recall()
                 const idsParaDevolver = discard.cards.map(c => c.id);
                 await discard.pass(deck, idsParaDevolver);
-
                 await deck.shuffle();
                 ui.notifications.info("El mazo se ha barajado con las cartas del descarte.");
             }
 
-            // 2. Robamos todo lo que haya en el mazo
-            if (deck.availableCards.length > 0) {
-                await hand.draw(deck, deck.availableCards.length);
+            // 2. Robamos todo lo que haya en el mazo (re-calculamos tras el posible barajeo)
+            const mazoActualizado = game.cards.get(deck.id);
+            if (mazoActualizado.availableCards.length > 0) {
+                await hand.draw(mazoActualizado, mazoActualizado.availableCards.length);
                 ui.notifications.info("La criatura roba toda su reserva de cartas.");
             }
         });
