@@ -399,3 +399,11 @@ form.mystery-paper-theme {
 .mystery-paper-theme .deck-section .skill-main-info {
     align-items: center;
 }
+
+.card-in-hand:hover .manual-ban-btn {
+    display: flex !important;
+}
+.manual-ban-btn:hover {
+    background: #ff0000 !important;
+    transform: scale(1.1);
+}

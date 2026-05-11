@@ -77,6 +77,24 @@ export class ManoHUD extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
+
+        // --- ELIMINAR CARTA MANULMENTE DESDE LA MANO ---
+        html.find('.manual-ban-btn').click(async ev => {
+            ev.stopPropagation(); // Evita que se active el zoom o el drag
+
+            const itemId = $(ev.currentTarget).parents('.item').data('itemId');
+            const hand = game.cards.get(this.actor.system.handId);
+            const eliminadas = game.cards.get(this.actor.system.eliminadasId);
+
+            if (hand && eliminadas) {
+                const card = hand.cards.find(c => c.flags.dorso_oscuro?.itemId === itemId);
+                if (card) {
+                    await card.pass(eliminadas);
+                    ui.notifications.info("Carta enviada a Eliminadas por efecto externo.");
+                    this.render(true);
+                }
+            }
+        });
         // --- GESTIÓN DE ENERGÍA ---
         html.find('.energy-control').click(async ev => {
             const action = ev.currentTarget.dataset.action;

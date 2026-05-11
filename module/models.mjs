@@ -77,7 +77,8 @@ export class CartaAlmaData extends foundry.abstract.TypeDataModel {
             elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
             energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
             descripcion: new fields.HTMLField(),
-            limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0})
+            limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            esCriatura: new fields.BooleanField({initial: false})
         };
     }
 }

@@ -60,8 +60,14 @@ Hooks.once('init', async function() {
         const item = actor?.items.get(data.itemId);
         if (!actor || !item) return true;
 
-        const width = 2.5;
-        const height = 3.6;
+        let width = 2.5;
+        let height = 3.6;
+
+        // Si es una criatura, doblamos el tamaño
+        if (item.system.esCriatura) {
+            width *= 2;
+            height *= 2;
+        }
 
         // --- 1. LÓGICA DE ECONOMÍA Y CARTA EN MANO ---
         let cardPassed = false;
@@ -111,68 +117,109 @@ Hooks.once('init', async function() {
 
         // --- 2. CONSTRUCCIÓN DEL TOKEN ---
         if (item.type === "carta_alma") {
-            // A) GESTIÓN DE CARPETAS
-            let folderId = null;
-            let rootFolder = game.folders.find(f => f.name === "CARTAS" && f.type === "Actor");
-            if (!rootFolder && game.user.isGM) rootFolder = await Folder.create({ name: "CARTAS", type: "Actor" });
 
-            if (rootFolder) {
-                let playerFolder = game.folders.find(f => f.name === actor.name && f.type === "Actor" && f.folder?.id === rootFolder.id);
-                if (!playerFolder && game.user.isGM) playerFolder = await Folder.create({ name: actor.name, type: "Actor", folder: rootFolder.id });
-                if (playerFolder) folderId = playerFolder.id;
-            }
+            // --- A) EL ALMA DE LA CRIATURA DEL DJ ---
+            if (actor.flags.dorso_oscuro?.isBossSession) {
+                const reversoPorDefecto = "img_varias/cards/cartas_v2/reverso_carta1.png";
+                const reverso = data.backImg || actor.getFlag("dorso_oscuro", "dorsoUrl") || reversoPorDefecto;
+                const estaOculta = data.faceDown || false;
 
-            // B) CREACIÓN DEL ACTOR TEMPORAL
-            const tempActorData = {
-                name: `[Alma] ${item.name} (${actor.name})`,
-                type: "personaje",
-                img: item.img,
-                folder: folderId,
-                system: {
-                    hp: { value: item.system.vida.value, max: item.system.vida.max },
-                    energia: { value: actor.system.energia.value, max: 7 }
-                },
-                prototypeToken: {
-                    texture: { src: item.img },
+                // Creamos el token directamente vinculado a la criatura activa
+                const tokenData = await actor.getTokenDocument({
+                    name: estaOculta ? "Criatura Oculta" : `❤️ ${item.system.vida.value}  |  ⚡ ${actor.system.energia.value}  |  ${item.name}`,
+                    texture: { src: estaOculta ? reverso : item.img },
                     width: width,
                     height: height,
+                    x: data.x - (canvas.grid.size * width) / 2,
+                    y: data.y - (canvas.grid.size * height) / 2,
+                    actorLink: true, // Esto es vital
+                    lockRotation: true,
                     displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
-                    displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+                    displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
+                    flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id, isFaceDown: estaOculta, imgReal: item.img, nombreReal: item.name } }
+                });
+
+                await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
+
+            } else {
+                // --- B) EL ALMA DE LOS JUGADORES (Actor temporal) ---
+                let folderId = null;
+                let rootFolder = game.folders.find(f => f.name === "CARTAS" && f.type === "Actor");
+                if (!rootFolder && game.user.isGM) rootFolder = await Folder.create({ name: "CARTAS", type: "Actor" });
+
+                if (rootFolder) {
+                    let playerFolder = game.folders.find(f => f.name === actor.name && f.type === "Actor" && f.folder?.id === rootFolder.id);
+                    if (!playerFolder && game.user.isGM) playerFolder = await Folder.create({ name: actor.name, type: "Actor", folder: rootFolder.id });
+                    if (playerFolder) folderId = playerFolder.id;
+                }
+
+                const tempActorData = {
+                    name: `[Alma] ${item.name} (${actor.name})`,
+                    type: "personaje",
+                    img: item.img,
+                    folder: folderId,
+                    system: {
+                        hp: { value: item.system.vida.value, max: item.system.vida.max },
+                        energia: { value: actor.system.energia.value, max: 7 }
+                    },
+                    prototypeToken: {
+                        texture: { src: item.img },
+                        width: width,
+                        height: height,
+                        displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+                        displayBars: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+                        actorLink: true,
+                        bar1: { attribute: "system.hp" },
+                        bar2: { attribute: "system.energia" }
+                    },
+                    flags: { dorso_oscuro: { isTempAlma: true, ownerId: actor.id } }
+                };
+
+                const tempActor = await Actor.create(tempActorData);
+
+                const tokenData = await tempActor.getTokenDocument({
+                    name: `❤️ ${item.system.vida.value}  |  ⚡ ${actor.system.energia.value}  |  ${item.name}`,
+                    x: data.x - (canvas.grid.size * width) / 2,
+                    y: data.y - (canvas.grid.size * height) / 2,
                     actorLink: true,
-                    bar1: { attribute: "system.hp" },
-                    bar2: { attribute: "system.energia" }
-                },
-                flags: { dorso_oscuro: { isTempAlma: true, ownerId: actor.id } }
-            };
+                    lockRotation: true,
+                    displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+                    displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
+                    flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id } }
+                });
 
-            const tempActor = await Actor.create(tempActorData);
+                await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
+            }
 
-            const tokenData = await tempActor.getTokenDocument({
-                name: `❤️ ${item.system.vida.value}  |  ⚡ ${actor.system.energia.value}  |  ${item.name}`,
+        } else {
+
+            // C) CARTAS NORMALES (Poderes y Objetos)...
+            // --- GESTIÓN DE DORSOS ---
+            const reversoPorDefecto = "img_varias/cards/cartas_v2/reverso_carta1.png";
+            const reverso = data.backImg || reversoPorDefecto;
+            const estaOculta = data.faceDown || false;
+
+            const tokenData = {
+                name: estaOculta ? "Carta Oculta" : item.name,
+                texture: { src: estaOculta ? reverso : item.img },
+                width: width,
+                height: height,
                 x: data.x - (canvas.grid.size * width) / 2,
                 y: data.y - (canvas.grid.size * height) / 2,
-                actorLink: true,
                 lockRotation: true,
                 displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
                 displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
-                flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id } }
-            });
-
-            await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
-
-        } else {
-            // C) CARTAS NORMALES (Poderes y Objetos)
-            const tokenData = {
-                name: item.name,
-                texture: { src: item.img },
-                x: data.x - (canvas.grid.size * width) / 2,
-                y: data.y - (canvas.grid.size * height) / 2,
-                width: width,
-                height: height,
-                lockRotation: false,
-                displayName: CONST.TOKEN_DISPLAY_MODES.HOVER,
-                displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
-                flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id } }
+                flags: {
+                    dorso_oscuro: {
+                        isCard: true,
+                        itemId: item.id,
+                        actorId: actor.id,
+                        type: item.type,
+                        isFaceDown: estaOculta,
+                        imgReal: item.img,
+                        nombreReal: item.name
+                    }
+                }
             };
             await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
         }
@@ -316,6 +363,135 @@ Hooks.once('init', async function() {
                     console.log("Dorso Oscuro | Ajuste del Core: Rotación automática desactivada nativamente.");
                 }
             }
+        }
+    });
+
+    // --- ACTUALIZACIÓN REACTIVA GLOBAL ---
+    const refrescarInterfaces = (documento) => {
+        // 1. Refresca el panel del DJ siempre
+        const djHud = Object.values(ui.windows).find(w => w.id === "dj-hud");
+        if (djHud) djHud.render(false);
+
+        // 2. ¿A quién pertenece este documento que acaba de cambiar?
+        let actorId = null;
+
+        if (documento) {
+            if (documento.documentName === "Actor") {
+                actorId = documento.id;
+            } else if (documento.documentName === "Item" && documento.parent) {
+                actorId = documento.parent.id;
+            } else if (documento.documentName === "Card" || documento.documentName === "Cards") {
+                // Si es una Carta, su "padre" es la pila (Mano, Mazo...). Si es la Pila entera, es el documento en sí.
+                const pilaDeCartas = documento.documentName === "Card" ? documento.parent : documento;
+
+                // Buscamos qué personaje de la partida tiene esta pila asignada en su ficha
+                const dueño = game.actors.find(a =>
+                    a.system.deckId === pilaDeCartas.id ||
+                    a.system.handId === pilaDeCartas.id ||
+                    a.system.discardId === pilaDeCartas.id ||
+                    a.system.eliminadasId === pilaDeCartas.id ||
+                    a.system.enJuegoId === pilaDeCartas.id
+                );
+
+                if (dueño) actorId = dueño.id;
+            }
+        }
+
+        // 3. Si hemos encontrado a su dueño, repintamos SU ventana de juego
+        if (actorId) {
+            const manoHud = Object.values(ui.windows).find(w => w.id === "mano-hud" && w.actor?.id === actorId);
+            if (manoHud) manoHud.render(false); // repintado sin saltos de scroll
+        }
+    };
+
+// Enganchamos todo al nuevo cazador unificado
+    Hooks.on("updateActor", refrescarInterfaces);
+    Hooks.on("updateItem", refrescarInterfaces);
+    Hooks.on("createCard", refrescarInterfaces);
+    Hooks.on("deleteCard", refrescarInterfaces);
+    Hooks.on("updateCard", refrescarInterfaces);
+    Hooks.on("updateCards", refrescarInterfaces);
+
+    // --- PERSONALIZAR EL HUD DEL TOKEN (CARTAS EN TABLERO) ---
+    Hooks.on("renderTokenHUD", (app, html, data) => {
+        // ¡LA MAGIA PARA FOUNDRY V14!
+        // Envolvemos el HTML nativo en jQuery para poder usar .find(), .append(), etc.
+        const $html = $(html);
+
+        const tokenDoc = app.object?.document;
+        if (!tokenDoc) return; // Seguridad extra
+
+        const flags = tokenDoc.flags?.dorso_oscuro;
+
+        // 1. La Frontera: Si no es una carta de nuestro sistema, lo dejamos tranquilo
+        if (!flags || !flags.isCard) return;
+
+        // 2. Usamos nuestra nueva variable $html para ocultar la basura nativa
+        $html.find('.control-icon[data-action="combat"]').hide();
+        $html.find('.control-icon[data-action="target"]').hide();
+        $html.find('.control-icon[data-action="effects"]').hide();
+        $html.find('.control-icon[data-action="visibility"]').hide();
+        $html.find('.attribute.elevation').hide();
+
+        // Si es el Alma, cortamos aquí
+        if (flags.type === "carta_alma") return;
+
+        // 3. Creamos nuestros botones
+        const btnDescarte = $(`
+            <div class="control-icon" title="Mandar al Descarte">
+                <i class="fas fa-trash-can" style="color: #aaaaaa;"></i>
+            </div>
+        `);
+
+        const btnEliminadas = $(`
+            <div class="control-icon" title="Mandar a Eliminadas (Destierro)">
+                <i class="fas fa-ban" style="color: #ff4444;"></i>
+            </div>
+        `);
+
+        // 4. Inyectamos usando $html
+        $html.find('.col.left').append(btnDescarte);
+        $html.find('.col.right').append(btnEliminadas);
+
+        // 5. Lógica de borrado
+        const moverCartaYBorrarToken = async (pilaDestinoId) => {
+            const actor = game.actors.get(flags.actorId);
+            if (actor) {
+                const enJuego = game.cards.get(actor.system.enJuegoId);
+                const destino = game.cards.get(pilaDestinoId);
+
+                if (enJuego && destino) {
+                    const card = enJuego.cards.find(c => c.flags.dorso_oscuro?.itemId === flags.itemId);
+                    if (card) await card.pass(destino);
+                }
+            }
+
+            await tokenDoc.delete();
+            app.clear();
+        };
+
+        btnDescarte.click((ev) => moverCartaYBorrarToken(game.actors.get(flags.actorId)?.system.discardId));
+        btnEliminadas.click((ev) => moverCartaYBorrarToken(game.actors.get(flags.actorId)?.system.eliminadasId));
+
+        // Solo para el DJ y si la carta está boca abajo
+        if (game.user.isGM && flags.isFaceDown) {
+            const btnRevelar = $(`
+                <div class="control-icon" title="Revelar Carta">
+                    <i class="fas fa-eye" style="color: #66ff66;"></i>
+                </div>
+            `);
+
+            $html.find('.col.right').prepend(btnRevelar);
+
+            btnRevelar.click(async () => {
+                await tokenDoc.update({
+                    "name": flags.nombreReal,
+                    "texture.src": flags.imgReal,
+                    "flags.dorso_oscuro.isFaceDown": false
+                });
+                ui.notifications.info(`¡${flags.nombreReal} revelada!`);
+                app.clear();
+            });
         }
     });
 });
