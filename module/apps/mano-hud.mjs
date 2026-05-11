@@ -2,6 +2,7 @@
 
 export class ManoHUD extends Application {
     static isProcessing = false;
+
     constructor(actor, options = {}) {
         super(options);
         this.actor = actor;
@@ -45,8 +46,7 @@ export class ManoHUD extends Application {
         data.conteoDescarte = numDescarte;
         data.conteoEliminadas = numEliminadas;
 
-        // EL TOTAL ES ABSOLUTO: El Mazo nunca pierde cartas físicamente,
-        // así que su "size" es siempre el total de tu baraja. ¡Se acabó sumar pilas!
+        // EL TOTAL ES ABSOLUTO: El Mazo nunca pierde cartas físicamente
         data.totalMazo = deck ? deck.cards.size : 0;
 
         // --- CÁLCULO DINÁMICO DEL LÍMITE DE MANO ---
@@ -72,13 +72,10 @@ export class ManoHUD extends Application {
         return data;
     }
 
-
-
     activateListeners(html) {
         super.activateListeners(html);
 
-
-        // --- ELIMINAR CARTA MANULMENTE DESDE LA MANO ---
+        // --- ELIMINAR CARTA MANUALMENTE DESDE LA MANO ---
         html.find('.manual-ban-btn').click(async ev => {
             ev.stopPropagation(); // Evita que se active el zoom o el drag
 
@@ -95,20 +92,19 @@ export class ManoHUD extends Application {
                 }
             }
         });
+
         // --- GESTIÓN DE ENERGÍA ---
         html.find('.energy-control').click(async ev => {
             const action = ev.currentTarget.dataset.action;
             const actor = this.actor;
             let current = actor.system.energia.value;
-            let nuevoValor = current; // Usamos esta variable para calcular el resultado final
+            let nuevoValor = current;
 
             if (action === "plus") {
                 nuevoValor = current + 1;
-            }
-            else if (action === "minus") {
+            } else if (action === "minus") {
                 nuevoValor = Math.max(current - 1, 0);
-            }
-            else if (action === "collect") {
+            } else if (action === "collect") {
                 let energiaTotal = 0;
 
                 // 1. Energía del Alma Activa
@@ -132,12 +128,10 @@ export class ManoHUD extends Application {
                 ui.notifications.info(`Has recolectado ${energiaTotal} de energía.`);
             }
 
-            // UN SOLO UPDATE AL FINAL: Así evitamos que se pisen los datos
             await actor.update({"system.energia.value": nuevoValor});
             await this._refreshTokenVisuals();
             this.render();
         });
-
 
         // --- GESTIÓN DE MALUS ---
         html.find('.malus-control').click(async ev => {
@@ -153,8 +147,7 @@ export class ManoHUD extends Application {
             this.render();
         });
 
-
-        // --- BOTONES DE ROBO (NATIVO FOUNDRY - UN SOLO CLIC) ---
+        // --- BOTONES DE ROBO (NATIVO FOUNDRY) ---
         html.find('.draw-cards').click(async ev => {
             if (ManoHUD.isProcessing) return ui.notifications.warn("Procesando cartas, espera un instante...");
             ManoHUD.isProcessing = true;
@@ -182,7 +175,7 @@ export class ManoHUD extends Application {
 
                 let cartasRobadas = 0;
 
-                // --- PASO 1: Robamos todo lo que podamos de las disponibles en el mazo ---
+                // --- PASO 1: Robamos de las disponibles en el mazo ---
                 const aRobarAhora = Math.min(numARobar, deck.availableCards.length);
                 if (aRobarAhora > 0) {
                     await deck.shuffle();
@@ -191,29 +184,21 @@ export class ManoHUD extends Application {
                     numARobar -= aRobarAhora;
                 }
 
-                // --- PASO 2: Si nos siguen faltando cartas, reciclamos automáticamente ---
-                if (numARobar > 0) {
-                    if (discard.cards.size > 0) {
-                        ui.notifications.info("Mazo vacío. Reciclando el descarte y robando el resto...");
+                // --- PASO 2: Reciclamos automáticamente el descarte ---
+                if (numARobar > 0 && discard.cards.size > 0) {
+                    ui.notifications.info("Mazo vacío. Reciclando el descarte y robando el resto...");
 
-                        // Devolvemos el descarte al mazo (Foundry les quita el check 'Drawn' internamente)
-                        const idsDescarte = discard.cards.map(c => c.id);
-                        await discard.pass(deck, idsDescarte);
+                    const idsDescarte = discard.cards.map(c => c.id);
+                    await discard.pass(deck, idsDescarte);
+                    await deck.shuffle();
 
-                        // Barajamos
-                        await deck.shuffle();
+                    await new Promise(resolve => setTimeout(resolve, 400));
 
-                        // RESPIRO VITAL: Le damos a la base de datos 0.4 segundos para que asiente
-                        // los checks quitados y el nuevo orden antes de volver a robar.
-                        await new Promise(resolve => setTimeout(resolve, 400));
-
-                        // Robamos lo que nos faltaba (o lo que se pueda si el descarte era muy pequeño)
-                        const aRobarFinal = Math.min(numARobar, deck.availableCards.length);
-                        if (aRobarFinal > 0) {
-                            await hand.draw(deck, aRobarFinal);
-                            cartasRobadas += aRobarFinal;
-                            numARobar -= aRobarFinal;
-                        }
+                    const aRobarFinal = Math.min(numARobar, deck.availableCards.length);
+                    if (aRobarFinal > 0) {
+                        await hand.draw(deck, aRobarFinal);
+                        cartasRobadas += aRobarFinal;
+                        numARobar -= aRobarFinal;
                     }
                 }
 
@@ -238,12 +223,10 @@ export class ManoHUD extends Application {
             const hand = game.cards.get(this.actor.system.handId);
             const cartasEnMano = hand ? hand.cards.contents : [];
 
-            // Si no le quedan cartas en la mano, acabamos el turno directamente
             if (cartasEnMano.length === 0) {
                 return this._ejecutarFinDeTurno([]);
             }
 
-            // Si tiene cartas, construimos el cuadro de diálogo visual
             let cardsHtml = `<div class="flexrow" style="flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 15px;">`;
             cartasEnMano.forEach(c => {
                 cardsHtml += `
@@ -263,12 +246,10 @@ export class ManoHUD extends Application {
                         icon: '<i class="fas fa-hourglass-end"></i>',
                         label: "Finalizar Turno",
                         callback: async (htmlContent) => {
-                            // Recogemos los IDs de las cartas que el jugador ha marcado en rojo
                             const selectedIds = [];
                             htmlContent.find('.discard-card-option.selected').each(function() {
                                 selectedIds.push($(this).data('cardId'));
                             });
-                            // Ejecutamos el cierre pasándole las cartas seleccionadas
                             await this._ejecutarFinDeTurno(selectedIds);
                         }
                     },
@@ -278,7 +259,6 @@ export class ManoHUD extends Application {
                     }
                 },
                 render: (htmlContent) => {
-                    // Animación y marcado de las cartas al hacerles clic
                     htmlContent.find('.discard-card-option').click(function() {
                         $(this).toggleClass('selected');
                         if ($(this).hasClass('selected')) {
@@ -292,14 +272,24 @@ export class ManoHUD extends Application {
             }, { width: 500 }).render(true);
         });
 
-// --- CERRAR MESA (Finalizar Partida de verdad) ---
+        // --- CERRAR MESA (Finalizar Partida de verdad) ---
         html.find('.end-combat-btn').click(async ev => {
-
             Dialog.confirm({
                 title: "Recoger Mesa",
-                content: "¿Quieres recoger todas tus cartas? Se borrarán tus mazos y tu carpeta de esta partida.",
+                content: "¿Quieres recoger todas tus cartas? Se borrarán tus mazos, tu carpeta y tus tokens de esta partida.",
                 yes: async () => {
-                    // 1. Borrar Pilas de Cartas
+                    // 1. Borrar Tokens del jugador en el tablero (AÑADIDO PARA LIMPIEZA TOTAL)
+                    const tokens = canvas.tokens.placeables.filter(t => {
+                        const f = t.document.flags.dorso_oscuro;
+                        return f?.actorId === this.actor.id;
+                    });
+
+                    if (tokens.length > 0) {
+                        // Le pasamos limpiezaTotal para que el Hook ignore el borrado
+                        await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id), { limpiezaTotal: true });
+                    }
+
+                    // 2. Borrar Pilas de Cartas
                     const pilas = ["deckId", "handId", "discardId", "enJuegoId", "eliminadasId"];
                     for (let key of pilas) {
                         const id = this.actor.system[key];
@@ -309,12 +299,12 @@ export class ManoHUD extends Application {
                         }
                     }
 
-                    // 2. Borrar Carpeta de Cartas
+                    // 3. Borrar Carpeta de Cartas
                     const rootCardsFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
                     const actorCardsFolder = game.folders.find(f => f.name === this.actor.name && f.type === "Cards" && f.folder?.id === rootCardsFolder?.id);
                     if (actorCardsFolder) await actorCardsFolder.delete();
 
-                    // 3. Resetear IDs en el actor
+                    // 4. Resetear IDs en el actor
                     await this.actor.update({
                         "system.deckId": "",
                         "system.handId": "",
@@ -329,8 +319,6 @@ export class ManoHUD extends Application {
             });
         });
 
-
-
         // --- SELECCIONAR ALMA ---
         html.find('.choose-soul-btn, .change-soul').click(ev => {
             this._onElegirAlma();
@@ -341,21 +329,17 @@ export class ManoHUD extends Application {
 
         // --- VER CARTA EN GRANDE (Clic Derecho) ---
         html.find('.card-in-hand').on('contextmenu', ev => {
-            ev.preventDefault(); // Evita que salga el menú contextual de Windows/Navegador
+            ev.preventDefault();
 
             const itemId = ev.currentTarget.dataset.itemId;
             if (!itemId) return;
 
             const item = this.actor.items.get(itemId);
             if (item) {
-                // OPCIÓN A: Pop-up visual (Solo la imagen de la carta en grande, muy inmersivo)
                 new ImagePopout(item.img, {
                     title: item.name,
                     uuid: item.uuid
                 }).render(true);
-
-                // OPCIÓN B: Abrir la ficha completa de la carta (Descomenta la línea de abajo si prefieres esta)
-                // item.sheet.render(true);
             }
         });
 
@@ -366,29 +350,24 @@ export class ManoHUD extends Application {
             const activeSoul = this.actor.items.get(almaId);
 
             if (activeSoul) {
-                // Si el valor es mayor que el máximo, lo capamos (opcional según tus reglas)
                 const cappedValue = Math.min(newValue, activeSoul.system.vida.max);
-
                 await activeSoul.update({"system.vida.value": cappedValue});
                 await this._refreshTokenVisuals();
                 ui.notifications.info(`Vida de ${activeSoul.name} actualizada.`);
             }
             this.render();
         });
-
     }
-// --- BOTONES DE LA CABECERA (Añadir Minimizar) ---
+
+    // --- BOTONES DE LA CABECERA (Añadir Minimizar) ---
     _getHeaderButtons() {
-        // Recuperamos los botones por defecto (el de "Cerrar")
         let buttons = super._getHeaderButtons();
 
-        // Insertamos nuestro botón de Minimizar al principio de la lista
         buttons.unshift({
             label: "Minimizar",
             class: "minimize-hud",
             icon: "fas fa-minus",
             onclick: ev => {
-                // Si ya está minimizada, la maximiza. Si no, la minimiza.
                 if (this._minimized) {
                     this.maximize();
                 } else {
@@ -407,7 +386,6 @@ export class ManoHUD extends Application {
 
         tokens.forEach(t => {
             if (value > 0) {
-                // Aquí podrías usar módulos como "Token Magic" o simplemente efectos de estado
                 t.document.update({
                     "effects": value > 0 ? [icon] : []
                 });
@@ -423,7 +401,6 @@ export class ManoHUD extends Application {
             return ui.notifications.warn("No tienes cartas de Alma disponibles en tu ficha.");
         }
 
-        // Construimos los botones para el diálogo
         let buttons = {};
         almas.forEach(alma => {
             buttons[alma.id] = {
@@ -432,9 +409,6 @@ export class ManoHUD extends Application {
                     await this.actor.update({"system.almaActivaId": alma.id});
                     ui.notifications.info(`${alma.name} ha despertado.`);
                     this.render();
-
-                    // OPCIONAL: Si quieres que al elegirla aparezca automáticamente en el tablero como Token
-                    // this._crearTokenDeAlma(alma);
                 }
             };
         });
@@ -450,8 +424,7 @@ export class ManoHUD extends Application {
     _onDragStart(event) {
         const itemId = event.currentTarget.dataset.itemId;
         if (!itemId) return;
-        console.log("Dorso Oscuro | Agarrando carta con ID:", itemId);
-        // Empaquetamos los datos con un tipo "personalizado" para que Foundry no se confunda
+
         const dragData = {
             type: "CartaDorsoOscuro",
             actorId: this.actor.id,
@@ -474,7 +447,6 @@ export class ManoHUD extends Application {
 
         const almaItem = actor.items.get(actor.system.almaActivaId);
 
-        // 1. Actualizamos el ACTOR TEMPORAL real
         if (almaToken.actor) {
             await almaToken.actor.update({
                 "system.hp.value": almaItem ? almaItem.system.vida.value : 0,
@@ -483,33 +455,26 @@ export class ManoHUD extends Application {
             });
         }
 
-        // 2. CONSTRUIMOS EL HUD DE TEXTO DINÁMICO
         const vidaActual = almaItem ? almaItem.system.vida.value : 0;
         const energiaActual = actor.system.energia.value;
         const nombreCarta = almaItem ? almaItem.name : "Alma";
 
-        // Base: Vida y Energía siempre visibles
         let nombreHUD = `❤️ ${vidaActual}  |  ⚡ ${energiaActual}`;
 
-        // Añadimos Merma solo si es mayor que 0
         if (actor.system.merma > 0) {
-            nombreHUD += `  |  ⏬ ${actor.system.merma}`; // ¡Cambiado a la doble flecha!
+            nombreHUD += `  |  ⏬ ${actor.system.merma}`;
         }
 
-        // Añadimos Decadencia solo si es mayor que 0
         if (actor.system.decadencia > 0) {
             nombreHUD += `  |  🩸 ${actor.system.decadencia}`;
         }
 
-        // Cerramos con el nombre de la carta
         nombreHUD += `  |  ${nombreCarta}`;
 
-        // 3. Iconos de estado visuales (los dejamos por si la gente hace zoom out)
         const effects = [];
         if (actor.system.merma > 0) effects.push("icons/svg/downgrade.svg");
         if (actor.system.decadencia > 0) effects.push("icons/svg/blood.svg");
 
-        // Actualizamos el Token
         await almaToken.document.update({
             name: nombreHUD,
             effects: effects
@@ -522,26 +487,21 @@ export class ManoHUD extends Application {
         ManoHUD.isProcessing = true;
 
         try {
-            // 1. Procesar los descartes de la mano (TODO VA AL DESCARTE NORMAL)
             if (cartasADescartarIds.length > 0) {
                 const hand = game.cards.get(this.actor.system.handId);
                 const discard = game.cards.get(this.actor.system.discardId);
 
                 if (hand && discard) {
-                    // Ya no filtramos. Mandamos las seleccionadas directo al descarte.
-                    // Usamos .pass() porque aquí sí estamos mandando IDs específicos seleccionados por el jugador
                     await hand.pass(discard, cartasADescartarIds);
                     ui.notifications.info(`Has descartado ${cartasADescartarIds.length} carta(s) voluntariamente.`);
                 }
             }
 
-            // 2. Limpiar energía sobrante
             let currentEnergy = this.actor.system.energia.value;
             if (currentEnergy > 7) {
                 await this.actor.update({"system.energia.value": 7});
             }
 
-            // 3. Limpiar poderes de la mesa (El Hook de sistema.js aplicará "Desaparece" si corresponde)
             const tokensABorrar = canvas.tokens.placeables.filter(t => {
                 const f = t.document.flags.dorso_oscuro;
                 return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_poder";
@@ -551,7 +511,6 @@ export class ManoHUD extends Application {
                 const ids = tokensABorrar.map(t => t.id);
                 await canvas.scene.deleteEmbeddedDocuments("Token", ids);
 
-                // Respiro para la aspiradora
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
 
@@ -562,5 +521,4 @@ export class ManoHUD extends Application {
             this.render();
         }
     }
-
 }

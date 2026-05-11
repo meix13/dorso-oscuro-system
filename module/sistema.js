@@ -102,10 +102,14 @@ Hooks.once('init', async function() {
                 const aporteInmediato = item.type === "carta_poder" ? (item.system.energiaAportada || 0) : 0;
                 let nuevaEnergia = actor.system.energia.value - coste + aporteInmediato;
                 await actor.update({"system.energia.value": Math.max(0, nuevaEnergia)});
-                ui.notifications.info(`${actor.name} juega ${item.name}: -${coste}${aporteInmediato > 0 ? ' / +'+aporteInmediato : ''} Energía`);
+                // ui.notifications.info(`${actor.name} juega ${item.name}: -${coste}${aporteInmediato > 0 ? ' / +'+aporteInmediato : ''} Energía`);
             } else {
                 // Si es el Boss, barra libre
-                ui.notifications.info(`La Criatura coloca una carta sobre el juego.`);
+                // ui.notifications.info(`La Criatura coloca una carta sobre el juego: ${item.name} `);
+                ChatMessage.create({
+                    speaker: { alias: "SISTEMA" },
+                    content: `<b style="color: #ff4444;">¡La Criatura coloca una carta oculta sobre la mesa!</b>`
+                });
             }
 
             // Movemos la carta
@@ -244,8 +248,11 @@ Hooks.once('init', async function() {
         return false;
     });
 
-    // --- INTERCEPTAR BORRADO DE TOKENS (Pasar de En Juego a Descarte o Eliminadas) ---
+// --- INTERCEPTAR BORRADO DE TOKENS (Pasar de En Juego a Descarte o Eliminadas) ---
     Hooks.on("deleteToken", async (tokenDocument, options, userId) => {
+        // ¡NUEVO!: Si es el DJ cerrando el tablero, ignoramos el proceso porque las pilas van a desaparecer.
+        if (options.limpiezaTotal) return;
+
         // Solo ejecuta esto el jugador que ha borrado el token, para no duplicar acciones
         if (game.user.id !== userId) return;
 
@@ -460,8 +467,8 @@ Hooks.once('init', async function() {
                     "flags.dorso_oscuro.isFaceDown": nuevoEstado
                 });
 
-                ui.notifications.info(nuevoEstado ? "Carta ocultada." : `¡${flags.nombreReal} revelada!`);
-                app.clear();
+                // ui.notifications.info(nuevoEstado ? "Carta ocultada." : `¡${flags.nombreReal} revelada!`);
+                app.close(); // CORREGIDO: Foundry V13/V14 prefiere close() en lugar del antiguo clear()
             });
         }
 

@@ -65,7 +65,9 @@
                             <div class="stat-box flexcol" style="margin-top: 10px; background: rgba(50,30,80,0.4); border: 1px solid #538; padding: 5px; text-align: center; border-radius: 5px;">
                                 <div class="flexrow" style="align-items: center; justify-content: center; gap: 10px;">
                                     <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="estabilidad" data-action="minus" style="font-size: 18px; color: #ff6666;"><i class="fas fa-circle-minus"></i></a>
-                                    <b style="font-size: 20px; color: white;">{{jug.system.estabilidad}}</b>
+                                    <b style="font-size: 20px; color: white;">
+                                        <i class="fas fa-brain" style="color: #b388ff; font-size: 16px; margin-right: 5px;"></i>{{jug.system.estabilidad}}
+                                    </b>
                                     <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="estabilidad" data-action="plus" style="font-size: 18px; color: #66ff66;"><i class="fas fa-circle-plus"></i></a>
                                 </div>
                             </div>
@@ -163,15 +165,18 @@
 
                     </div>
                 {{else}}
+
                     <h3 style="text-align: center; color: #ffaa00; margin-bottom: 20px;">SELECCIONA CRIATURA</h3>
-                    <div class="creature-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px;">
+                    <div class="creature-selection-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px;">
                         {{#each disponibles as |c|}}
-                            <div class="select-boss flexcol" data-id="{{c.id}}" style="cursor: pointer; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border: 1px solid #444; transition: all 0.2s; text-align: center;">
-                                <img src="{{c.img}}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 5px;">
-                                <b style="color: gold; font-size: 12px;">{{c.name}}</b>
+                            <div class="select-boss flexcol" data-id="{{c.id}}" style="cursor: pointer; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border: 1px solid #444; transition: all 0.2s; text-align: center; align-items: center;">
+                                {{!-- Cambiado a height: 160px y object-fit: contain para que la carta se vea entera sin recortes --}}
+                                <img src="{{c.img}}" style="width: 100%; height: 160px; object-fit: contain; border-radius: 4px; margin-bottom: 8px; drop-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                                <b style="color: gold; font-size: 12px; line-height: 1.2;">{{c.name}}</b>
                             </div>
                         {{/each}}
                     </div>
+
                 {{/if}}
 
             </div>

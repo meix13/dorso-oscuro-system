@@ -201,11 +201,13 @@ export class DJHUD extends Application {
                         // 1. Borrar Tokens del tablero (Usamos los flags, que nunca fallan)
                         const tokens = canvas.tokens.placeables.filter(t => {
                             const f = t.document.flags.dorso_oscuro;
-                            return f?.actorId === boss.id && f?.isCard;
+                            // Simplificado: Borramos TODO lo que pertenezca al Boss (Alma, Poderes, Objetos)
+                            return f?.actorId === boss.id;
                         });
 
                         if (tokens.length > 0) {
-                            await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id));
+                            // AÑADIDO: Le pasamos la opción { limpiezaTotal: true } para que el sistema no intente reciclar las cartas
+                            await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id), { limpiezaTotal: true });
                         }
 
                         // 2. Identificar la Carpeta de Cartas antes de borrar las pilas
@@ -311,7 +313,7 @@ export class DJHUD extends Application {
             const mazoActualizado = game.cards.get(deck.id);
             if (mazoActualizado.availableCards.length > 0) {
                 await hand.draw(mazoActualizado, mazoActualizado.availableCards.length);
-                ui.notifications.info("La criatura roba toda su reserva de cartas.");
+                // ui.notifications.info("La criatura roba toda su reserva de cartas.");
             }
         });
 
