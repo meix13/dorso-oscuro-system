@@ -78,26 +78,33 @@ export class CartaAlmaData extends foundry.abstract.TypeDataModel {
             energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
             descripcion: new fields.HTMLField(),
             limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            esCriatura: new fields.BooleanField({initial: false})
+            esCriatura: new fields.BooleanField({initial: false}),
+            carpetaSistema: new fields.StringField({ initial: "" }),
         };
     }
 }
 
-// 2. Carta de Poder / Objeto (Usaremos el mismo modelo base para ambos, diferenciándolos por su "tipo" en Foundry)
+// 2. Carta de Poder / Objeto
 export class CartaJugableData extends foundry.abstract.TypeDataModel {
     static defineSchema() {
         const fields = foundry.data.fields;
         return {
+            vida: new fields.SchemaField({
+                value: new fields.NumberField({initial: 0, integer: true, min: 0}),
+                max: new fields.NumberField({initial: 0, integer: true, min: 0})
+            }),
+            // ------------------------------------------------------
             costeEnergia: new fields.NumberField({initial: 1, integer: true, min: 0}),
             elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
             tipoAccion: new fields.StringField({initial: "otro", choices: ["ataque", "cura", "defensa", "otro"]}),
-            formulaBase: new fields.StringField({initial: ""}), // Ej: "1d6" o "2"
+            formulaBase: new fields.StringField({initial: ""}),
             esInstantanea: new fields.BooleanField({initial: false}),
             desaparece: new fields.BooleanField({initial: false}),
             descripcion: new fields.HTMLField(),
             enBanquillo: new fields.BooleanField({initial: false}),
             limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0})
+            energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            carpetaSistema: new fields.StringField({ initial: "" }),
         };
     }
 }

@@ -158,20 +158,13 @@ Hooks.once('init', async function() {
             } else {
                 // --- B) EL ALMA DE LOS JUGADORES (Actor temporal) ---
                 let folderId = null;
-                let rootFolder = game.folders.find(f => f.name === "CARTAS" && f.type === "Actor");
-                if (!rootFolder && game.user.isGM) rootFolder = await Folder.create({ name: "CARTAS", type: "Actor" });
 
-                if (rootFolder) {
-                    let playerFolder = game.folders.find(f => f.name === actor.name && f.type === "Actor" && f.folder?.id === rootFolder.id);
-                    if (!playerFolder && game.user.isGM) playerFolder = await Folder.create({ name: actor.name, type: "Actor", folder: rootFolder.id });
-                    if (playerFolder) folderId = playerFolder.id;
-                }
 
                 const tempActorData = {
                     name: `[Alma] ${item.name} (${actor.name})`,
                     type: "personaje",
                     img: item.img,
-                    folder: folderId,
+                    folder: folderId, // Si es un jugador, se queda en null (va al raíz directo)
                     system: {
                         hp: { value: item.system.vida.value, max: item.system.vida.max },
                         energia: { value: actor.system.energia.value, max: 7 }
@@ -186,10 +179,13 @@ Hooks.once('init', async function() {
                         bar1: { attribute: "system.hp" },
                         bar2: { attribute: "system.energia" }
                     },
-                    flags: { dorso_oscuro: { isTempAlma: true, ownerId: actor.id } }
+                    flags: { dorso_oscuro: { isTempAlma: true, ownerId: actor.id } },
+                    // Heredamos los permisos del jugador para que sea el dueño legítimo
+                    ownership: actor.ownership
                 };
 
                 const tempActor = await Actor.create(tempActorData);
+
 
                 const tokenData = await tempActor.getTokenDocument({
                     name: `❤️ ${item.system.vida.value}  |  ⚡ ${actor.system.energia.value}  |  ${item.name}`,
@@ -206,15 +202,25 @@ Hooks.once('init', async function() {
             }
 
         } else {
-
             // C) CARTAS NORMALES (Poderes y Objetos)...
             // --- GESTIÓN DE DORSOS ---
             const reversoPorDefecto = "img_varias/cards/cartas_v2/reverso_carta1.png";
             const reverso = data.backImg || reversoPorDefecto;
             const estaOculta = data.faceDown || false;
 
+            let tokenName = estaOculta ? "Carta Oculta" : item.name;
+
+            // --- NUEVO: ¿Es una Carta con Vida de base (Objeto o Poder)? ---
+            if (item.system.vida && item.system.vida.max > 0) {
+                // Al bajarla, le rellenamos la vida al máximo
+                await item.update({"system.vida.value": item.system.vida.max});
+                if (!estaOculta) {
+                    tokenName = `❤️ ${item.system.vida.max}  |  ${item.name}`;
+                }
+            }
+
             const tokenData = {
-                name: estaOculta ? "Carta Oculta" : item.name,
+                name: tokenName,
                 texture: { src: estaOculta ? reverso : item.img },
                 width: width,
                 height: height,
@@ -274,11 +280,19 @@ Hooks.once('init', async function() {
 
                 if (card && item) {
                     // EL GRAN FILTRO: ¿Debe desaparecer?
-                    if (item.system.desaparece) {
+                    let debeDesaparecer = item.system.desaparece;
+
+                    // Si era una carta con Vida (>0 de base) y se ha borrado el token, va a Eliminadas.
+                    if (item.system.vida && item.system.vida.max > 0) {
+                        debeDesaparecer = true;
+                    }
+
+                    if (debeDesaparecer) {
                         await card.pass(eliminadas); // A la fosa común
                     } else {
                         await card.pass(discard);    // Al descarte normal
                     }
+
 
                     // Refrescamos el HUD para que se actualicen los números
                     const hud = Object.values(ui.windows).find(w => w.id === "mano-hud" && w.actor?.id === actor.id);

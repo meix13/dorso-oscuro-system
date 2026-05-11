@@ -1,77 +1,99 @@
-<form class="{{cssClass}} flexrow" autocomplete="off" style="padding: 0; background: #111; overflow: hidden;">
+<form class="{{cssClass}} flexrow" autocomplete="off" style="padding: 0; background: #111; overflow: hidden; height: 100%; width: 100%;">
+
+    {{#if isGM}}
+    {{!-- VISTA DEL DIRECTOR DE JUEGO --}}
 
     {{!-- LADO IZQUIERDO: Visualización de la Carta --}}
-    <div class="card-visual-container" style="flex: 0 0 380px; position: relative; background-image: url('{{item.img}}'); background-size: cover; background-position: center;">
-        {{!-- Este input invisible permite cambiar la imagen al hacer clic en la zona --}}
-        <img src="{{item.img}}" data-edit="img" title="Cambiar imagen de la carta" style="opacity: 0; width: 100%; height: 100%; cursor: pointer;" />
-    </div>
-
-    {{!-- LADO DERECHO: Datos del Sistema --}}
-    <div class="card-data-container flexcol" style="flex: 1; padding: 20px; color: #d4c4a8; font-family: 'Kalam', cursive;">
-
-        <h1 style="border-bottom: 2px solid #ff4500; margin-bottom: 20px;">
-            <input name="name" type="text" value="{{item.name}}" placeholder="Nombre de la Carta" style="color: #ff4500; font-family: 'Kalam', cursive; font-size: 32px; background: transparent; border: none;"/>
-        </h1>
-
-        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-            <label style="flex: 1; font-size: 20px;">Elemento (Palo)</label>
-            <select name="system.elemento" style="flex: 1; background: #222; color: #d4c4a8; font-family: 'Kalam', cursive; border: 1px solid #444; font-size: 18px;">
-                {{selectOptions config.elementos selected=system.elemento}}
-            </select>
+        <div class="card-visual-container" style="flex: 0 0 380px; position: relative; background-image: url('{{item.img}}'); background-size: cover; background-position: center; height: 100%;">
+            {{!-- Este input invisible permite cambiar la imagen al hacer clic en la zona --}}
+            <img src="{{item.img}}" data-edit="img" title="Cambiar imagen de la carta" style="opacity: 0; width: 100%; height: 100%; cursor: pointer;" />
         </div>
 
-        {{!-- Campos exclusivos para PODERES y OBJETOS --}}
-        {{#if isJugable}}
+        {{!-- LADO DERECHO: Datos del Sistema --}}
+        <div class="card-data-container flexcol" style="flex: 1; padding: 20px; color: #d4c4a8; font-family: 'Kalam', cursive; height: 100%; overflow-y: auto;">
+
+            <h1 style="border-bottom: 2px solid #ff4500; margin-bottom: 20px;">
+                <input name="name" type="text" value="{{item.name}}" placeholder="Nombre de la Carta" style="color: #ff4500; font-family: 'Kalam', cursive; font-size: 32px; background: transparent; border: none;"/>
+            </h1>
+
             <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">Coste de Energía</label>
-                <input type="number" name="system.costeEnergia" value="{{system.costeEnergia}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
-            </div>
-            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
-                <input type="number" name="system.energiaAportada" value="{{system.energiaAportada}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
-            </div>
-            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">Tipo Principal</label>
-                <select name="system.tipoAccion" style="flex: 1; background: #222; color: #d4c4a8; font-family: 'Kalam', cursive; border: 1px solid #444;">
-                    {{selectOptions config.tiposAccion selected=system.tipoAccion}}
+                <label style="flex: 1; font-size: 20px;">Elemento (Palo)</label>
+                <select name="system.elemento" style="flex: 1; background: #222; color: #d4c4a8; font-family: 'Kalam', cursive; border: 1px solid #444; font-size: 18px;">
+                    {{selectOptions config.elementos selected=system.elemento}}
                 </select>
             </div>
+
+            {{!-- Campos exclusivos para PODERES y OBJETOS --}}
+            {{#if isJugable}}
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">Coste de Energía</label>
+                    <input type="number" name="system.costeEnergia" value="{{system.costeEnergia}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
+                    <input type="number" name="system.energiaAportada" value="{{system.energiaAportada}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">Tipo Principal</label>
+                    <select name="system.tipoAccion" style="flex: 1; background: #222; color: #d4c4a8; font-family: 'Kalam', cursive; border: 1px solid #444;">
+                        {{selectOptions config.tiposAccion selected=system.tipoAccion}}
+                    </select>
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">¿Instantánea?</label>
+                    <input type="checkbox" name="system.esInstantanea" {{checked system.esInstantanea}} style="flex: 0 0 30px;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">¿Desaparece (Eliminadas)?</label>
+                    <input type="checkbox" name="system.desaparece" {{checked system.desaparece}} style="flex: 0 0 30px;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; border-top: 1px dashed #444; padding-top: 10px;">
+                    <label style="flex: 1.5; font-size: 18px; color: #ff6666;"><i class="fas fa-heart"></i> Vida de la Carta <span style="font-size: 12px; color: #888;">(0 = No tiene)</span></label>
+                    <input type="number" name="system.vida.max" value="{{system.vida.max}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #ff4444;">
+                </div>
+            {{/if}}
+
             <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">¿Instantánea?</label>
-                <input type="checkbox" name="system.esInstantanea" {{checked system.esInstantanea}} style="flex: 0 0 30px;">
+                <label style="flex: 1; font-size: 20px;">Límite de Mano (+)</label>
+                <input type="number" name="system.limiteManoBonus" value="{{system.limiteManoBonus}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
             </div>
-            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">¿Desaparece (Eliminadas)?</label>
-                <input type="checkbox" name="system.desaparece" {{checked system.desaparece}} style="flex: 0 0 30px;">
+
+            {{!-- Campos exclusivos para ALMAS --}}
+            {{#if isAlma}}
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">Vida Máxima</label>
+                    <input type="number" name="system.vida.max" value="{{system.vida.max}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
+                    <input type="number" name="system.energiaBase" value="{{system.energiaBase}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; border-top: 1px solid #444; padding-top: 10px;">
+                    <label style="flex: 1; font-size: 20px; color: #ff6666;"><i class="fas fa-dragon"></i> ¿Es una Criatura (Jefe)?</label>
+                    <input type="checkbox" name="system.esCriatura" {{checked system.esCriatura}} style="flex: 0 0 30px;">
+                </div>
+            {{/if}}
+
+            {{!-- NUEVO CAMPO: Carpeta Sistema (Para la macro de importación) --}}
+            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #444;">
+                <label style="flex: 1; font-size: 18px; color: #aaa;"><i class="fas fa-folder-open"></i> Carpeta Sistema:</label>
+                <input type="text" name="system.carpetaSistema" value="{{system.carpetaSistema}}" placeholder="ej: la_gargola" style="flex: 1; background: #111; color: #aaa; text-align: center; border: 1px solid #333; font-family: sans-serif; font-size: 14px;">
             </div>
-        {{/if}}
-        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-            <label style="flex: 1; font-size: 20px;">Límite de Mano (+)</label>
-            <input type="number" name="system.limiteManoBonus" value="{{system.limiteManoBonus}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+
+            <div class="description-editor flexcol" style="margin-top: 10px; flex: 1;">
+                <label style="color: #ff4500; font-size: 22px; border-bottom: 1px dashed #444; margin-bottom: 5px;">Anotaciones del Sistema</label>
+                <div style="flex: 1; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px;">
+                    {{editor item.system.descripcion target="system.descripcion" button=true owner=owner editable=editable}}
+                </div>
+            </div>
+
         </div>
 
-        {{!-- Campos exclusivos para ALMAS --}}
-        {{#if isAlma}}
-            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">Vida Máxima</label>
-                <input type="number" name="system.vida.max" value="{{system.vida.max}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
-            </div>
-            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
-                <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
-                <input type="number" name="system.energiaBase" value="{{system.energiaBase}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
-            </div>
-            <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; border-top: 1px solid #444; padding-top: 10px;">
-                <label style="flex: 1; font-size: 20px; color: #ff6666;"><i class="fas fa-dragon"></i> ¿Es una Criatura (Jefe)?</label>
-                <input type="checkbox" name="system.esCriatura" {{checked system.esCriatura}} style="flex: 0 0 30px;">
-            </div>
-        {{/if}}
-
-        <div class="description-editor flexcol" style="margin-top: 20px; flex: 1;">
-            <label style="color: #ff4500; font-size: 22px; border-bottom: 1px dashed #444; margin-bottom: 5px;">Anotaciones del Sistema</label>
-            <div style="flex: 1; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px;">
-                {{editor item.system.descripcion target="system.descripcion" button=true owner=owner editable=editable}}
-            </div>
+    {{else}}
+    {{!-- VISTA DE JUGADOR (Solo Lectura) --}}
+        <div style="flex: 1; height: 100%; width: 100%; display: flex; align-items: center; justify-content: center; padding: 15px; box-sizing: border-box;">
+            <img src="{{item.img}}" title="{{item.name}}" style="max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: 0 0 20px rgba(0,0,0,0.9); object-fit: contain; pointer-events: none; border: none;">
         </div>
+    {{/if}}
 
-    </div>
 </form>

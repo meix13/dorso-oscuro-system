@@ -285,25 +285,35 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
     }
 
 
-    //  función para preparar los objetos "Cards" de Foundry
+    // Función para preparar los objetos "Cards" de Foundry
     async _registrarMazoDeJuego() {
         const actor = this.actor;
+        let folderId = null;
 
-        // --- 1. GESTIÓN DE CARPETAS PARA CARTAS ---
-        let rootFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
-        if (!rootFolder) rootFolder = await Folder.create({ name: "PARTIDAS", type: "Cards" });
+        // --- 1. GESTIÓN DE CARPETAS (Solo para el Director de Juego) ---
+        // Si el usuario es el GM, organizamos en carpetas. Si es jugador, folderId se queda null (Raíz).
+        if (game.user.isGM) {
+            try {
+                let rootFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
+                if (!rootFolder) rootFolder = await Folder.create({ name: "PARTIDAS", type: "Cards" });
 
-        let actorCardsFolder = game.folders.find(f => f.name === actor.name && f.type === "Cards" && f.folder?.id === rootFolder.id);
-        if (!actorCardsFolder) actorCardsFolder = await Folder.create({ name: actor.name, type: "Cards", folder: rootFolder.id });
+                let actorCardsFolder = game.folders.find(f => f.name === actor.name && f.type === "Cards" && f.folder?.id === rootFolder.id);
+                if (!actorCardsFolder) {
+                    actorCardsFolder = await Folder.create({ name: actor.name, type: "Cards", folder: rootFolder.id });
+                }
+                folderId = actorCardsFolder.id;
+            } catch (error) {
+                console.error("Dorso Oscuro | Error al organizar carpetas del GM:", error);
+            }
+        }
 
-        const folderId = actorCardsFolder.id;
-
-        // --- 2. CREACIÓN DE LAS 5 PILAS (Con carpeta asignada) ---
+        // --- 2. CREACIÓN DE LAS 5 PILAS (Directo al raíz si es jugador) ---
         const createStack = async (name, type) => {
             return await Cards.create({
                 name: `[${name}] ${actor.name}`,
                 type: type,
-                folder: folderId // <--- Asignamos la carpeta aquí
+                folder: folderId, // Si es null, Foundry lo crea en el raíz automáticamente
+                ownership: actor.ownership // Mantenemos esto para que el jugador sea dueño de sus cartas
             });
         };
 
@@ -313,10 +323,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         const banished = await createStack("Eliminadas", "pile");
         const inPlay = await createStack("En Juego", "pile");
 
-
-
         // --- 3. POBLAR EL MAZO ---
-        // Filtramos poderes y objetos que NO estén en el banquillo
         const itemsCartas = actor.items.filter(i =>
             (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.enBanquillo
         );

@@ -276,41 +276,67 @@ export class ManoHUD extends Application {
         html.find('.end-combat-btn').click(async ev => {
             Dialog.confirm({
                 title: "Recoger Mesa",
-                content: "¿Quieres recoger todas tus cartas? Se borrarán tus mazos, tu carpeta y tus tokens de esta partida.",
+                content: "¿Quieres recoger todas tus cartas? Se borrarán tus mazos, tokens y el alma temporal de esta partida.",
                 yes: async () => {
-                    // 1. Borrar Tokens del jugador en el tablero (AÑADIDO PARA LIMPIEZA TOTAL)
+                    // 1. Borrar el ACTOR TEMPORAL del alma
+                    // Buscamos en game.actors el que tenga el flag de 'isTempAlma' y pertenezca a este jugador
+                    //Quitado porque el jugador no puede borrarlo, lo hará el DJ desde su HUD al finalizar
+                    // const tempAlmaActor = game.actors.find(a =>
+                    //     a.flags.dorso_oscuro?.isTempAlma &&
+                    //     a.flags.dorso_oscuro?.ownerId === this.actor.id
+                    // );
+
+
+                    // if (tempAlmaActor) {
+                    //     try {
+                    //         await tempAlmaActor.delete();
+                    //     } catch (e) {
+                    //         console.warn("Dorso Oscuro | No se pudo borrar el actor temporal del alma.");
+                    //     }
+                    // }
+
+                    // 2. Borrar Tokens del jugador en el tablero
                     const tokens = canvas.tokens.placeables.filter(t => {
                         const f = t.document.flags.dorso_oscuro;
                         return f?.actorId === this.actor.id;
                     });
 
                     if (tokens.length > 0) {
-                        // Le pasamos limpiezaTotal para que el Hook ignore el borrado
                         await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id), { limpiezaTotal: true });
                     }
 
-                    // 2. Borrar Pilas de Cartas
+                    // 3. Borrar Pilas de Cartas
                     const pilas = ["deckId", "handId", "discardId", "enJuegoId", "eliminadasId"];
                     for (let key of pilas) {
                         const id = this.actor.system[key];
                         if (id) {
                             const stack = game.cards.get(id);
-                            if (stack) await stack.delete();
+                            try {
+                                if (stack) await stack.delete();
+                            } catch (e) {
+                                console.warn(`Dorso Oscuro | No se pudo borrar la pila ${key}.`);
+                            }
                         }
                     }
 
-                    // 3. Borrar Carpeta de Cartas
-                    const rootCardsFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
-                    const actorCardsFolder = game.folders.find(f => f.name === this.actor.name && f.type === "Cards" && f.folder?.id === rootCardsFolder?.id);
-                    if (actorCardsFolder) await actorCardsFolder.delete();
+                    // 4. Curar el Alma (Poner vida al máximo)
+                    const almaId = this.actor.system.almaActivaId;
+                    if (almaId) {
+                        const alma = this.actor.items.get(almaId);
+                        if (alma) {
+                            await alma.update({"system.vida.value": alma.system.vida.max});
+                        }
+                    }
 
-                    // 4. Resetear IDs en el actor
+                    // 5. Resetear IDs en el actor, energía y quitar el alma seleccionada
                     await this.actor.update({
                         "system.deckId": "",
                         "system.handId": "",
                         "system.discardId": "",
                         "system.enJuegoId": "",
-                        "system.eliminadasId": ""
+                        "system.eliminadasId": "",
+                        "system.energia.value": 0,
+                        "system.almaActivaId": ""
                     });
 
                     ui.notifications.info(`La mesa de ${this.actor.name} ha sido recogida por completo.`);
@@ -502,15 +528,25 @@ export class ManoHUD extends Application {
                 await this.actor.update({"system.energia.value": 7});
             }
 
+            // Los objetos de jugador ya se quedan en mesa por defecto. Solo filtramos los poderes.
             const tokensABorrar = canvas.tokens.placeables.filter(t => {
                 const f = t.document.flags.dorso_oscuro;
-                return f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_poder";
+                if (f?.isCard && f?.actorId === this.actor.id && f?.type === "carta_poder") {
+                    const item = this.actor.items.get(f.itemId);
+                    if (!item) return true;
+
+                    // LA MAGIA: Si es un poder con vida > 0 y le queda vida, se salva de borrarse
+                    if (item.system.vida && item.system.vida.max > 0 && item.system.vida.value > 0) {
+                        return false;
+                    }
+                    return true; // Si es un poder normal o su vida es 0, se borra
+                }
+                return false;
             });
 
             if (tokensABorrar.length > 0) {
                 const ids = tokensABorrar.map(t => t.id);
                 await canvas.scene.deleteEmbeddedDocuments("Token", ids);
-
                 await new Promise(resolve => setTimeout(resolve, 300));
             }
 
