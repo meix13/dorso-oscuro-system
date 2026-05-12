@@ -552,7 +552,10 @@ Hooks.once('init', async function() {
                     const item = actor?.items.get(flags.itemId);
 
                     // Si el objeto existe y tiene vida máxima > 0, lo pintamos con el formato
-                    if (item && item.system.vida && item.system.vida.max > 0) {
+                    if (flags.isMercader) {
+                        const precio = flags.costeEsencia || 0;
+                        nombreMostrado = `💰 ${precio}  |  ${flags.nombreReal}`;
+                    } else if (item && item.system.vida && item.system.vida.max > 0) {
                         nombreMostrado = `❤️ ${item.system.vida.value}  |  ${flags.nombreReal}`;
                     }
 

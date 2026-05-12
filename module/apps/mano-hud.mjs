@@ -109,7 +109,7 @@ export class ManoHUD extends Application {
 
                 // 1. Energía del Alma Activa
                 const alma = actor.items.get(actor.system.almaActivaId);
-                if (alma) energiaTotal += (alma.system.energiaBase || 0);
+                if (alma) energiaTotal += (alma.system.energiaAportada || 0);
 
                 // 2. Energía de los Objetos en el Tablero
                 const objetosEnMesa = canvas.tokens.placeables.filter(t => {

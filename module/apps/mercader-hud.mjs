@@ -96,9 +96,9 @@ export class MercaderHud extends Application {
             totalCartas.forEach((item, index) => {
                 const fila = Math.floor(index / cartasPorFila);
                 const columna = index % cartasPorFila;
-
+                const precio = item.system.costeEsencia || 0;
                 tokensACrear.push({
-                    name: item.name,
+                    name: `💰 ${precio}  |  ${item.name}`,
                     texture: { src: item.img },
                     width: 2.5,
                     height: 3.6,

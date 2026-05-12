@@ -68,6 +68,15 @@
                                 {{selectOptions config.mundos selected=system.mundo}}
                             </select>
                         </div>
+                        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
+                            <label style="flex: 1; font-size: 16px;">Precio en Esencia</label>
+                            <div style="flex: 1; display: flex; align-items: center; gap: 5px;">
+                                <i class="fas fa-coins" style="color: gold;"></i>
+                                <input type="number" name="system.costeEsencia" value="{{system.costeEsencia}}"
+                                       style="width: 60px; background: #111; color: #fff; text-align: center; border: 1px solid #444;"
+                                       title="Precio de venta en el Mercader">
+                            </div>
+                        </div>
 
                         <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
                             <label style="flex: 1; font-size: 16px;">Rareza</label>
@@ -97,7 +106,7 @@
                 </div>
                 <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
                     <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
-                    <input type="number" name="system.energiaBase" value="{{system.energiaBase}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
+                    <input type="number" name="system.energiaAportada" value="{{system.energiaAportada}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
                 </div>
                 <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; border-top: 1px solid #444; padding-top: 10px;">
                     <label style="flex: 1; font-size: 20px; color: #ff6666;"><i class="fas fa-dragon"></i> ¿Es una Criatura (Jefe)?</label>

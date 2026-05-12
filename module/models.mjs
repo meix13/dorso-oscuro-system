@@ -73,7 +73,6 @@ export class CartaAlmaData extends foundry.abstract.TypeDataModel {
                 value: new fields.NumberField({initial: 10, integer: true, min: 0}),
                 max: new fields.NumberField({initial: 10, integer: true, min: 1})
             }),
-            energiaBase: new fields.NumberField({initial: 1, integer: true, min: 0}), // Energía que genera por turno
             elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
             energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
             descripcion: new fields.HTMLField(),
@@ -108,7 +107,8 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             esDeCriatura: new fields.BooleanField({initial: false}),
             mundo: new fields.StringField({initial: "inicial", choices: ["inicial", "ghilliam_duh", "cu_sith", "aletehia", "glaistig"]}),
             rareza: new fields.StringField({initial: "comun", choices: ["comun", "infrecuente", "unica", ""]}),
-            cantidadExistente: new fields.NumberField({initial: 5, integer: true, min: 1})
+            cantidadExistente: new fields.NumberField({initial: 5, integer: true, min: 1}),
+            costeEsencia: new fields.NumberField({initial: 0, integer: true, min: 0})
         };
     }
 }
