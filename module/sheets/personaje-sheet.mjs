@@ -1,5 +1,6 @@
 // module/sheets/personaje-sheet.mjs
 import { ManoHUD } from "../apps/mano-hud.mjs";
+import { MercaderManager } from "../apps/mercader.mjs";
 
 export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
@@ -235,7 +236,6 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         await this.actor.update({ "system.estabilidad": nuevoValor });
     }
 
-
     async _onBorrarItem(event) {
         event.preventDefault();
 
@@ -244,14 +244,62 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         // Obtenemos el objeto completo de la base de datos de nuestro actor
         const item = this.actor.items.get(li.data("itemId"));
 
-        // Usamos la API nativa de Foundry para sacar un cuadro de confirmación
-        Dialog.confirm({
-            title: `Borrar Habilidad`,
-            content: `<p style="text-align: center;">¿Estás seguro de que quieres borrar la habilidad <strong>${item.name}</strong>?</p>`,
-            yes: () => item.delete(), // Si pulsa sí, la borramos de la base de datos
-            no: () => {}, // Si pulsa no, no hacemos nada
-            defaultYes: false // El botón "No" viene marcado por defecto por seguridad
-        });
+        // Verificamos si es el DJ y si el objeto es una carta comerciable
+        const isGM = game.user.isGM;
+        const esCartaComerciable = item.type === "carta_poder" || item.type === "carta_objeto";
+
+        // Si es el DJ borrando una carta, le damos las opciones avanzadas
+        if (isGM && esCartaComerciable) {
+            new Dialog({
+                title: `Borrar o Vender Carta`,
+                content: `
+                    <p style="text-align: center; margin-bottom: 5px;">¿Qué deseas hacer con la carta <strong>${item.name}</strong>?</p>
+                    <div style="background: rgba(0,0,0,0.1); border: 1px solid #444; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                        <p style="font-size: 13px; margin: 0 0 8px 0;">
+                            <i class="fas fa-trash" style="color: #ff4444;"></i> <b>Normal:</b> Para corregir errores. Simplemente se borra del jugador sin alterar la economía.
+                        </p>
+                        <p style="font-size: 13px; margin: 0;">
+                            <i class="fas fa-store" style="color: #00ccff;"></i> <b>Mercader:</b> Se destruye, se retira del mundo para que no vuelva a salir en el mercado, y el jugador recibe esencia. <br>
+                            <span style="font-size: 11px; color: #888; font-style: italic;">(Nota: Si quieres recuperarla en el futuro, busca el actor oculto "Papelera del Mercader" y bórrala de su ficha).</span>
+                        </p>
+                    </div>
+                    <div class="flexrow" style="align-items: center; justify-content: center; margin-bottom: 10px; gap: 10px;">
+                        <label style="font-weight: bold; flex: 0 0 auto;">Precio de Venta (Esencia):</label>
+                        <input type="number" id="precio-venta" value="4" style="width: 50px; text-align: center; font-weight: bold; background: #111; color: #fff; border: 1px solid #444;">
+                    </div>
+                `,
+                buttons: {
+                    vender: {
+                        label: "ELIMINAR MERCADER",
+                        icon: '<i class="fas fa-store"></i>',
+                        callback: async (html) => {
+                            const precio = parseInt(html.find('#precio-venta').val()) || 0;
+                            await MercaderManager.venderCarta(this.actor.id, item.id, precio);
+                        }
+                    },
+                    normal: {
+                        label: "ELIMINAR NORMAL",
+                        icon: '<i class="fas fa-trash"></i>',
+                        callback: () => item.delete()
+                    },
+                    cancelar: {
+                        label: "Cancelar",
+                        icon: '<i class="fas fa-times"></i>'
+                    }
+                },
+                default: "vender"
+            }, { width: 500 }).render(true);
+
+        } else {
+            // Borrado clásico nativo si no es DJ o si es una habilidad/alma
+            Dialog.confirm({
+                title: `Borrar Item`,
+                content: `<p style="text-align: center;">¿Estás seguro de que quieres borrar <strong>${item.name}</strong>?</p>`,
+                yes: () => item.delete(),
+                no: () => {},
+                defaultYes: false
+            });
+        }
     }
 
     async _onToggleBanquillo(event) {

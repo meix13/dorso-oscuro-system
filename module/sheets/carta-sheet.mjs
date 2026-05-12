@@ -52,6 +52,19 @@ export class CartaSheet extends foundry.appv1.sheets.ItemSheet {
             formatos: {
                 "vertical": "Vertical (Normal)",
                 "horizontal": "Horizontal (Tumbada)"
+            },
+            mundos: {
+                "inicial": "Inicial (Común)",
+                "ghilliam_duh": "Ghilliam Duh (Mundo 1)",
+                "cu_sith": "Cu Sith (Mundo 2)",
+                "aletehia": "Aletehia (Mundo 3)",
+                "glaistig": "Glaistig (Mundo 4)"
+            },
+            rarezas: {
+                "": "Ninguna / N/A",
+                "comun": "Común (5 copias)",
+                "infrecuente": "Infrecuente (3 copias)",
+                "unica": "Única (1 copia)"
             }
         };
 

@@ -5,6 +5,7 @@ import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
 import { CartaSheet } from "./sheets/carta-sheet.mjs";
 import { ManoHUD } from "./apps/mano-hud.mjs";
 import { DJHUD } from "./apps/dj-hud.mjs";
+import { MercaderHud } from "./apps/mercader-hud.mjs";
 
 
 
@@ -363,12 +364,21 @@ Hooks.once('init', async function() {
                     new DJHUD().render(true);
                 }
             };
+            const botonMercader = {
+                name: "panel-mercader",
+                title: "El Mercader",
+                icon: "fas fa-store",
+                button: true,
+                onClick: () => { new MercaderHud().render(true); }
+            };
 
             // Inyectamos de forma segura según la arquitectura (igual que el otro)
             if (Array.isArray(tokenControls.tools)) {
                 if (!tokenControls.tools.find(t => t.name === "panel-dj")) tokenControls.tools.push(botonDJ);
+                if (!tokenControls.tools.find(t => t.name === "panel-mercader")) tokenControls.tools.push(botonMercader);
             } else {
                 if (!tokenControls.tools["panel-dj"]) tokenControls.tools["panel-dj"] = botonDJ;
+                if (!tokenControls.tools["panel-mercader"]) tokenControls.tools["panel-mercader"] = botonMercader;
             }
         }
 

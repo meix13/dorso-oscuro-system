@@ -51,6 +51,37 @@
                     <label style="flex: 1.5; font-size: 18px; color: #ff6666;"><i class="fas fa-heart"></i> Vida de la Carta <span style="font-size: 12px; color: #888;">(0 = No tiene)</span></label>
                     <input type="number" name="system.vida.max" value="{{system.vida.max}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #ff4444;">
                 </div>
+                <div style="border: 1px solid #444; background: rgba(0,0,0,0.2); padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+                    <h3 style="color: #00ccff; border-bottom: 1px dashed #00ccff; margin-bottom: 10px; font-size: 16px;">
+                        <i class="fas fa-book-journal-whills"></i> Colección y Mercader
+                    </h3>
+
+                    <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
+                        <label style="flex: 1.5; font-size: 16px;">¿Es carta de Criatura?</label>
+                        <input type="checkbox" name="system.esDeCriatura" {{checked system.esDeCriatura}} style="flex: 0 0 30px;">
+                    </div>
+
+                    {{#unless system.esDeCriatura}}
+                        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
+                            <label style="flex: 1; font-size: 16px;">Mundo de Origen</label>
+                            <select name="system.mundo" style="flex: 1; background: #111; color: #d4c4a8; border: 1px solid #444; font-family: 'Kalam', cursive;">
+                                {{selectOptions config.mundos selected=system.mundo}}
+                            </select>
+                        </div>
+
+                        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
+                            <label style="flex: 1; font-size: 16px;">Rareza</label>
+                            <select name="system.rareza" style="flex: 1; background: #111; color: #d4c4a8; border: 1px solid #444; font-family: 'Kalam', cursive;">
+                                {{selectOptions config.rarezas selected=system.rareza}}
+                            </select>
+                        </div>
+
+                        <div class="stat-row flexrow" style="align-items: center;">
+                            <label style="flex: 1.5; font-size: 16px;">Copias Totales (Existencias)</label>
+                            <input type="number" name="system.cantidadExistente" value="{{system.cantidadExistente}}" style="flex: 0 0 60px; background: #111; color: #fff; text-align: center; border: 1px solid #444;">
+                        </div>
+                    {{/unless}}
+                </div>
             {{/if}}
 
             <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">

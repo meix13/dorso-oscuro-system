@@ -105,6 +105,10 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
             energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
             carpetaSistema: new fields.StringField({ initial: "" }),
+            esDeCriatura: new fields.BooleanField({initial: false}),
+            mundo: new fields.StringField({initial: "inicial", choices: ["inicial", "ghilliam_duh", "cu_sith", "aletehia", "glaistig"]}),
+            rareza: new fields.StringField({initial: "comun", choices: ["comun", "infrecuente", "unica", ""]}),
+            cantidadExistente: new fields.NumberField({initial: 5, integer: true, min: 1})
         };
     }
 }
