@@ -81,6 +81,21 @@ export class DJHUD extends Application {
             data.bossAlma = criaturaActiva.items.find(i => i.type === "carta_alma");
             const hand = game.cards.get(criaturaActiva.system.handId);
             const deck = game.cards.get(criaturaActiva.system.deckId);
+            const enJuegoBoss = game.cards.get(criaturaActiva.system.enJuegoId); // Buscamos su mesa
+
+            // --- NUEVO: Buscamos cartas con vida activas del Boss ---
+            const cartasVivasBossEnMesa = [];
+            if (enJuegoBoss) {
+                enJuegoBoss.cards.forEach(c => {
+                    const itemId = c.getFlag("dorso_oscuro", "itemId");
+                    const item = criaturaActiva.items.get(itemId);
+                    if (item && (item.type === "carta_poder" || item.type === "carta_objeto") && item.system.vida?.max > 0) {
+                        cartasVivasBossEnMesa.push(item);
+                    }
+                });
+            }
+            data.bossCartasVivas = cartasVivasBossEnMesa;
+            // --------------------------------------------------------
 
             const manoTotal = hand?.cards || [];
             data.bossPoderes = manoTotal.filter(c => {
@@ -337,23 +352,31 @@ export class DJHUD extends Application {
 
             // --- LÓGICA DE MUERTE DE CARTA EN TIEMPO REAL ---
             if (btn.type === "carta-vida" && newVal === 0 && currentVal > 0 && btn.action === "minus") {
+                const isBoss = actor.flags.dorso_oscuro?.isBossSession;
+
+                // Determinamos el nombre del destino para el mensaje
+                let destinoMensaje = "Descarte";
+                if (!isBoss && target.system.desaparece) {
+                    destinoMensaje = "Destierro (Eliminadas)";
+                }
+
                 Dialog.confirm({
                     title: "La carta ha sido destruida",
-                    content: `<p style="text-align:center;"><b>${target.name}</b> se ha quedado sin vida.<br>¿Retirar del tablero (Destierro)?</p>`,
+                    content: `<p style="text-align:center;"><b>${target.name}</b> se ha quedado sin vida.<br>¿Retirar del tablero (${destinoMensaje})?</p>`,
                     yes: async () => {
                         await target.update({[updatePath]: 0});
                         const tokenCarta = canvas.tokens.placeables.find(t => t.document.flags.dorso_oscuro?.itemId === btn.itemId);
-                        // Borrar el token automáticamente activa el Hook que la manda a eliminadas
+                        // Al borrar el token, el Hook "deleteToken" en sistema.js ya se encarga
+                        // de enviarlo al sitio correcto (Discard o Eliminadas).
                         if (tokenCarta) await canvas.scene.deleteEmbeddedDocuments("Token", [tokenCarta.id]);
                     },
                     no: async () => {
                         await target.update({[updatePath]: 0});
-                        // Actualizar token por si el DJ la quiere dejar viva con 0 HP
                         const tokenCarta = canvas.tokens.placeables.find(t => t.document.flags.dorso_oscuro?.itemId === btn.itemId);
                         if (tokenCarta) await tokenCarta.document.update({name: `❤️ 0  |  ${target.name}`});
                     }
                 });
-                return; // Detenemos la función para que el DJ decida en el cuadro de diálogo
+                return;
             }
 
             await target.update({[updatePath]: newVal});
@@ -375,6 +398,7 @@ export class DJHUD extends Application {
         });
 
 // --- ROBAR TODO (Inteligente: Baraja SOLO el descarte) ---
+        // --- ROBAR TODO (Siempre recupera descarte y roba todo el mazo) ---
         html.find('.boss-draw-all').click(async ev => {
             const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
             if (!actor) return;
@@ -385,25 +409,22 @@ export class DJHUD extends Application {
 
             if (!hand || !deck || !discard) return;
 
-            // 1. Si el mazo está vacío, pasamos el descarte al mazo
-            // Usamos deck.cards.size para mayor precisión en tiempo real
-            if (deck.cards.size === 0) {
-                if (discard.cards.size === 0) {
-                    ui.notifications.warn("No quedan cartas ni en el mazo ni en el descarte.");
-                    return;
-                }
-
+            // 1. Pasamos SIEMPRE todo el descarte al mazo (sin importar si el mazo tiene cartas o no)
+            if (discard.cards.size > 0) {
                 const idsParaDevolver = discard.cards.map(c => c.id);
                 await discard.pass(deck, idsParaDevolver);
-                await deck.shuffle();
-                ui.notifications.info("El mazo se ha barajado con las cartas del descarte.");
             }
 
-            // 2. Robamos todo lo que haya en el mazo (re-calculamos tras el posible barajeo)
+            // 2. Barajamos para asegurar que el sistema actualiza bien las referencias internas
+            await deck.shuffle();
+
+            // 3. Robamos TODA la reserva disponible del mazo directamente a la mano
             const mazoActualizado = game.cards.get(deck.id);
             if (mazoActualizado.availableCards.length > 0) {
                 await hand.draw(mazoActualizado, mazoActualizado.availableCards.length);
-                // ui.notifications.info("La criatura roba toda su reserva de cartas.");
+                ui.notifications.info("La criatura ha recuperado todas sus cartas (Mazo + Descarte).");
+            } else {
+                ui.notifications.warn("No quedan cartas para robar.");
             }
         });
 

@@ -279,19 +279,27 @@ Hooks.once('init', async function() {
                 const item = actor.items.get(flags.itemId);
 
                 if (card && item) {
+
                     // EL GRAN FILTRO: ¿Debe desaparecer?
                     let debeDesaparecer = item.system.desaparece;
+                    const isBoss = actor.flags.dorso_oscuro?.isBossSession;
 
-                    // Si era una carta con Vida (>0 de base) y se ha borrado el token, va a Eliminadas.
-                    if (item.system.vida && item.system.vida.max > 0) {
-                        debeDesaparecer = true;
+                    if (isBoss) {
+                        // LA REGLA DE LA CRIATURA: Sus cartas NUNCA se destierran.
+                        debeDesaparecer = false;
+                    } else {
+                        // Si es jugador y era una carta con Vida (>0 de base) y muere, va a Eliminadas.
+                        if (item.system.vida && item.system.vida.max > 0) {
+                            debeDesaparecer = true;
+                        }
                     }
 
                     if (debeDesaparecer) {
-                        await card.pass(eliminadas); // A la fosa común
+                        await card.pass(eliminadas); // A la fosa común (Jugadores)
                     } else {
-                        await card.pass(discard);    // Al descarte normal
+                        await card.pass(discard);    // Al descarte normal (Criatura / Cartas normales)
                     }
+
 
 
                     // Refrescamos el HUD para que se actualicen los números
