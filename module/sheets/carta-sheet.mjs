@@ -32,6 +32,7 @@ export class CartaSheet extends foundry.appv1.sheets.ItemSheet {
         // Banderas para saber qué campos mostrar en el HTML
         context.isAlma = context.item.type === "carta_alma";
         context.isJugable = (context.item.type === "carta_poder" || context.item.type === "carta_objeto");
+        context.isEquipo = context.item.type === "carta_equipo";
 
         // Opciones para los desplegables
         context.config = {
@@ -47,6 +48,10 @@ export class CartaSheet extends foundry.appv1.sheets.ItemSheet {
                 "cura": "Cura",
                 "defensa": "Defensa",
                 "otro": "Efecto / Otro"
+            },
+            formatos: {
+                "vertical": "Vertical (Normal)",
+                "horizontal": "Horizontal (Tumbada)"
             }
         };
 

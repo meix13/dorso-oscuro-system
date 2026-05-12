@@ -3,7 +3,7 @@
     "types": ["personaje"]
   },
   "Item": {
-    "types": ["habilidad", "carta_alma", "carta_poder", "carta_objeto"],
+    "types": ["habilidad", "carta_alma", "carta_poder", "carta_objeto","carta_equipo"],
     "habilidad": {
       "templates": [],
       "descripcion": "",
@@ -14,6 +14,7 @@
     },
     "carta_alma": {},
     "carta_poder": {},
-    "carta_objeto": {}
+    "carta_objeto": {},
+    "carta_equipo": {}
   }
 }

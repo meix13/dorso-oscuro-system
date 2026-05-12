@@ -108,3 +108,16 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
         };
     }
 }
+
+// 3. Carta de Equipo (Se baja al inicio y se queda)
+export class CartaEquipoData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        const fields = foundry.data.fields;
+        return {
+            formato: new fields.StringField({initial: "vertical", choices: ["vertical", "horizontal"]}),
+            elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
+            descripcion: new fields.HTMLField(),
+            carpetaSistema: new fields.StringField({ initial: "" }),
+        };
+    }
+}

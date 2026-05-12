@@ -24,6 +24,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" }
         };
 
+
         // Filtros de Habilidades (se quedan igual)
         context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
         context.habilidadesGenerales = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
@@ -42,6 +43,10 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
         context.barajaPoderes = barajaActiva.filter(i => i.type === "carta_poder");
         context.barajaObjetos = barajaActiva.filter(i => i.type === "carta_objeto");
+
+        // --- CARTAS DE EQUIPO GLOBALES ---
+        // Buscamos las cartas de equipo que el jugador tiene permiso de ver (las que el DJ ha desbloqueado)
+        context.equipoDisponible = game.items.filter(i => i.type === "carta_equipo" && i.testUserPermission(game.user, "OBSERVER"));
 
 
         return context;
@@ -104,6 +109,14 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
             // Abrimos el HUD (si ya estaba abierto, Foundry simplemente le da foco)
             new ManoHUD(this.actor).render(true);
+        });
+
+        // NUEVO: Escuchador para Ver cartas GLOBALES (Equipo)
+        html.find('.item-edit-global').click(ev => {
+            ev.preventDefault();
+            const itemId = $(ev.currentTarget).data("itemId");
+            const itemGlobal = game.items.get(itemId);
+            if (itemGlobal) itemGlobal.sheet.render(true);
         });
 
 

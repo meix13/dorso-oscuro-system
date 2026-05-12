@@ -114,6 +114,24 @@ export class DJHUD extends Application {
             data.disponibles = game.items.filter(i => i.type === "carta_alma" && i.system.esCriatura);
         }
 
+
+        // --- 3.  GESTIÓN DE EQUIPO  ---
+        const unlocked = game.settings.get("dorso_oscuro", "equiposDesbloqueados") || {};
+
+        // Buscamos todos los Items de tipo carta_equipo que existan en la barra lateral
+        data.cartasEquipoMundo = game.items.filter(i => i.type === "carta_equipo").map(item => {
+            return {
+                id: item.id,
+                name: item.name,
+                img: item.img,
+                formato: item.system.formato,
+                isUnlocked: !!unlocked[item.id] // Booleano para el template
+            };
+        });
+
+        return data;
+
+
         return data;
     }
 
@@ -217,24 +235,55 @@ export class DJHUD extends Application {
             }
         });
 
-        // --- DRAG & DROP: SIEMPRE BOCA ABAJO PARA EL DJ ---
+        // --- DRAG & DROP: BOCA ABAJO PARA EL DJ, BOCA ARRIBA PARA EL EQUIPO ---
         html.find('.boss-card-container').on('dragstart', ev => {
-            let itemId = ev.currentTarget.dataset.itemId;
-            const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+            const dataset = ev.currentTarget.dataset;
+            const itemId = dataset.itemId;
+
+            // 1. ¿Es una carta de equipo global?
+            const globalItem = game.items.get(itemId);
+            if (globalItem && globalItem.type === "carta_equipo") {
+                const dragData = {
+                    type: "CartaDorsoOscuro",
+                    isGlobal: true, // ¡Flag mágica para avisar al sistema!
+                    itemId: itemId,
+                    faceDown: false // El equipo se baja boca arriba
+                };
+                ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
+                return;
+            }
+
+            // 2. Si no es global, asumimos que es del Boss o un Jugador
+            let actorId = dataset.actorId;
+            let actor = game.actors.get(actorId);
+
+            // Si no tiene actorId en el HTML, es de la mano del Boss
+            if (!actor) {
+                actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+                actorId = actor?.id;
+            }
+
             if (!actor || !itemId) return;
 
-            // Traductor de ID: Igual que en el zoom
-            const hand = game.cards.get(actor.system.handId);
-            const card = hand?.cards.get(itemId);
-            if (card) itemId = card.getFlag("dorso_oscuro", "itemId");
+            // Traductor de ID para cartas de la mano del Boss
+            let finalItemId = itemId;
+            if (actor.flags.dorso_oscuro?.isBossSession) {
+                const hand = game.cards.get(actor.system.handId);
+                const card = hand?.cards.get(itemId);
+                if (card) finalItemId = card.getFlag("dorso_oscuro", "itemId");
+            }
 
+            const item = actor.items.get(finalItemId);
+            if (!item) return;
+
+            const faceDown = actor.flags.dorso_oscuro?.isBossSession && item.type !== "carta_equipo";
             const dorsoEspecial = actor.getFlag("dorso_oscuro", "dorsoUrl");
 
             const dragData = {
                 type: "CartaDorsoOscuro",
-                actorId: actor.id,
-                itemId: itemId,
-                faceDown: true, // Siempre oculta al caer
+                actorId: actorId,
+                itemId: finalItemId,
+                faceDown: faceDown,
                 backImg: dorsoEspecial
             };
             ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
@@ -264,14 +313,16 @@ export class DJHUD extends Application {
                     // --- LIMPIEZA DEL BOSS ---
                     const boss = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
                     if (boss) {
-                        // 1. Borrar Tokens del tablero
-                        const tokens = canvas.tokens.placeables.filter(t => {
+                        // 1. Borrar Tokens del tablero (Modificado para incluir cartas de equipo)
+                        const tokensABorrar = canvas.tokens.placeables.filter(t => {
                             const f = t.document.flags.dorso_oscuro;
-                            return f?.actorId === boss.id;
+                            const esDelBoss = f?.actorId === boss.id;
+                            const esCartaEquipo = f?.isCard && f?.type === "carta_equipo";
+                            return esDelBoss || esCartaEquipo;
                         });
 
-                        if (tokens.length > 0) {
-                            await canvas.scene.deleteEmbeddedDocuments("Token", tokens.map(t => t.id), { limpiezaTotal: true });
+                        if (tokensABorrar.length > 0) {
+                            await canvas.scene.deleteEmbeddedDocuments("Token", tokensABorrar.map(t => t.id), { limpiezaTotal: true });
                         }
 
                         // 2. Identificar la Carpeta de Cartas antes de borrar las pilas
@@ -350,6 +401,9 @@ export class DJHUD extends Application {
             let newVal = btn.action === "plus" ? currentVal + 1 : currentVal - 1;
             if (newVal < 0) newVal = 0;
 
+            const diff = newVal - currentVal;
+            if (diff === 0) return;
+
             // --- LÓGICA DE MUERTE DE CARTA EN TIEMPO REAL ---
             if (btn.type === "carta-vida" && newVal === 0 && currentVal > 0 && btn.action === "minus") {
                 const isBoss = actor.flags.dorso_oscuro?.isBossSession;
@@ -381,20 +435,45 @@ export class DJHUD extends Application {
 
             await target.update({[updatePath]: newVal});
 
+            // Solo para cambios de vida (Almas o cartas en mesa)
+            if (btn.type === "alma-vida" || btn.type === "carta-vida") {
+                const tokenToAnimate = canvas.tokens.placeables.find(t => t.document.flags.dorso_oscuro?.itemId === btn.itemId);
+                if (tokenToAnimate) {
+                    const isHeal = diff > 0;
+                    const color = isHeal ? 0x66ff66 : 0xff2222; // Verde brillante o Rojo sangre
+                    const text = isHeal ? `+${diff}` : `${diff}`;
+
+                    // Magia nativa de Foundry: Lanza el número flotando sobre el token
+                    canvas.interface.createScrollingText(tokenToAnimate.center, text, {
+                        anchor: CONST.TEXT_ANCHOR_POINTS.CENTER,
+                        direction: isHeal ? CONST.TEXT_ANCHOR_POINTS.TOP : CONST.TEXT_ANCHOR_POINTS.BOTTOM,
+                        distance: 2 * canvas.grid.size,
+                        fontSize: 48,
+                        fill: color,
+                        stroke: 0x000000,
+                        strokeThickness: 4,
+                        jitter: 0.25
+                    });
+                }
+            }
+
             // Refresco visual del token en tablero si no murió
             if (btn.type === "carta-vida") {
                 const tokenCarta = canvas.tokens.placeables.find(t => t.document.flags.dorso_oscuro?.itemId === btn.itemId);
                 if (tokenCarta) {
                     await tokenCarta.document.update({name: `❤️ ${newVal}  |  ${target.name}`});
                 }
+            }else {
+                // --- CORRECCIÓN ---
+                if (btn.type === "alma-vida" && newVal <= 0 && btn.action === "minus") {
+                    ui.notifications.warn(`¡El Alma de ${actor.name} ha caído! Es hora de mermar su Estabilidad.`);
+                }
+                // Cogemos siempre la activa real del actor, no el itemId del botón
+                const almaId = actor.system.almaActivaId;
+                await this._sincronizarTokenAlma(actor.id, almaId);
             }
 
-            if (btn.type === "alma-vida" && newVal <= 0 && btn.action === "minus") {
-                ui.notifications.warn(`¡El Alma de ${actor.name} ha caído! Es hora de mermar su Estabilidad.`);
-            }
 
-            const almaId = btn.itemId || actor.system.almaActivaId;
-            await this._sincronizarTokenAlma(actor.id, almaId);
         });
 
 // --- ROBAR TODO (Inteligente: Baraja SOLO el descarte) ---
@@ -461,6 +540,96 @@ export class DJHUD extends Application {
             ui.notifications.info("Turno finalizado. Cartas resueltas enviadas al descarte/eliminadas.");
         });
 
+        // En module/apps/dj-hud.mjs -> activateListeners(html)
+
+        html.find('.toggle-equipo').click(async ev => {
+            const itemId = ev.currentTarget.dataset.id;
+            const item = game.items.get(itemId);
+            if (!item) return;
+
+            const unlocked = game.settings.get("dorso_oscuro", "equiposDesbloqueados");
+            const newState = !unlocked[itemId];
+
+            // 1. Guardar en el setting
+            unlocked[itemId] = newState;
+            await game.settings.set("dorso_oscuro", "equiposDesbloqueados", unlocked);
+
+            // 2. Cambiar permisos nativos (OBSERVER para todos los jugadores si se desbloquea)
+            const ownership = newState
+                ? { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER }
+                : { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE };
+
+            await item.update({ ownership });
+
+            // 3. Notificación y refresco
+            ui.notifications.info(`Carta ${item.name} ${newState ? 'desbloqueada' : 'bloqueada'}`);
+            this.render();
+        });
+
+        // --- GESTIÓN DE VIDA DIRECTA (CRIATURA BOSS) ---
+        const updateBossLife = async (inputElement) => {
+            const actorId = inputElement.dataset.actorId;
+            const itemId = inputElement.dataset.itemId;
+            const newVal = parseInt(inputElement.value) || 0;
+
+            const actor = game.actors.get(actorId);
+            const alma = actor?.items.get(itemId);
+            if (!actor || !alma) return;
+
+            const currentVal = alma.system.vida.value;
+            const diff = newVal - currentVal;
+            if (diff === 0) return; // Si no hay cambio real, ignoramos
+
+            // Topamos la vida entre 0 y el Máximo
+            const cappedVal = Math.max(0, Math.min(newVal, alma.system.vida.max));
+            const realDiff = cappedVal - currentVal;
+
+            // 1. Guardamos la nueva vida
+            await alma.update({"system.vida.value": cappedVal});
+
+            // 2. Animación de texto flotante en la mesa
+            const tokenToAnimate = canvas.tokens.placeables.find(t => t.document.flags.dorso_oscuro?.itemId === itemId);
+            if (tokenToAnimate) {
+                const isHeal = realDiff > 0;
+                const color = isHeal ? 0x66ff66 : 0xff2222;
+                const text = isHeal ? `+${realDiff}` : `${realDiff}`;
+
+                canvas.interface.createScrollingText(tokenToAnimate.center, text, {
+                    anchor: CONST.TEXT_ANCHOR_POINTS.CENTER,
+                    direction: isHeal ? CONST.TEXT_ANCHOR_POINTS.TOP : CONST.TEXT_ANCHOR_POINTS.BOTTOM,
+                    distance: 2 * canvas.grid.size,
+                    fontSize: 48,
+                    fill: color,
+                    stroke: 0x000000,
+                    strokeThickness: 4,
+                    jitter: 0.25
+                });
+            }
+
+            // 3. Avisar si la criatura cae
+            if (cappedVal <= 0 && currentVal > 0) {
+                ui.notifications.warn(`¡La Criatura ${actor.name} ha caído!`);
+            }
+
+            // 4. Sincronizar el título del Token en la mesa (solo si no está oculta)
+            await this._sincronizarTokenAlma(actor.id, itemId);
+
+            // 5. Refrescar interfaz del DJ (sin saltos de scroll)
+            this.render(false);
+        };
+
+        // Si el DJ cambia el número y pulsa Enter o hace clic fuera
+        html.find('.boss-life-input').change(async ev => {
+            await updateBossLife(ev.currentTarget);
+        });
+
+        // Si el DJ hace clic en el botón de sincronizar (el icono de reciclaje verde)
+        html.find('.boss-life-update').click(async ev => {
+            const input = $(ev.currentTarget).siblings('.boss-life-input')[0];
+            await updateBossLife(input);
+        });
+
+
     }
 
     // --- LÓGICA DE SINCRONIZACIÓN VISUAL DEL TABLERO ---
@@ -489,10 +658,18 @@ export class DJHUD extends Application {
         const merma = actor.system.merma || 0;
         const decadencia = actor.system.decadencia || 0;
 
-        let nombreHUD = `❤️ ${vidaActual}  |  ⚡ ${energiaActual}`;
-        if (merma > 0) nombreHUD += `  |  ⏬ ${merma}`;
-        if (decadencia > 0) nombreHUD += `  |  🩸 ${decadencia}`;
-        nombreHUD += `  |  ${almaItem.name}`;
+        // --- PROTECCIÓN DEL NOMBRE DEL BOSS ---
+        const isFaceDown = almaToken.document.getFlag("dorso_oscuro", "isFaceDown");
+        let nombreHUD = "";
+
+        if (isFaceDown && actor.flags.dorso_oscuro?.isBossSession) {
+            nombreHUD = "Criatura Oculta";
+        } else {
+            nombreHUD = `❤️ ${vidaActual}  |  ⚡ ${energiaActual}`;
+            if (merma > 0) nombreHUD += `  |  ⏬ ${merma}`;
+            if (decadencia > 0) nombreHUD += `  |  🩸 ${decadencia}`;
+            nombreHUD += `  |  ${almaItem.name}`;
+        }
 
         const effects = [];
         if (merma > 0) effects.push("icons/svg/downgrade.svg");
@@ -502,5 +679,25 @@ export class DJHUD extends Application {
             name: nombreHUD,
             effects: effects
         });
+    }
+
+
+
+
+
+    async _onToggleEquipo(itemId) {
+        const unlocked = game.settings.get("dorso_oscuro", "equiposDesbloqueados");
+        const newState = !unlocked[itemId];
+
+        // 1. Actualizar el estado global
+        unlocked[itemId] = newState;
+        await game.settings.set("dorso_oscuro", "equiposDesbloqueados", unlocked);
+
+        // 2. Gestionar permisos (Poner a "Observador" para todos los jugadores)
+        const item = game.items.get(itemId);
+        if (item) {
+            const ownership = newState ? { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER } : { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE };
+            await item.update({ ownership });
+        }
     }
 }

@@ -1,13 +1,25 @@
 // module/sistema.js
-import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData } from "./models.mjs";
+import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData, CartaEquipoData } from "./models.mjs";
 import { PersonajeSheet } from "./sheets/personaje-sheet.mjs";
 import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
 import { CartaSheet } from "./sheets/carta-sheet.mjs";
 import { ManoHUD } from "./apps/mano-hud.mjs";
 import { DJHUD } from "./apps/dj-hud.mjs";
 
+
+
+
 Hooks.once('init', async function() {
     console.log("Dorso Oscuro | Inicializando");
+
+    // --- REGISTRO DE AJUSTES DEL SISTEMA ---
+    game.settings.register("dorso_oscuro", "equiposDesbloqueados", {
+        name: "Cartas de Equipo Descubiertas",
+        scope: "world",
+        config: false, // No se ve en el menú de ajustes normal
+        type: Object,
+        default: {} // Guardaremos algo como { "id-de-la-carta": true }
+    });
 
     // --- APAGAR LA REGLA DE ARRASTRE NATIVA (ESTILO JUEGO DE MESA) ---
     if (CONFIG.Token && CONFIG.Token.rulerClass) {
@@ -23,6 +35,7 @@ Hooks.once('init', async function() {
     CONFIG.Item.dataModels.carta_alma = CartaAlmaData;
     CONFIG.Item.dataModels.carta_poder = CartaJugableData;
     CONFIG.Item.dataModels.carta_objeto = CartaJugableData;
+    CONFIG.Item.dataModels.carta_equipo = CartaEquipoData;
 
     // Actualizamos Actors a su ruta estricta en V13/V14
     foundry.documents.collections.Actors.unregisterSheet("core", foundry.appv1.sheets.ActorSheet);
@@ -39,7 +52,7 @@ Hooks.once('init', async function() {
     });
 
     foundry.documents.collections.Items.registerSheet("dorso_oscuro", CartaSheet, {
-        types: ["carta_alma", "carta_poder", "carta_objeto"],
+        types: ["carta_alma", "carta_poder", "carta_objeto","carta_equipo"],
         makeDefault: true
     });
 
@@ -47,31 +60,43 @@ Hooks.once('init', async function() {
         "systems/dorso_oscuro/templates/parts/skill-list.hbs"
     ]);
 
-    // En module/sistema.js
 
-    // --- INTERCEPTAR EL DRAG & DROP EN EL TABLERO ---
-    // module/sistema.js
 
     // --- INTERCEPTAR EL DRAG & DROP EN EL TABLERO ---
     Hooks.on("dropCanvasData", async (canvas, data) => {
         if (data.type !== "CartaDorsoOscuro") return true;
 
-        const actor = game.actors.get(data.actorId);
-        const item = actor?.items.get(data.itemId);
-        if (!actor || !item) return true;
+        let actor = game.actors.get(data.actorId);
+        let item = actor?.items.get(data.itemId);
 
+        if (data.isGlobal) {
+            item = game.items.get(data.itemId);
+            if (!item) return true;
+        } else {
+            actor = game.actors.get(data.actorId);
+            item = actor?.items.get(data.itemId);
+            if (!actor || !item) return true;
+        }
+
+
+        // --- DIMENSIONES DINÁMICAS ---
         let width = 2.5;
         let height = 3.6;
 
-        // Si es una criatura, doblamos el tamaño
-        if (item.system.esCriatura) {
+        // Si es Equipo Horizontal, invertimos las dimensiones
+        if (item.type === "carta_equipo" && item.system.formato === "horizontal") {
+            width = 5;
+            height = 3.6;
+
+        } else if (item.system.esCriatura) {
+            // Si es una criatura, doblamos el tamaño
             width *= 2;
             height *= 2;
         }
 
         // --- 1. LÓGICA DE ECONOMÍA Y CARTA EN MANO ---
         let cardPassed = false;
-        if (item.type !== "carta_alma") {
+        if (item.type !== "carta_alma" && item.type !== "carta_equipo") {
             const hand = game.cards.get(actor.system.handId);
             const enJuego = game.cards.get(actor.system.enJuegoId);
 
@@ -205,7 +230,19 @@ Hooks.once('init', async function() {
             // C) CARTAS NORMALES (Poderes y Objetos)...
             // --- GESTIÓN DE DORSOS ---
             const reversoPorDefecto = "img_varias/cards/cartas_v2/reverso_carta1.png";
-            const reverso = data.backImg || reversoPorDefecto;
+            let reverso = data.backImg || reversoPorDefecto;
+
+            // --- Dorso para Cartas de Equipo ---
+            if (item.type === "carta_equipo") {
+                if (item.system.formato === "horizontal") {
+                    reverso = "img_varias/cards/cartas_v3/equipo/dorso_equipo_MOD20_100x140.jpg";
+                } else {
+                    // Si queremos cambiar el dorso vertical, lo cambiamos aquí, por ahora usamos el de carta normal
+                    reverso = "img_varias/cards/cartas_v3/equipo/dorso_equipo_MOD20_100x140.jpg";
+                }
+            }
+
+
             const estaOculta = data.faceDown || false;
 
             let tokenName = estaOculta ? "Carta Oculta" : item.name;
@@ -218,7 +255,7 @@ Hooks.once('init', async function() {
                     tokenName = `❤️ ${item.system.vida.max}  |  ${item.name}`;
                 }
             }
-
+// ... (un poco más abajo en la misma función dropCanvasData)
             const tokenData = {
                 name: tokenName,
                 texture: { src: estaOculta ? reverso : item.img },
@@ -233,11 +270,12 @@ Hooks.once('init', async function() {
                     dorso_oscuro: {
                         isCard: true,
                         itemId: item.id,
-                        actorId: actor.id,
+                        actorId: actor ? actor.id : null, // <-- ESTA LÍNEA ES CLAVE
                         type: item.type,
                         isFaceDown: estaOculta,
                         imgReal: item.img,
-                        nombreReal: item.name
+                        nombreReal: item.name,
+                        reverso: reverso
                     }
                 }
             };
@@ -466,32 +504,59 @@ Hooks.once('init', async function() {
 
         // --- 3. BOTÓN DE REVELAR / OCULTAR (TOGGLE) ---
         if (game.user.isGM) {
-            const icono = flags.isFaceDown ? "fa-eye" : "fa-eye-slash";
-            const titulo = flags.isFaceDown ? "Revelar Carta" : "Ocultar Carta de nuevo";
-            const color = flags.isFaceDown ? "#66ff66" : "#ffaa00";
 
-            const btnToggle = $(`
+
+            const esAlmaJugador = flags.type === "carta_alma" && tokenDoc.actor?.getFlag("dorso_oscuro", "isTempAlma");
+
+            // Solo mostramos el botón si NO es el alma de un jugador
+            // (Esto permite que las cartas normales y el Alma del Boss sigan teniendo el botón)
+            if (!esAlmaJugador) {
+                const icono = flags.isFaceDown ? "fa-eye" : "fa-eye-slash";
+                const titulo = flags.isFaceDown ? "Revelar Carta" : "Ocultar Carta de nuevo";
+                const color = flags.isFaceDown ? "#66ff66" : "#ffaa00";
+
+                const btnToggle = $(`
                 <div class="control-icon" title="${titulo}" style="border: 2px solid ${color}; border-radius: 5px; background: rgba(0,0,0,0.5);">
                     <i class="fas ${icono}" style="color: ${color};"></i>
                 </div>
             `);
 
-            $html.find('.col.right').prepend(btnToggle);
+                $html.find('.col.right').prepend(btnToggle);
 
-            btnToggle.click(async () => {
-                const nuevoEstado = !flags.isFaceDown;
-                const nuevaImagen = nuevoEstado ? (flags.reverso || "img_varias/cards/cartas_v2/reverso_carta1.png") : flags.imgReal;
-                const nuevoNombre = nuevoEstado ? (flags.type === "carta_alma" ? "Criatura Oculta" : "Carta Oculta") : flags.nombreReal;
+                btnToggle.click(async () => {
+                    const nuevoEstado = !flags.isFaceDown;
 
-                await tokenDoc.update({
-                    "name": nuevoNombre,
-                    "texture.src": nuevaImagen,
-                    "flags.dorso_oscuro.isFaceDown": nuevoEstado
+                    // 1. Calculamos el dorso con lógica de respaldo
+                    let dorsoFinal = flags.reverso || "img_varias/cards/cartas_v2/reverso_carta1.png";
+
+                    // Si es equipo y no tiene el flag guardado, forzamos el suyo
+                    if (flags.type === "carta_equipo") {
+                        dorsoFinal = "img_varias/cards/cartas_v3/equipo/dorso_equipo_MOD20_100x140.jpg";
+                    }
+
+                    const nuevaImagen = nuevoEstado ? dorsoFinal : flags.imgReal;
+
+                    // --- NUEVO: Construir título con vida si se está revelando ---
+                    let nombreMostrado = flags.nombreReal;
+                    const actor = game.actors.get(flags.actorId);
+                    const item = actor?.items.get(flags.itemId);
+
+                    // Si el objeto existe y tiene vida máxima > 0, lo pintamos con el formato
+                    if (item && item.system.vida && item.system.vida.max > 0) {
+                        nombreMostrado = `❤️ ${item.system.vida.value}  |  ${flags.nombreReal}`;
+                    }
+
+                    const nuevoNombre = nuevoEstado ? (flags.type === "carta_alma" ? "Criatura Oculta" : "Carta Oculta") : nombreMostrado;
+
+                    await tokenDoc.update({
+                        "name": nuevoNombre,
+                        "texture.src": nuevaImagen,
+                        "flags.dorso_oscuro.isFaceDown": nuevoEstado
+                    });
+
+                    app.close();
                 });
-
-                // ui.notifications.info(nuevoEstado ? "Carta ocultada." : `¡${flags.nombreReal} revelada!`);
-                app.close(); // CORREGIDO: Foundry V13/V14 prefiere close() en lugar del antiguo clear()
-            });
+            }
         }
 
         if (flags.type === "carta_alma") return;
