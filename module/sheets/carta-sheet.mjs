@@ -43,12 +43,6 @@ export class CartaSheet extends foundry.appv1.sheets.ItemSheet {
                 "luz": "Luz",
                 "oscuridad": "Oscuridad"
             },
-            tiposAccion: {
-                "ataque": "Ataque",
-                "cura": "Cura",
-                "defensa": "Defensa",
-                "otro": "Efecto / Otro"
-            },
             formatos: {
                 "vertical": "Vertical (Normal)",
                 "horizontal": "Horizontal (Tumbada)"

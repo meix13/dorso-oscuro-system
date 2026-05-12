@@ -1,96 +1,141 @@
-<div class="mercader-container flexcol" style="background: rgba(20,20,20,0.95); color: white; border: 2px solid #00ccff; border-radius: 8px; height: 100%; padding: 10px;">
+{{!--
+  Añadimos este pequeño bloque de estilo para manejar las pestañas.
+  Esto es mucho más limpio que intentar hacerlo todo con estilos en línea.
+--}}
+<style>
+    .mercader-app .tabs {
+        border-bottom: 1px solid #00ccff !important;
+        height: 30px;
+        line-height: 30px;
+    }
+    .mercader-app .tabs .item {
+        border: 1px solid #444;
+        border-bottom: none;
+        background: rgba(0, 0, 0, 0.4);
+        color: #888;
+        border-radius: 5px 5px 0 0;
+        margin-right: 5px;
+        font-size: 13px;
+        transition: all 0.2s;
+    }
+    .mercader-app .tabs .item.active {
+        background: rgba(0, 204, 255, 0.2) !important;
+        color: #00ccff !important;
+        border: 1px solid #00ccff !important;
+        border-bottom: 2px solid #141414 !important; /* Pisa la línea azul para dar efecto de pestaña abierta */
+        text-shadow: 0 0 5px #00ccff;
+    }
+    .mercader-app .tabs .item:hover {
+        color: white;
+        background: rgba(0, 204, 255, 0.1);
+    }
+</style>
 
-    {{!-- 1. ZONA DE CONFIGURACIÓN --}}
-    <div class="config-section flexcol" style="flex: 0 0 auto; background: rgba(0, 204, 255, 0.1); border: 1px solid #00ccff; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px;">
-        <h3 style="color: #00ccff; text-align: center; margin: 0 0 10px 0; border-bottom: 1px dashed #00ccff; padding-bottom: 5px; font-size: 16px;">
-            <i class="fas fa-store"></i> Parámetros de la Oferta
-        </h3>
+<div class="mercader-container flexcol" style="background: #141414; color: white; border: 2px solid #00ccff; border-radius: 8px; height: 100%; padding: 10px;">
 
-        <div class="flexrow" style="gap: 20px; align-items: flex-start;">
-            {{!-- ... (Los checkboxes de mundos y los inputs numéricos se quedan igual) ... --}}
-            <div class="flexcol" style="flex: 1;">
-                <label style="color: #aaa; font-weight: bold; font-size: 12px; margin-bottom: 5px;">Mundos Activos:</label>
-                <div class="grid" style="grid-template-columns: 1fr 1fr; gap: 5px;">
-                    {{#each mundos as |m|}}
-                        <label style="font-size: 12px; cursor: pointer;">
-                            <input type="checkbox" class="mundo-checkbox" value="{{m.id}}" checked> {{m.nombre}}
-                        </label>
+    {{!-- NAVEGACIÓN DE PESTAÑAS --}}
+    <nav class="tabs flexrow" style="flex: 0 0 30px; margin-bottom: 15px;">
+        <a class="item" data-tab="tienda">
+            <i class="fas fa-coins"></i> Tienda y Generador
+        </a>
+        <a class="item" data-tab="catalogo">
+            <i class="fas fa-search"></i> Catálogo del DJ
+        </a>
+    </nav>
+
+    {{!-- CONTENEDOR DE LAS PESTAÑAS --}}
+    <section class="tab-content" style="flex: 1; overflow: hidden; display: flex; flex-direction: column;">
+
+        {{!-- PESTAÑA 1: LA TIENDA --}}
+        <div class="tab flexcol" data-tab="tienda" style="height: 100%;">
+            {{!-- Aquí va toda tu zona de configuración y escaparate que ya teníamos --}}
+            {{!-- (No cambies nada de lo que hay dentro de la pestaña tienda, ya estaba bien) --}}
+
+            <div class="config-section" style="background: rgba(0, 204, 255, 0.05); border: 1px solid #00ccff; padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; flex: 0 0 auto;">
+                <h3 style="color: #00ccff; text-align: center; margin: 0 0 10px 0; border-bottom: 1px dashed #00ccff; padding-bottom: 5px; font-size: 16px;">
+                    <i class="fas fa-store"></i> Parámetros de la Oferta
+                </h3>
+                {{!-- ... (resto del contenido de la cabecera) ... --}}
+                <div style="display: flex; gap: 15px; align-items: stretch;">
+                    {{!-- Columna Mundos --}}
+                    <div style="flex: 0 0 260px; display: flex; flex-direction: column;">
+                        <label style="color: #aaa; font-weight: bold; font-size: 12px; margin-bottom: 5px;">Mundos Activos:</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px;">
+                            {{#each mundos as |m|}}
+                                <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" class="mundo-checkbox" value="{{m.id}}" checked style="margin: 0; width: 14px; height: 14px;">
+                                    <span>{{m.nombre}}</span>
+                                </label>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{!-- Columna Generación Manual --}}
+                    <div style="flex: 0 0 170px; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid #444; border-right: 1px solid #444; padding: 0 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <label style="font-weight: bold; font-size: 12px;">Objetos:</label>
+                            <input type="number" id="num-objetos" value="2" style="width: 45px; height: 22px; text-align: center; background: #111; color: white; border: 1px solid #444;">
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <label style="font-weight: bold; font-size: 12px;">Poderes:</label>
+                            <input type="number" id="num-poderes" value="7" style="width: 45px; height: 22px; text-align: center; background: #111; color: white; border: 1px solid #444;">
+                        </div>
+                        <button id="btn-generar-oferta" style="background: #003366; color: #00ccff; border: 1px solid #00ccff; font-weight: bold; padding: 3px; cursor: pointer; font-size: 11px;">
+                            GENERAR A MEDIDA
+                        </button>
+                    </div>
+                    {{!-- Columna Botones Globales --}}
+                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                        <button id="btn-generar-mesa" style="background: #6600cc; color: #e6ccff; border: 1px solid #a64dff; font-weight: bold; padding: 6px; cursor: pointer; font-size: 14px; margin-bottom: 6px;">
+                            <i class="fas fa-dice-d20"></i> MESA MERCADER
+                        </button>
+                        <div style="display: flex; gap: 5px;">
+                            <button id="btn-pasar-tablero" style="flex: 1; background: #225522; color: white; border: 1px solid #383; font-size: 11px; padding: 4px; cursor: pointer;">
+                                <i class="fas fa-layer-group"></i> TABLERO
+                            </button>
+                            <button id="btn-recoger-tablero" style="flex: 1; background: #552222; color: white; border: 1px solid #833; font-size: 11px; padding: 4px; cursor: pointer;">
+                                <i class="fas fa-trash-sweep"></i> RECOGER
+                            </button>
+                            <button id="btn-limpiar-oferta" style="flex: 1; background: #4a0000; color: #ff6666; border: 1px solid #ff4444; font-size: 11px; padding: 4px; cursor: pointer;">
+                                <i class="fas fa-eraser"></i> LIMPIAR
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="oferta-section flexcol" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                {{!-- Contenido de la oferta (Objetos y Poderes) --}}
+                <h4 style="color: gold; border-bottom: 1px solid gold; margin-bottom: 10px;"><i class="fas fa-suitcase"></i> Objetos en Venta</h4>
+                <div class="flexrow" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+                    {{#each oferta.objetos as |obj|}}
+                        <div class="mercader-card item" data-item-id="{{obj.id}}" draggable="true" style="flex: 0 0 110px; width: 110px; text-align: center;">
+                            <img src="{{obj.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid gold; border-radius: 5px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #ddd; display: block; margin-top: 4px;">{{obj.name}}</span>
+                        </div>
+                    {{/each}}
+                </div>
+                <h4 style="color: #ff4500; border-bottom: 1px solid #ff4500; margin-bottom: 10px;"><i class="fas fa-bolt"></i> Poderes en Venta</h4>
+                <div class="flexrow" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap;">
+                    {{#each oferta.poderes as |pod|}}
+                        <div class="mercader-card item" data-item-id="{{pod.id}}" draggable="true" style="flex: 0 0 110px; width: 110px; text-align: center;">
+                            <img src="{{pod.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #ff4500; border-radius: 5px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #ddd; display: block; margin-top: 4px;">{{pod.name}}</span>
+                        </div>
                     {{/each}}
                 </div>
             </div>
+        </div>
 
-            <div class="flexcol" style="flex: 1; align-items: center; justify-content: center; gap: 10px;">
-                <div class="flexrow" style="align-items: center; gap: 10px;">
-                    <label style="font-weight: bold;">Nº Objetos:</label>
-                    <input type="number" id="num-objetos" value="2" style="width: 50px; text-align: center; background: #111; color: white; border: 1px solid #444;">
-                </div>
-                <div class="flexrow" style="align-items: center; gap: 10px;">
-                    <label style="font-weight: bold;">Nº Poderes:</label>
-                    <input type="number" id="num-poderes" value="7" style="width: 50px; text-align: center; background: #111; color: white; border: 1px solid #444;">
-                </div>
-            </div>
-
-            {{!-- NUEVA ZONA DE BOTONES DE CONTROL --}}
-            <div class="flexcol" style="flex: 1; justify-content: center; gap: 5px;">
-                <div class="flexrow" style="gap: 5px;">
-                    <button id="btn-generar-oferta" style="flex: 2; background: #003366; color: #00ccff; border: 1px solid #00ccff; font-weight: bold; padding: 8px; cursor: pointer;" title="Generar una nueva oferta">
-                        <i class="fas fa-magic"></i> GENERAR OFERTA
-                    </button>
-                    <button id="btn-limpiar-oferta" style="flex: 1; background: #4a0000; color: #ff6666; border: 1px solid #ff4444; font-weight: bold; padding: 8px; cursor: pointer;" title="Vaciar el escaparate actual">
-                        <i class="fas fa-eraser"></i> LIMPIAR
-                    </button>
-                </div>
-
-                <div class="flexrow" style="gap: 5px;">
-                    <button id="btn-pasar-tablero" style="background: #225522; color: white; border: 1px solid #383; font-size: 10px; padding: 5px; cursor: pointer;" title="Coloca toda la oferta en el centro del tablero">
-                        <i class="fas fa-layer-group"></i> PASAR A TABLERO
-                    </button>
-                    <button id="btn-recoger-tablero" style="background: #552222; color: white; border: 1px solid #833; font-size: 10px; padding: 5px; cursor: pointer;" title="Borra todos los tokens del mercader de la mesa">
-                        <i class="fas fa-trash-sweep"></i> RECOGER MESA
-                    </button>
-                </div>
+        {{!-- PESTAÑA 2: EL CATÁLOGO --}}
+        <div class="tab flexcol" data-tab="catalogo" style="height: 100%;">
+            {{!-- Aquí construiremos el buscador en el siguiente paso --}}
+            <div style="flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #444; border-radius: 10px;">
+                <p style="color: #888; font-size: 16px; text-align: center;">
+                    <i class="fas fa-search" style="font-size: 30px; margin-bottom: 10px; display: block;"></i>
+                    Buscador de Cartas en desarrollo...
+                </p>
             </div>
         </div>
-    </div>
 
-    {{!-- 2. EL ESCAPARATE (La Oferta Generada) --}}
-    <div class="oferta-section flexcol" style="flex: 1; overflow-y: auto;">
-
-        <h4 style="color: gold; border-bottom: 1px solid gold; margin-bottom: 10px;">
-            <i class="fas fa-suitcase"></i> Objetos en Venta
-        </h4>
-        <div class="flexrow" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; min-height: 160px;">
-            {{#if oferta.objetos.length}}
-                {{#each oferta.objetos as |obj|}}
-                {{!-- CORRECCIÓN CSS: flex: 0 0 110px para evitar el estiramiento --}}
-                    <div class="mercader-card item" data-item-id="{{obj.id}}" draggable="true" style="flex: 0 0 110px; width: 110px; text-align: center; cursor: grab;">
-                        <img src="{{obj.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid gold; border-radius: 5px; pointer-events: none;" draggable="false">
-                        <span style="font-size: 11px; font-weight: bold; color: #ddd; display: block; margin-top: 4px;">{{obj.name}}</span>
-                    </div>
-                {{/each}}
-            {{else}}
-                <span style="color: #666; font-style: italic;">Sin objetos generados...</span>
-            {{/if}}
-        </div>
-
-        <h4 style="color: #ff4500; border-bottom: 1px solid #ff4500; margin-bottom: 10px;">
-            <i class="fas fa-bolt"></i> Poderes en Venta
-        </h4>
-        <div class="flexrow" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap; padding-bottom: 10px;">
-            {{#if oferta.poderes.length}}
-                {{#each oferta.poderes as |pod|}}
-                {{!-- CORRECCIÓN CSS: flex: 0 0 110px para evitar el estiramiento --}}
-                    <div class="mercader-card item" data-item-id="{{pod.id}}" draggable="true" style="flex: 0 0 110px; width: 110px; text-align: center; cursor: grab;">
-                        <img src="{{pod.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #ff4500; border-radius: 5px; pointer-events: none;" draggable="false">
-                        <span style="font-size: 11px; font-weight: bold; color: #ddd; display: block; margin-top: 4px;">{{pod.name}}</span>
-                    </div>
-                {{/each}}
-            {{else}}
-                <span style="color: #666; font-style: italic;">Sin poderes generados...</span>
-            {{/if}}
-        </div>
-
-    </div>
-
-
+    </section>
 </div>

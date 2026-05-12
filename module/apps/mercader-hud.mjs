@@ -13,12 +13,13 @@ export class MercaderHud extends Application {
             id: "mercader-hud",
             title: "El Mercader - Dorso Oscuro",
             template: "systems/dorso_oscuro/templates/apps/mercader-hud.hbs",
-            width: 950,
-            height: 600,
+            width: 780, // Lo ensanchamos un pelín para que quepan bien los nuevos botones
+            height: 650,
             classes: ["dorso_oscuro", "mercader-app"],
             resizable: true,
-            // Activamos el Drag & Drop nativo de Foundry
-            dragDrop: [{ dragSelector: ".mercader-card" }]
+            dragDrop: [{ dragSelector: ".mercader-card" }],
+            // NUEVO: Activamos el sistema de pestañas de Foundry
+            tabs: [{ navSelector: ".tabs", contentSelector: ".tab-content", initial: "tienda" }]
         });
     }
 
@@ -147,6 +148,23 @@ export class MercaderHud extends Application {
             this.render(false);
 
             ui.notifications.info("El escaparate del mercader ha sido vaciado.");
+        });
+
+        // --- GENERAR MESA MERCADER  ---
+        html.find('#btn-generar-mesa').click(ev => {
+            const mundosSeleccionados = [];
+            html.find('.mundo-checkbox:checked').each(function() {
+                mundosSeleccionados.push($(this).val());
+            });
+
+            if (mundosSeleccionados.length === 0) {
+                return ui.notifications.warn("Debes seleccionar al menos un mundo.");
+            }
+
+            // Llamamos al cerebro forzando 2 objetos y 12 poderes
+            this.ofertaActual = MercaderManager.generarOferta(mundosSeleccionados, 2, 12);
+            this.render(false);
+            ui.notifications.info("Se ha generado la Mesa del Mercader (2 Objetos / 12 Poderes).");
         });
 
     }

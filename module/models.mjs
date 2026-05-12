@@ -94,8 +94,10 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             }),
             // ------------------------------------------------------
             costeEnergia: new fields.NumberField({initial: 1, integer: true, min: 0}),
-            elemento: new fields.StringField({initial: "ninguno", choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]}),
-            tipoAccion: new fields.StringField({initial: "otro", choices: ["ataque", "cura", "defensa", "otro"]}),
+            elemento: new fields.StringField({
+                initial: "ninguno",
+                choices: ["vida", "muerte", "luz", "oscuridad", "ninguno"]
+            }),
             formulaBase: new fields.StringField({initial: ""}),
             esInstantanea: new fields.BooleanField({initial: false}),
             desaparece: new fields.BooleanField({initial: false}),
@@ -103,13 +105,15 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             enBanquillo: new fields.BooleanField({initial: false}),
             limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
             energiaAportada: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            carpetaSistema: new fields.StringField({ initial: "" }),
+            carpetaSistema: new fields.StringField({initial: ""}),
             esDeCriatura: new fields.BooleanField({initial: false}),
-            mundo: new fields.StringField({initial: "inicial", choices: ["inicial", "ghilliam_duh", "cu_sith", "aletehia", "glaistig"]}),
+            mundo: new fields.StringField({
+                initial: "inicial",
+                choices: ["inicial", "ghilliam_duh", "cu_sith", "aletehia", "glaistig"]
+            }),
             rareza: new fields.StringField({initial: "comun", choices: ["comun", "infrecuente", "unica", ""]}),
-            cantidadExistente: new fields.NumberField({initial: 5, integer: true, min: 1}),
-            costeEsencia: new fields.NumberField({initial: 0, integer: true, min: 0})
-        };
+            cantidadExistente: new fields.NumberField({initial: 5, integer: true, min: 1})
+        }
     }
 }
 
