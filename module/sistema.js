@@ -149,7 +149,7 @@ Hooks.once('init', async function() {
 
             // --- A) EL ALMA DE LA CRIATURA DEL DJ ---
             if (actor.flags.dorso_oscuro?.isBossSession) {
-                const reversoPorDefecto = "img_varias/cards/cartas_v2/reverso_carta1.png";
+                const reversoPorDefecto = "systems/dorso_oscuro/assets/cartas/reverso_carta1.png";
                 const reverso = data.backImg || actor.getFlag("dorso_oscuro", "dorsoUrl") || reversoPorDefecto;
                 const estaOculta = data.faceDown || false;
 
@@ -230,16 +230,16 @@ Hooks.once('init', async function() {
         } else {
             // C) CARTAS NORMALES (Poderes y Objetos)...
             // --- GESTIÓN DE DORSOS ---
-            const reversoPorDefecto = "img_varias/cards/cartas_v2/reverso_carta1.png";
+            const reversoPorDefecto = "systems/dorso_oscuro/assets/cartas/reverso_carta1.png";
             let reverso = data.backImg || reversoPorDefecto;
 
             // --- Dorso para Cartas de Equipo ---
             if (item.type === "carta_equipo") {
                 if (item.system.formato === "horizontal") {
-                    reverso = "img_varias/cards/cartas_v3/equipo/dorso_equipo_MOD20_100x140.jpg";
+                    reverso = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
                 } else {
                     // Si queremos cambiar el dorso vertical, lo cambiamos aquí, por ahora usamos el de carta normal
-                    reverso = "img_varias/cards/cartas_v3/equipo/dorso_equipo_MOD20_100x140.jpg";
+                    reverso = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
                 }
             }
 
@@ -537,11 +537,11 @@ Hooks.once('init', async function() {
                     const nuevoEstado = !flags.isFaceDown;
 
                     // 1. Calculamos el dorso con lógica de respaldo
-                    let dorsoFinal = flags.reverso || "img_varias/cards/cartas_v2/reverso_carta1.png";
+                    let dorsoFinal = flags.reverso || "systems/dorso_oscuro/assets/cartas/reverso_carta1.png";
 
                     // Si es equipo y no tiene el flag guardado, forzamos el suyo
                     if (flags.type === "carta_equipo") {
-                        dorsoFinal = "img_varias/cards/cartas_v3/equipo/dorso_equipo_MOD20_100x140.jpg";
+                        dorsoFinal = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
                     }
 
                     const nuevaImagen = nuevoEstado ? dorsoFinal : flags.imgReal;

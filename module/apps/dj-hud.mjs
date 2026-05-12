@@ -185,7 +185,7 @@ export class DJHUD extends Application {
                     .replace(/\s+/g, '_'); // Cambia espacios por _
             }
 
-            const dorsoUrl = `img_varias/cards/cartas_v3/criaturas/${nombreSistema}/${nombreSistema}_dorso_cartas.jpg`;
+            const dorsoUrl = `system/dorso_oscuro/assets/cartas/criaturas/${nombreSistema}/${nombreSistema}_dorso_cartas.jpg`;
 
             const bossActor = await Actor.create({
                 name: `[BOSS] ${bossTemplate.name}`,

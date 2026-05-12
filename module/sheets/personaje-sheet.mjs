@@ -392,7 +392,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         const cardsData = itemsCartas.map(item => ({
             name: item.name,
             faces: [{ img: item.img, name: item.name }],
-            back: { img: "img_varias/cards/cartas_v2/reverso_carta1.png" },
+            back: { img: "systems/dorso_oscuro/assets/cartas/reverso_carta1.png" },
             flags: { dorso_oscuro: { itemId: item.id } }
         }));
 
