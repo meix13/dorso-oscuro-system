@@ -145,4 +145,44 @@ export class MercaderManager {
             poderes: ofertaPoderes
         };
     }
+
+    /**
+     * 5. OBTENER CATÁLOGO COMPLETO
+     * Devuelve todas las cartas del sistema con su conteo de stock.
+     */
+    static obtenerCatalogoCompleto() {
+        const cartasMundo = game.items.filter(i =>
+            (i.type === "carta_poder" || i.type === "carta_objeto") && !i.system.esDeCriatura
+        );
+
+        // Contamos cartas en uso (igual que en obtenerStock)
+        const cartasEnUso = {};
+        const actoresValidos = game.actors.filter(a => a.type === "personaje" && !a.flags.dorso_oscuro?.isTempAlma && !a.flags.dorso_oscuro?.isBossSession);
+
+        for (let actor of actoresValidos) {
+            for (let item of actor.items) {
+                if (item.type === "carta_poder" || item.type === "carta_objeto") {
+                    const nombre = item.name;
+                    cartasEnUso[nombre] = (cartasEnUso[nombre] || 0) + 1;
+                }
+            }
+        }
+
+        return cartasMundo.map(c => {
+            const total = c.system.cantidadExistente || 1;
+            const usadas = cartasEnUso[c.name] || 0;
+            return {
+                id: c.id,
+                name: c.name,
+                img: c.img,
+                tipo: c.type === "carta_poder" ? "Poder" : "Objeto",
+                mundo: c.system.mundo,
+                rareza: c.system.rareza,
+                total: total,
+                disponibles: Math.max(0, total - usadas),
+                esInstantanea: c.system.esInstantanea,
+                desaparece: c.system.desaparece
+            };
+        }).sort((a, b) => a.name.localeCompare(b.name));
+    }
 }

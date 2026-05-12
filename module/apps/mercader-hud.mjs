@@ -4,8 +4,9 @@ import { MercaderManager } from "./mercader.mjs";
 export class MercaderHud extends Application {
     constructor(options = {}) {
         super(options);
-        // Guardamos la oferta generada para que no se borre si cerramos/abrimos la ventana
         this.ofertaActual = { objetos: [], poderes: [] };
+        // NUEVO: Filtros actuales del catálogo
+        this.filtros = { nombre: "", mundo: "", tipo: "" };
     }
 
     static get defaultOptions() {
@@ -35,6 +36,24 @@ export class MercaderHud extends Application {
             { id: "aletehia", nombre: "Aletehia" },
             { id: "glaistig", nombre: "Glaistig" }
         ];
+
+        // --- LÓGICA DEL CATÁLOGO ---
+        let catalogo = MercaderManager.obtenerCatalogoCompleto();
+
+        // Aplicar filtros
+        if (this.filtros.nombre) {
+            catalogo = catalogo.filter(c => c.name.toLowerCase().includes(this.filtros.nombre.toLowerCase()));
+        }
+        if (this.filtros.mundo) {
+            catalogo = catalogo.filter(c => c.mundo === this.filtros.mundo);
+        }
+        if (this.filtros.tipo) {
+            catalogo = catalogo.filter(c => c.tipo.toLowerCase() === this.filtros.tipo.toLowerCase());
+        }
+
+        data.catalogo = catalogo;
+        data.filtros = this.filtros;
+
         return data;
     }
 
@@ -165,6 +184,32 @@ export class MercaderHud extends Application {
             this.ofertaActual = MercaderManager.generarOferta(mundosSeleccionados, 2, 12);
             this.render(false);
             ui.notifications.info("Se ha generado la Mesa del Mercader (2 Objetos / 12 Poderes).");
+        });
+
+        // Buscador de texto
+        html.find('.filtro-catalogo').on('input', ev => {
+            this.filtros.nombre = ev.target.value;
+            this.render(false);
+        });
+
+        // Selectores de mundo/tipo
+        html.find('.select-filtro').change(ev => {
+            const campo = ev.target.dataset.campo;
+            this.filtros[campo] = ev.target.value;
+            this.render(false);
+        });
+
+        // Botón: Añadir a la oferta manual
+        html.find('.btn-add-oferta').click(ev => {
+            const itemId = ev.currentTarget.dataset.itemId;
+            const item = game.items.get(itemId);
+            if (!item) return;
+
+            if (item.type === "carta_objeto") this.ofertaActual.objetos.push(item);
+            else this.ofertaActual.poderes.push(item);
+
+            ui.notifications.info(`Añadida "${item.name}" a la oferta.`);
+            this.render(false);
         });
 
     }

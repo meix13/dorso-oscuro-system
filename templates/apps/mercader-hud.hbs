@@ -126,14 +126,69 @@
             </div>
         </div>
 
+        {{!-- ============================================== --}}
         {{!-- PESTAÑA 2: EL CATÁLOGO --}}
-        <div class="tab flexcol" data-tab="catalogo" style="height: 100%;">
-            {{!-- Aquí construiremos el buscador en el siguiente paso --}}
-            <div style="flex: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #444; border-radius: 10px;">
-                <p style="color: #888; font-size: 16px; text-align: center;">
-                    <i class="fas fa-search" style="font-size: 30px; margin-bottom: 10px; display: block;"></i>
-                    Buscador de Cartas en desarrollo...
-                </p>
+        {{!-- ============================================== --}}
+        <div class="tab flexcol" data-tab="catalogo" style="height: 100%; overflow: hidden;">
+
+            {{!-- Filtros del Catálogo --}}
+            <div class="flexrow" style="flex: 0 0 auto; gap: 10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 5px; margin-bottom: 10px; align-items: center;">
+                <div style="flex: 2; position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 10px; top: 8px; color: #00ccff;"></i>
+                    <input type="text" class="filtro-catalogo" placeholder="Buscar por nombre..." value="{{filtros.nombre}}" style="padding-left: 30px; background: #111; color: white; border: 1px solid #444;">
+                </div>
+
+                <select class="select-filtro" data-campo="mundo" style="flex: 1; background: #111; color: #ddd;">
+                    <option value="">-- Todos los Mundos --</option>
+                    {{#each mundos as |m|}}
+                        <option value="{{m.id}}" {{#if (eq ../filtros.mundo m.id)}}selected{{/if}}>{{m.nombre}}</option>
+                    {{/each}}
+                </select>
+
+                <select class="select-filtro" data-campo="tipo" style="flex: 1; background: #111; color: #ddd;">
+                    <option value="">-- Todos los Tipos --</option>
+                    <option value="poder" {{#if (eq filtros.tipo "poder")}}selected{{/if}}>Poderes</option>
+                    <option value="objeto" {{#if (eq filtros.tipo "objeto")}}selected{{/if}}>Objetos</option>
+                </select>
+            </div>
+
+            {{!-- Tabla de Resultados --}}
+            <div style="flex: 1; overflow-y: auto; border: 1px solid #444; border-radius: 5px;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+                    <thead style="position: sticky; top: 0; background: #222; color: #00ccff; z-index: 1;">
+                    <tr>
+                        <th style="padding: 8px; text-align: left; width: 40px;"></th>
+                        <th style="padding: 8px; text-align: left;">Nombre</th>
+                        <th style="padding: 8px; text-align: center;">Mundo</th>
+                        <th style="padding: 8px; text-align: center;">Stock</th>
+                        <th style="padding: 8px; text-align: center; width: 80px;">Acción</th>
+                    </tr>
+                    </thead>
+                    <tbody style="color: #ccc;">
+                    {{#each catalogo as |c|}}
+                        <tr style="border-bottom: 1px solid #333; background: {{#if (eq c.disponibles 0)}}rgba(255,0,0,0.05){{else}}transparent{{/if}};">
+                            <td style="padding: 5px; text-align: center;">
+                                <img src="{{c.img}}" style="width: 30px; height: 40px; object-fit: cover; border: 1px solid #555;">
+                            </td>
+                            <td style="padding: 5px;">
+                                <b style="color: white;">{{c.name}}</b><br>
+                                <span style="font-size: 10px; color: #888;">{{c.tipo}} • {{c.rareza}}</span>
+                            </td>
+                            <td style="padding: 5px; text-align: center; font-size: 11px;">{{c.mundo}}</td>
+                            <td style="padding: 5px; text-align: center;">
+                                <span style="padding: 2px 6px; border-radius: 10px; font-weight: bold; background: {{#if (eq c.disponibles 0)}}#400{{else}}#040{{/if}}; color: {{#if (eq c.disponibles 0)}}#f66{{else}}#6f6{{/if}};">
+                                    {{c.disponibles}} / {{c.total}}
+                                </span>
+                            </td>
+                            <td style="padding: 5px; text-align: center;">
+                                <button class="btn-add-oferta" data-item-id="{{c.id}}" title="Añadir a la tienda manual" style="background: #004488; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    {{/each}}
+                    </tbody>
+                </table>
             </div>
         </div>
 
