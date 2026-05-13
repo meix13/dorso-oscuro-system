@@ -79,6 +79,12 @@ export class DJHUD extends Application {
         if (criaturaActiva) {
             data.activeBoss = criaturaActiva;
             data.bossAlma = criaturaActiva.items.find(i => i.type === "carta_alma");
+
+            // Si por lo que sea no la encuentra en items, probamos por el ID guardado
+            if (!data.bossAlma && criaturaActiva.system.almaActivaId) {
+                data.bossAlma = criaturaActiva.items.get(criaturaActiva.system.almaActivaId);
+            }
+
             const hand = game.cards.get(criaturaActiva.system.handId);
             const deck = game.cards.get(criaturaActiva.system.deckId);
             const enJuegoBoss = game.cards.get(criaturaActiva.system.enJuegoId); // Buscamos su mesa
@@ -142,83 +148,83 @@ export class DJHUD extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
-        // --- SELECTOR DE CRIATURA ---
+        // --- SELECTOR DE CRIATURA (BOSS) ACTUALIZADO ---
         html.find('.select-boss').click(async ev => {
             const almaId = ev.currentTarget.dataset.id;
-            const almaItem = game.items.get(almaId);
-            if (!almaItem) return;
+            const almaItemOriginal = game.items.get(almaId);
+            if (!almaItemOriginal) return;
 
-            // 1. OBTENEMOS EL ID ÚNICO DE LA CRIATURA
-            const idCriatura = almaItem.system.idCriatura;
-            if (!idCriatura) {
-                return ui.notifications.error(`La carta ${almaItem.name} no tiene un ID de Criatura configurado.`);
-            }
+            const idCriatura = almaItemOriginal.system.idCriatura;
+            if (!idCriatura) return ui.notifications.error("Esta alma no tiene ID de Criatura.");
 
-            // 2. DEFINIMOS EL DORSO PERSONALIZADO
-            const dorsoBoss = `systems/dorso_oscuro/assets/cartas/criaturas/${idCriatura}_dorso_cartas.jpg`;
+            // 1. Borrar sesión anterior si existe
+            let oldBoss = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+            if (oldBoss) await oldBoss.delete();
 
-            // 3. BUSCAMOS TODAS LAS CARTAS DEL MAZO (Poderes y Objetos)
-            // Filtramos por idCriatura y nos aseguramos de que sean cartas de criatura
-            const mazoItems = game.items.filter(i =>
-                i.system.idCriatura === idCriatura &&
-                i.system.esDeCriatura === true &&
-                i.type !== "carta_alma" // El alma no va dentro del mazo de robo
-            );
-
-            if (mazoItems.length === 0) {
-                ui.notifications.warn(`No se han encontrado cartas de poder/objeto para el ID: ${idCriatura}`);
-            }
-
-            // --- LÓGICA DE CREACIÓN DEL ACTOR TEMPORAL (BOSS SESSION) ---
-            // (Mantenemos la lógica de crear el actor para gestionar la energía y vida del boss)
-
-            let bossActor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
-            if (bossActor) await bossActor.delete();
-
-            bossActor = await Actor.create({
-                name: `BOSS: ${almaItem.name}`,
+            // 2. Crear el Actor del Boss
+            const bossActor = await Actor.create({
+                name: `BOSS: ${almaItemOriginal.name}`,
                 type: "personaje",
-                img: almaItem.img,
-                flags: {
-                    dorso_oscuro: {
-                        isBossSession: true,
-                        idCriatura: idCriatura,
-                        almaOriginalId: almaId
-                    }
-                }
+                img: almaItemOriginal.img,
+                flags: { dorso_oscuro: { isBossSession: true, idCriatura: idCriatura } }
             });
 
-            // --- GENERACIÓN DE PILAS DE CARTAS (MAZO) ---
-            // Creamos el mazo de juego específico para esta sesión de Boss
+            // 3. Importar los Ítems al Actor (Vital para la Vida y Energía)
+            const mazoItemsMundo = game.items.filter(i =>
+                i.system.idCriatura === idCriatura && i.system.esDeCriatura && i.type !== "carta_alma"
+            );
+
+            // Creamos copias de los items dentro del actor
+            const itemsCreados = await bossActor.createEmbeddedDocuments("Item", [
+                almaItemOriginal.toObject(),
+                ...mazoItemsMundo.map(i => i.toObject())
+            ]);
+
+            const almaEnActor = itemsCreados.find(i => i.type === "carta_alma");
+
+            // 4. Crear las 5 Pilas de Cartas (Mazo, Mano, Descarte, Juego, Eliminadas)
             const folder = game.folders.find(f => f.name === "MAZOS BOSS" && f.type === "Cards")
                 || await Folder.create({name: "MAZOS BOSS", type: "Cards"});
 
-            const deck = await Cards.create({
-                name: `Mazo - ${almaItem.name}`,
-                type: "deck",
-                folder: folder.id
-            });
+            const createStack = async (suffix, type) => {
+                return await Cards.create({
+                    name: `${suffix} - ${almaItemOriginal.name}`,
+                    type: type,
+                    folder: folder.id
+                });
+            };
 
-            // Mapeamos los items encontrados al formato de cartas de Foundry
-            const cardsData = mazoItems.map(item => ({
+            const deck = await createStack("Mazo", "deck");
+            const hand = await createStack("Mano", "hand");
+            const discard = await createStack("Descarte", "pile");
+            const enJuego = await createStack("En Juego", "pile");
+            const eliminadas = await createStack("Eliminadas", "pile");
+
+            // 5. Poblar el Mazo con los ítems del Actor
+            const dorsoBoss = `systems/dorso_oscuro/assets/cartas/criaturas/${idCriatura}_dorso_cartas.jpg`;
+            const cartasParaMazo = itemsCreados.filter(i => i.type !== "carta_alma").map(item => ({
                 name: item.name,
                 faces: [{ img: item.img, name: item.name }],
-                back: { img: dorsoBoss }, // <--- Usamos el nuevo dorso dinámico
+                back: { img: dorsoBoss },
                 flags: { dorso_oscuro: { itemId: item.id } }
             }));
 
-            await deck.createEmbeddedDocuments("Card", cardsData);
+            await deck.createEmbeddedDocuments("Card", cartasParaMazo);
             await deck.shuffle();
 
-            // Vinculamos el mazo y el alma al actor del boss
+            // 6. Vincular todo al Actor
             await bossActor.update({
-                "system.almaActivaId": almaId,
+                "system.almaActivaId": almaEnActor.id,
                 "system.deckId": deck.id,
-                "system.energia.value": almaItem.system.energiaAportada || 0
+                "system.handId": hand.id,
+                "system.discardId": discard.id,
+                "system.enJuegoId": enJuego.id,
+                "system.eliminadasId": eliminadas.id,
+                "system.energia.value": almaItemOriginal.system.energiaAportada || 0
             });
 
-            ui.notifications.info(`Sesión de Boss iniciada: ${almaItem.name}. Mazo creado con ${mazoItems.length} cartas.`);
-            this.render(false);
+            ui.notifications.info(`Boss ${almaItemOriginal.name} listo para el combate.`);
+            this.render(true);
         });
 
         // --- ZOOM DE CARTA (CLIC DERECHO) ---
@@ -483,8 +489,6 @@ export class DJHUD extends Application {
 
         });
 
-// --- ROBAR TODO (Inteligente: Baraja SOLO el descarte) ---
-        // --- ROBAR TODO (Siempre recupera descarte y roba todo el mazo) ---
         html.find('.boss-draw-all').click(async ev => {
             const actor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
             if (!actor) return;
@@ -493,26 +497,24 @@ export class DJHUD extends Application {
             const deck = game.cards.get(actor.system.deckId);
             const discard = game.cards.get(actor.system.discardId);
 
-            if (!hand || !deck || !discard) return;
+            if (!hand || !deck || !discard) return ui.notifications.error("Faltan pilas de cartas en este Boss.");
 
-            // 1. Pasamos SIEMPRE todo el descarte al mazo (sin importar si el mazo tiene cartas o no)
+            // 1. Recuperar descarte
             if (discard.cards.size > 0) {
-                const idsParaDevolver = discard.cards.map(c => c.id);
-                await discard.pass(deck, idsParaDevolver);
+                await discard.pass(deck, discard.cards.map(c => c.id));
             }
 
-            // 2. Barajamos para asegurar que el sistema actualiza bien las referencias internas
             await deck.shuffle();
 
-            // 3. Robamos TODA la reserva disponible del mazo directamente a la mano
+            // 2. Robar todo lo que haya en el mazo
             const mazoActualizado = game.cards.get(deck.id);
             if (mazoActualizado.availableCards.length > 0) {
                 await hand.draw(mazoActualizado, mazoActualizado.availableCards.length);
-                ui.notifications.info("La criatura ha recuperado todas sus cartas (Mazo + Descarte).");
-            } else {
-                ui.notifications.warn("No quedan cartas para robar.");
+                ui.notifications.info("Mazo completo robado a la mano.");
             }
+            this.render(false);
         });
+
 
         // --- FINALIZAR TURNO DEL BOSS ---
         html.find('.boss-end-turn').click(async ev => {
