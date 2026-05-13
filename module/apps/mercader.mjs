@@ -57,9 +57,9 @@ export class MercaderManager {
         // 1. Recogemos TODAS las cartas globales que NO son de criatura
         const cartasMundo = game.items.filter(i =>
             (i.type === "carta_poder" || i.type === "carta_objeto") &&
-            !i.system.esDeCriatura
+            !i.system.esDeCriatura &&
+            !i.system.esEspecial
         );
-
         // 2. Contamos cuántas copias existen actualmente en TODOS los Actores (Jugadores + Papelera)
         const cartasEnUso = {};
 
@@ -184,5 +184,52 @@ export class MercaderManager {
                 desaparece: c.system.desaparece
             };
         }).sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    // En module/apps/mercader.mjs
+
+    /**
+     * 6. RASTREAR UBICACIÓN DE CARTA
+     * Busca exactamente quién tiene copias de una carta por ID o Nombre.
+     */
+    static obtenerDetalleUbicacion(itemId) {
+        const itemOriginal = game.items.get(itemId);
+        if (!itemOriginal) return null;
+
+        const nombreCarta = itemOriginal.name;
+        const totalPermitidas = itemOriginal.system.cantidadExistente || 1;
+
+        let detalle = {
+            nombre: nombreCarta,
+            total: totalPermitidas,
+            enJugadores: [],
+            enPapelera: 0,
+            disponibles: 0
+        };
+
+        // 1. Buscar en todos los actores (Jugadores)
+        const jugadores = game.actors.filter(a => a.type === "personaje" && !a.flags.dorso_oscuro?.isTempAlma && !a.flags.dorso_oscuro?.isBossSession && !a.flags.dorso_oscuro?.isPapelera);
+
+        let sumaEnUso = 0;
+        for (let actor of jugadores) {
+            const copias = actor.items.filter(i => i.name === nombreCarta).length;
+            if (copias > 0) {
+                detalle.enJugadores.push({ nombre: actor.name, cantidad: copias });
+                sumaEnUso += copias;
+            }
+        }
+
+        // 2. Buscar en la Papelera
+        const papelera = game.actors.find(a => a.flags.dorso_oscuro?.isPapelera);
+        if (papelera) {
+            const copiasPapelera = papelera.items.filter(i => i.name === nombreCarta).length;
+            detalle.enPapelera = copiasPapelera;
+            sumaEnUso += copiasPapelera;
+        }
+
+        // 3. Calcular el resto (Disponibles para el mercader/mundo)
+        detalle.disponibles = Math.max(0, totalPermitidas - sumaEnUso);
+
+        return detalle;
     }
 }

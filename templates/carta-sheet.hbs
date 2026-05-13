@@ -12,8 +12,17 @@
         {{!-- LADO DERECHO: Datos del Sistema --}}
         <div class="card-data-container flexcol" style="flex: 1; padding: 20px; color: #d4c4a8; font-family: 'Kalam', cursive; height: 100%; overflow-y: auto;">
 
-            <h1 style="border-bottom: 2px solid #ff4500; margin-bottom: 20px;">
-                <input name="name" type="text" value="{{item.name}}" placeholder="Nombre de la Carta" style="color: #ff4500; font-family: 'Kalam', cursive; font-size: 32px; background: transparent; border: none;"/>
+            {{!-- ETIQUETA DEL TIPO DE CARTA --}}
+            <div style="font-size: 13px; color: #888; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0; font-family: sans-serif; font-weight: bold;">
+                {{#if (eq item.type "carta_alma")}}<i class="fas fa-ghost" style="color: #00ccff;"></i> Carta de Alma{{/if}}
+                {{#if (eq item.type "carta_poder")}}<i class="fas fa-bolt" style="color: #ff4500;"></i> Carta de Poder{{/if}}
+                {{#if (eq item.type "carta_objeto")}}<i class="fas fa-suitcase" style="color: gold;"></i> Carta de Objeto{{/if}}
+                {{#if (eq item.type "carta_equipo")}}<i class="fas fa-shield-alt" style="color: #44ff44;"></i> Carta de Equipo{{/if}}
+            </div>
+
+            {{!-- TÍTULO (NOMBRE DE LA CARTA) --}}
+            <h1 style="border-bottom: 2px solid #ff4500; margin-top: 5px; margin-bottom: 20px;">
+                <input name="name" type="text" value="{{item.name}}" placeholder="Nombre de la Carta" style="color: #ff4500; font-family: 'Kalam', cursive; font-size: 32px; background: transparent; border: none; width: 100%; padding: 0;">
             </h1>
 
             <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
@@ -62,6 +71,10 @@
                             <select name="system.mundo" style="flex: 1; background: #111; color: #d4c4a8; border: 1px solid #444; font-family: 'Kalam', cursive;">
                                 {{selectOptions config.mundos selected=system.mundo}}
                             </select>
+                        </div>
+                        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
+                            <label style="flex: 1.5; font-size: 16px; color: #ffaa00;">¿Es carta Especial? (No sale en Mercader)</label>
+                            <input type="checkbox" name="system.esEspecial" {{checked system.esEspecial}} style="flex: 0 0 30px;">
                         </div>
                         <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
                             <label style="flex: 1; font-size: 16px;">Precio en Esencia</label>

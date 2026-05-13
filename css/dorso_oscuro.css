@@ -2,32 +2,44 @@
 
 /* --- 1. IMPORTAR FUENTE MANUSCRITA DE GOOGLE --- */
 @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
+
 /* --- 2. CONTENEDOR PRINCIPAL (Fondo de pergamino) --- */
-/* Cambiamos el selector para apuntar solo al formulario interno */
+
+/* Quitamos el padding por defecto de Foundry a nuestra ficha para que el pergamino ocupe todo */
+.app.window-app.mystery-paper-theme .window-content {
+    padding: 0;
+    background: transparent;
+}
+
 form.mystery-paper-theme {
     background-image: url('../assets/fondo_ficha.jpg');
     background-size: cover;
+    background-position: top center;
     background-attachment: local;
+
+    /* ¡CORRECCIÓN!: El tamaño lo define el .mjs (750x850), aquí debe ser 100% para no desbordar */
+    width: 100%;
+    height: 100%;
+
     position: relative;
-    padding: 50px 40px; /* Margen amplio para que no pise el marco */
+    padding: 20px 30px; /* Margen interior cómodo */
     font-family: 'Kalam', cursive;
     color: #1a1a1a; /* Texto oscuro imitando tinta */
 
     /* Configuración del scroll del contenido */
-    display: block;
+    display: flex;
+    flex-direction: column;
     overflow-y: auto;
     overflow-x: hidden;
-    height: 100%;
-
 }
 
-//* --- 3. EL MARCO DE LA FICHA (Capa superpuesta dividida) --- */
+/* --- 3. EL MARCO DE LA FICHA --- */
 .dorso_oscuro.sheet.actor.mystery-paper-theme::before,
 .dorso_oscuro.sheet.actor.mystery-paper-theme::after {
     content: "";
     position: absolute;
     left: 0; right: 0;
-    height: 150px; /* Ajusta esto según el alto de tus imágenes de borde */
+    height: 150px;
     background-size: 100% 100%;
     background-repeat: no-repeat;
     pointer-events: none;
@@ -45,7 +57,8 @@ form.mystery-paper-theme {
     background-image: url('../assets/borde_inferior.png');
     background-position: bottom center;
 }
-/* --- 4. ESTILOS GLOBALES DE INPUTS (Para quitar las cajas por defecto) --- */
+
+/* --- 4. ESTILOS GLOBALES DE INPUTS EN LA FICHA --- */
 .mystery-paper-theme input[type="text"],
 .mystery-paper-theme input[type="number"] {
     background: transparent;
@@ -68,10 +81,12 @@ form.mystery-paper-theme {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    gap: 15px;
 }
 
 /* Columna izquierda: Dados */
 .mystery-paper-theme .dice-column {
+    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 15px;
@@ -81,24 +96,26 @@ form.mystery-paper-theme {
     display: flex;
     align-items: center;
     gap: 15px;
-    position: relative; /* ¡CRÍTICO para que el lápiz no se escape! */
-    width: fit-content; /* Mantiene la caja pegada al dado */
+    position: relative;
+    width: fit-content;
 }
 
 .mystery-paper-theme .attribute-label {
-    font-size: 28px;
+    font-size: 26px;
     font-weight: bold;
     text-transform: capitalize;
-    width: 90px;
+    width: 80px;
     text-align: right;
 }
 
 .mystery-paper-theme .img-dado {
-    width: 60px;
-    height: 60px;
+    width: 55px;
+    height: 55px;
     cursor: pointer;
     transition: transform 0.2s;
     background: transparent;
+    border: none !important;
+    outline: none !important;
 }
 .mystery-paper-theme .img-dado:hover { transform: scale(1.1); }
 
@@ -106,14 +123,20 @@ form.mystery-paper-theme {
 .mystery-paper-theme .rune-separator {
     flex: 0 0 60px;
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 .mystery-paper-theme .rune-separator img {
-    max-height: 250px;
+    max-height: 200px;
     object-fit: contain;
+    border: none !important;
+    background: transparent !important;
 }
 
 /* Columna derecha: Retrato */
 .mystery-paper-theme .portrait-column {
+    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -121,16 +144,17 @@ form.mystery-paper-theme {
 }
 
 .mystery-paper-theme .charname input {
-    font-size: 45px;
+    font-size: 38px;
     font-weight: bold;
     text-align: center;
     border-bottom: 2px solid #1a1a1a;
     height: auto;
+    width: 100%;
 }
 
 .mystery-paper-theme .profile-img-circle {
-    width: 180px;
-    height: 180px;
+    width: 160px;
+    height: 160px;
     border-radius: 50%;
     border: 3px solid #1a1a1a;
     box-shadow: 2px 4px 8px rgba(0,0,0,0.5);
@@ -143,27 +167,27 @@ form.mystery-paper-theme {
 /* --- B. SECCIÓN MEDIA (Salud, Estabilidad, Umbral, Esencia) --- */
 .mystery-paper-theme .stats-mid {
     display: flex;
-    justify-content: space-around; /* Reparte el espacio entre las stats y los iconos */
+    justify-content: space-around;
     align-items: flex-end;
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px dotted #444; /* Separador sutil */
+    border-bottom: 2px dotted #444;
 }
 
 .mystery-paper-theme .track-stats {
     display: flex;
     flex-direction: column;
     gap: 5px;
-    font-size: 22px;
+    font-size: 20px;
 }
 
 .mystery-paper-theme .input-line input {
     width: 40px;
-    font-size: 22px;
+    font-size: 20px;
     text-align: center;
     border: 1px solid #1a1a1a;
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.3); /* Un poco de fondo para que se vea la caja */
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .mystery-paper-theme .icon-stats {
@@ -177,7 +201,7 @@ form.mystery-paper-theme {
 
 .mystery-paper-theme .icon-group label {
     display: block;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
     margin-bottom: 5px;
 }
@@ -186,8 +210,8 @@ form.mystery-paper-theme {
 .mystery-paper-theme .esencia-frame { background-image: url('../assets/icon_esencia.png'); }
 
 .mystery-paper-theme .icon-frame {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
@@ -197,15 +221,15 @@ form.mystery-paper-theme {
 }
 
 .mystery-paper-theme .icon-frame input {
-    width: 50px;
-    font-size: 32px;
+    width: 45px;
+    font-size: 28px;
     font-weight: bold;
 }
 
-/* --- C. SECCIÓN HABILIDADES (Dos columnas) --- */
+/* --- C. SECCIÓN HABILIDADES --- */
 .mystery-paper-theme .skills-grid {
     display: flex;
-    gap: 50px;
+    gap: 30px;
     margin-bottom: 30px;
 }
 
@@ -215,7 +239,7 @@ form.mystery-paper-theme {
 
 .mystery-paper-theme .skill-column h3 {
     font-family: 'Kalam', cursive;
-    font-size: 24px;
+    font-size: 22px;
     border-bottom: 2px solid #1a1a1a;
     margin-bottom: 10px;
     text-align: center;
@@ -238,11 +262,11 @@ form.mystery-paper-theme {
 .mystery-paper-theme .skill-name {
     font-weight: bold;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
 }
 
 .mystery-paper-theme .skill-attr {
-    font-size: 14px;
+    font-size: 13px;
     color: #444;
 }
 
@@ -257,7 +281,7 @@ form.mystery-paper-theme {
 /* --- D. PIE DE FICHA (Armas y Notas) --- */
 .mystery-paper-theme .sheet-footer {
     display: flex;
-    gap: 50px;
+    gap: 30px;
 }
 
 .mystery-paper-theme .footer-box {
@@ -266,7 +290,7 @@ form.mystery-paper-theme {
 
 .mystery-paper-theme .footer-box h3 {
     font-family: 'Kalam', cursive;
-    font-size: 24px;
+    font-size: 22px;
     border-bottom: 2px solid #1a1a1a;
     margin-bottom: 10px;
     text-align: center;
@@ -285,15 +309,16 @@ form.mystery-paper-theme {
     background: transparent;
     border: 1px solid rgba(0,0,0,0.3);
     font-family: 'Kalam', cursive;
-    font-size: 18px;
+    font-size: 16px;
     padding: 10px;
     resize: none;
 }
+
 /* El botón del lápiz */
 .mystery-paper-theme .btn-editar-dado {
     position: absolute;
     top: 0px;
-    right: -15px; /* Lo empuja un poquito a la derecha del dado */
+    right: -15px;
     background: #4a3424;
     color: #fff;
     border-radius: 50%;
@@ -313,14 +338,26 @@ form.mystery-paper-theme {
     background: #ff4500;
 }
 
-/* Eliminar bordes negros indeseados en imágenes transparentes */
-.mystery-paper-theme .img-dado,
-.mystery-paper-theme .rune-separator img {
-    border: none !important;
-    background: transparent !important;
-    outline: none !important;
+/* --- Normalización de miniaturas de cartas --- */
+.mystery-paper-theme .deck-section img.card-thumbnail {
+    width: 32px !important;
+    height: 48px !important;
+    object-fit: cover;
+    border-radius: 3px;
+    margin-right: 10px;
+    border: 1px solid #000;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+    flex: 0 0 auto;
+    display: block;
 }
 
+.mystery-paper-theme .deck-section .skill-main-info {
+    align-items: center;
+}
+
+/* =========================================================
+   ESTILOS HUD DE CARTAS DE MESA
+========================================================= */
 .mano-hud-app {
     background: rgba(20, 20, 20, 0.9) !important;
     border: 2px solid #444;
@@ -337,24 +374,23 @@ form.mystery-paper-theme {
 .energy-display { font-size: 30px; font-weight: bold; color: #44aaff; }
 .malus-group i { font-size: 20px; margin-bottom: 5px; }
 
-/* Efecto de abanico/superposición para la mano */
 .hud-hand-area {
     flex: 1;
     justify-content: center;
     align-items: center;
-    padding: 10px 30px; /* Espacio para que respiren a los lados */
+    padding: 10px 30px;
     background: rgba(0,0,0,0.4);
     border-radius: 10px;
 }
 .card-in-hand {
-    margin-left: -35px; /* Se pisan unas a otras */
-    transition: transform 0.2s ease, z-index 0s; /* Z-index instantáneo para que no haya parpadeos */
+    margin-left: -35px;
+    transition: transform 0.2s ease, z-index 0s;
     position: relative;
-    z-index: 1; /* Nivel base */
+    z-index: 1;
 }
 
 .card-in-hand:first-child {
-    margin-left: 0; /* La primera no se pisa con nada */
+    margin-left: 0;
 }
 
 .card-in-hand img {
@@ -365,13 +401,11 @@ form.mystery-paper-theme {
     box-shadow: -4px 4px 8px rgba(0,0,0,0.6);
 }
 
-/* Al pasar el ratón, la carta se levanta por ENCIMA de las demás sin empujarlas */
 .card-in-hand:hover {
-    transform: translateY(-30px) scale(1.15); /* Sube un poco más y crece */
-    z-index: 100 !important; /* Salta al primer plano */
+    transform: translateY(-30px) scale(1.15);
+    z-index: 100 !important;
 }
 
-/* Controles de malus */
 .malus-controls a {
     cursor: pointer;
     background: rgba(255,255,255,0.1);
@@ -382,24 +416,6 @@ form.mystery-paper-theme {
 .malus-controls a:hover { background: rgba(255,255,255,0.3); }
 .malus-val { font-weight: bold; font-size: 18px; width: 25px; text-align: center; }
 
-/* --- Normalización de miniaturas de cartas en listas (personaje-sheet) --- */
-.mystery-paper-theme .deck-section img.card-thumbnail {
-    width: 32px !important;    /* Ancho fijo normalizado */
-    height: 48px !important;   /* Alto fijo normalizado (ratio 2:3 típico de cartas) */
-    object-fit: cover;        /* SECRETOMÁGICO: Mantiene la proporción, recortando si es necesario, pero nunca deformando */
-    border-radius: 3px;
-    margin-right: 10px;
-    border: 1px solid #000;
-    box-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-    flex: 0 0 auto; /* Evita que el flexbox la deforme */
-    display: block;
-}
-
-/* Asegurar que el contenedor flex alinea el texto con la miniatura rectangular */
-.mystery-paper-theme .deck-section .skill-main-info {
-    align-items: center;
-}
-
 .card-in-hand:hover .manual-ban-btn {
     display: flex !important;
 }
@@ -407,3 +423,208 @@ form.mystery-paper-theme {
     background: #ff0000 !important;
     transform: scale(1.1);
 }
+
+/* =========================================================
+   ESTILOS DE INTERFAZ GENERAL DE FOUNDRY (UI TEMA OSCURO)
+========================================================= */
+
+/* --- 1. MENÚS LATERALES Y PANELES --- */
+/* ¡CORRECCIÓN!: Seleccionamos .window-content PERO excluimos nuestra ficha para que no se oscurezca su interior */
+#sidebar,
+#sidebar-tabs,
+.app.window-app:not(.mystery-paper-theme) .window-content {
+    background: rgba(10, 15, 25, 0.95);
+    color: #e0e0e0;
+    border: none;
+    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+}
+
+#sidebar {
+    border-left: 2px solid #2a5a8a;
+    background-image: radial-gradient(circle at 50% 0%, rgba(42, 90, 138, 0.1) 0%, transparent 70%);
+}
+
+.window-app .window-header,
+#sidebar-tabs {
+    background: #0d121a;
+    border-bottom: 1px solid #2a5a8a;
+    font-family: 'Kalam', cursive;
+    font-size: 1.1em;
+}
+
+/* --- 2. COLORES DE ICONOS --- */
+#sidebar-tabs > .item i,
+.control-tool i {
+    color: #8fa6b8;
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+
+#sidebar-tabs > .item.active i,
+#sidebar-tabs > .item:hover i,
+.control-tool.active i,
+.control-tool:hover i {
+    color: #4a90e2;
+    text-shadow: 0 0 8px rgba(74, 144, 226, 0.8);
+}
+
+/* --- 3. MENÚ DE NAVEGACIÓN Y CONTROLES --- */
+#navigation {
+    background: transparent;
+}
+#scene-list .scene {
+    background: rgba(10, 15, 25, 0.8);
+    border: 1px solid #4a3424;
+    color: #ccc;
+    font-family: 'Kalam', cursive;
+}
+#scene-list .scene.view,
+#scene-list .scene:hover {
+    background: rgba(42, 90, 138, 0.6);
+    border-color: #4a90e2;
+    color: #fff;
+    text-shadow: 0 0 5px #000;
+}
+
+#controls .control-tool {
+    background: rgba(10, 15, 25, 0.8);
+    border: 1px solid #333;
+}
+#controls .control-tool:hover,
+#controls .control-tool.active {
+    background: rgba(42, 90, 138, 0.5);
+    border-color: #4a90e2;
+}
+/* --- 4. PERSONALIZACIÓN DEL CHAT (Forzado Absoluto para V14) --- */
+#chat-log {
+    background: transparent;
+}
+
+/* Usamos 'background' a secas para anular las variables CSS de Foundry V14 */
+#chat-log .chat-message,
+.chat-message {
+    background: url('../assets/fondo_ficha.jpg') no-repeat center center / cover !important;
+    border: 1px solid #4a3424 !important;
+    border-radius: 4px !important;
+    color: #1a1a1a !important;
+    font-family: 'Kalam', cursive !important;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.5) !important;
+    margin-bottom: 10px !important;
+    padding: 8px !important;
+}
+
+.chat-message .message-header {
+    color: #333 !important;
+    border-bottom: 1px solid rgba(0,0,0,0.3) !important;
+    font-weight: bold !important;
+    padding-bottom: 3px !important;
+    margin-bottom: 5px !important;
+}
+
+.chat-message .message-sender {
+    color: #6b0f0f !important;
+    font-size: 1.1em !important;
+    text-shadow: none !important;
+}
+
+.dice-roll .dice-formula,
+.dice-roll .dice-total {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid #4a3424 !important;
+    color: #1a1a1a !important;
+    font-weight: bold !important;
+    font-family: sans-serif !important;
+}
+.dice-roll .dice-total {
+    background: rgba(74, 144, 226, 0.2) !important;
+    font-size: 1.5em !important;
+}
+
+
+/* --- 5. DIARIOS / JOURNAL ENTRIES (Efecto integrado sin doble capa) --- */
+
+/* 1. Ponemos el pergamino SOLO en el contenedor principal (la mitad derecha del diario) */
+.journal-sheet .journal-entry-content {
+    background: url('../assets/fondo_ficha.jpg') no-repeat top center / cover !important;
+}
+
+/* 2. Hacemos transparente el interior (la página) para quitar el efecto parche/doble imagen */
+.journal-sheet .journal-page-content,
+.journal-sheet .editor-content {
+    background: transparent !important;
+    box-shadow: none !important; /* Quitamos las sombras internas de Foundry */
+    border: none !important;
+    font-family: 'Kalam', cursive !important;
+    color: #1a1a1a !important;
+    font-size: 1.1em !important;
+}
+
+/* Modificamos los títulos dentro de los diarios */
+.journal-sheet .journal-page-content h1,
+.journal-sheet .journal-page-content h2,
+.journal-sheet .journal-page-content h3,
+.journal-sheet .journal-page-content h4 {
+    color: #4a3424 !important;
+    border-bottom: 2px solid #4a3424 !important;
+    font-family: 'Kalam', cursive !important;
+    font-weight: bold !important;
+}
+
+/* Enlaces dentro del diario */
+.journal-sheet .journal-page-content a.entity-link,
+.journal-sheet .journal-page-content a.content-link {
+    background: rgba(74, 144, 226, 0.1) !important;
+    border: 1px solid #2a5a8a !important;
+    color: #6b0f0f !important;
+    border-radius: 3px !important;
+    padding: 0 4px !important;
+}
+
+/* Tablas dentro de los diarios */
+.journal-sheet .journal-page-content table {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid #4a3424 !important;
+}
+.journal-sheet .journal-page-content table th {
+    background: rgba(74, 144, 226, 0.3) !important;
+    color: #1a1a1a !important;
+    border-bottom: 2px solid #4a3424 !important;
+}
+
+/* --- ARREGLO DE CONTRASTE PARA LOS DESPLEGABLES (<option>) --- */
+select option {
+    background-color: #141414 !important; /* Fondo negro carbón/gris muy oscuro */
+    color: #ffffff !important;            /* Texto blanco puro */
+    font-family: 'Kalam', cursive;        /* Mantenemos la tipografía de tu sistema */
+}
+
+/* Opcional: Un pequeño efecto para cuando pasas el ratón por las opciones (solo funciona en algunos navegadores) */
+select option:hover,
+select option:focus,
+select option:active,
+select option:checked {
+    background-color: #00ccff !important; /* El azul brillante de tu interfaz */
+    color: #000000 !important;
+}
+
+/* --- ARREGLO PARA LOS BOTONES DE DIÁLOGO (Confirmaciones, Mercader, etc.) --- */
+.dialog .dialog-buttons button {
+    background-color: #141414 !important; /* Fondo oscuro */
+    color: #ffffff !important;            /* Texto blanco puro */
+    border: 1px solid #444 !important;    /* Borde gris oscuro por defecto */
+    font-family: 'Kalam', cursive !important; /* Nuestra tipografía */
+    font-size: 16px !important;
+    font-weight: bold !important;
+    text-shadow: none !important;         /* Quitamos sombras feas de Foundry */
+    transition: all 0.2s ease-in-out;
+}
+
+/* Efecto al pasar el ratón por encima (Hover) */
+.dialog .dialog-buttons button:hover,
+.dialog .dialog-buttons button:focus {
+    background-color: rgba(0, 204, 255, 0.1) !important; /* Fondo azul translúcido */
+    color: #00ccff !important;                           /* Texto azul brillante */
+    border-color: #00ccff !important;                    /* Borde azul brillante */
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.5) !important;
+}
+
+/* Si tu botón de vender a la papelera usa una clase específica (como .yes o .vender), podemos darle un toque verde/rojo, pero con este código base ya se leerán TODOS perfectamente. */

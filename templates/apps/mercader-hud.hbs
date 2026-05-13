@@ -63,7 +63,7 @@
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 5px;">
                             {{#each mundos as |m|}}
                                 <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
-                                    <input type="checkbox" class="mundo-checkbox" value="{{m.id}}" checked style="margin: 0; width: 14px; height: 14px;">
+                                    <input type="checkbox" class="mundo-checkbox" value="{{m.id}}" {{#if m.checked}}checked{{/if}} style="margin: 0; width: 14px; height: 14px;">
                                     <span>{{m.nombre}}</span>
                                 </label>
                             {{/each}}
@@ -109,7 +109,12 @@
                 <div class="flexrow" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
                     {{#each oferta.objetos as |obj|}}
                         <div class="mercader-card item" data-item-id="{{obj.id}}" draggable="true" style="flex: 0 0 110px; width: 110px; text-align: center;">
-                            <img src="{{obj.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid gold; border-radius: 5px;">
+                            <div style="position: relative;">
+                                <img src="{{obj.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid gold; border-radius: 5px;">
+                                <div class="ver-imagen" data-img="{{obj.img}}" data-name="{{obj.name}}" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 50%; cursor: pointer; border: 1px solid #00ccff;">
+                                    <i class="fas fa-eye" style="font-size: 10px; color: #00ccff;"></i>
+                                </div>
+                            </div>
                             <span style="font-size: 11px; font-weight: bold; color: #ddd; display: block; margin-top: 4px;">{{obj.name}}</span>
                         </div>
                     {{/each}}
@@ -118,7 +123,12 @@
                 <div class="flexrow" style="justify-content: flex-start; gap: 15px; flex-wrap: wrap;">
                     {{#each oferta.poderes as |pod|}}
                         <div class="mercader-card item" data-item-id="{{pod.id}}" draggable="true" style="flex: 0 0 110px; width: 110px; text-align: center;">
-                            <img src="{{pod.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #ff4500; border-radius: 5px;">
+                            <div style="position: relative;">
+                                 <img src="{{pod.img}}" style="width: 100%; height: 150px; object-fit: cover; border: 2px solid #ff4500; border-radius: 5px;">
+                                <div class="ver-imagen" data-img="{{pod.img}}" data-name="{{pod.name}}" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); padding: 5px; border-radius: 50%; cursor: pointer; border: 1px solid #00ccff;">
+                                    <i class="fas fa-eye" style="font-size: 10px; color: #00ccff;"></i>
+                                </div>
+                            </div>
                             <span style="font-size: 11px; font-weight: bold; color: #ddd; display: block; margin-top: 4px;">{{pod.name}}</span>
                         </div>
                     {{/each}}
@@ -167,8 +177,8 @@
                     <tbody style="color: #ccc;">
                     {{#each catalogo as |c|}}
                         <tr style="border-bottom: 1px solid #333; background: {{#if (eq c.disponibles 0)}}rgba(255,0,0,0.05){{else}}transparent{{/if}};">
-                            <td style="padding: 5px; text-align: center;">
-                                <img src="{{c.img}}" style="width: 30px; height: 40px; object-fit: cover; border: 1px solid #555;">
+                            <td style="padding: 5px; text-align: center; position: relative;" class="ver-imagen" data-img="{{c.img}}" data-name="{{c.name}}">
+                                <img src="{{c.img}}" style="width: 30px; height: 40px; cursor: zoom-in; object-fit: cover; border: 1px solid #555;">
                             </td>
                             <td style="padding: 5px;">
                                 <b style="color: white;">{{c.name}}</b><br>
@@ -176,15 +186,20 @@
                             </td>
                             <td style="padding: 5px; text-align: center; font-size: 11px;">{{c.mundo}}</td>
                             <td style="padding: 5px; text-align: center;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 5px;">
                                 <span style="padding: 2px 6px; border-radius: 10px; font-weight: bold; background: {{#if (eq c.disponibles 0)}}#400{{else}}#040{{/if}}; color: {{#if (eq c.disponibles 0)}}#f66{{else}}#6f6{{/if}};">
                                     {{c.disponibles}} / {{c.total}}
                                 </span>
+                                    {{!-- NUEVO BOTÓN DE INFO --}}
+                                    <i class="fas fa-info-circle btn-rastrear" data-item-id="{{c.id}}" style="color: #00ccff; cursor: pointer;" title="Rastrear ubicación de copias"></i>
+                                </div>
                             </td>
                             <td style="padding: 5px; text-align: center;">
                                 <button class="btn-add-oferta" data-item-id="{{c.id}}" title="Añadir a la tienda manual" style="background: #004488; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer;">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </td>
+
                         </tr>
                     {{/each}}
                     </tbody>

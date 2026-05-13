@@ -259,12 +259,12 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                             <i class="fas fa-trash" style="color: #ff4444;"></i> <b>Normal:</b> Para corregir errores. Simplemente se borra del jugador sin alterar la economía.
                         </p>
                         <p style="font-size: 13px; margin: 0;">
-                            <i class="fas fa-store" style="color: #00ccff;"></i> <b>Mercader:</b> Se destruye, se retira del mundo para que no vuelva a salir en el mercado, y el jugador recibe esencia. <br>
+                            <i class="fas fa-store" style="color: #00ccff;"></i> <b>Mercader:</b> El mercader la destruye, se retira del mundo para que no vuelva a salir en el mercado, y el jugador paga esencia. <br>
                             <span style="font-size: 11px; color: #888; font-style: italic;">(Nota: Si quieres recuperarla en el futuro, busca el actor oculto "Papelera del Mercader" y bórrala de su ficha).</span>
                         </p>
                     </div>
                     <div class="flexrow" style="align-items: center; justify-content: center; margin-bottom: 10px; gap: 10px;">
-                        <label style="font-weight: bold; flex: 0 0 auto;">Precio de Venta (Esencia):</label>
+                        <label style="font-weight: bold; flex: 0 0 auto;">Coste de eliminación (Esencia):</label>
                         <input type="number" id="precio-venta" value="4" style="width: 50px; text-align: center; font-weight: bold; background: #111; color: #fff; border: 1px solid #444;">
                     </div>
                 `,

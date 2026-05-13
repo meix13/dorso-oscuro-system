@@ -7,6 +7,7 @@ export class MercaderHud extends Application {
         this.ofertaActual = { objetos: [], poderes: [] };
         // NUEVO: Filtros actuales del catálogo
         this.filtros = { nombre: "", mundo: "", tipo: "" };
+        this.mundosActivos = ["inicial"];
     }
 
     static get defaultOptions() {
@@ -28,14 +29,18 @@ export class MercaderHud extends Application {
         const data = await super.getData();
         data.oferta = this.ofertaActual;
 
-        // Pasamos los mundos para pintar los checkboxes
-        data.mundos = [
+        const listaMundos = [
             { id: "inicial", nombre: "Inicial (Base)" },
             { id: "ghilliam_duh", nombre: "Ghilliam Duh" },
             { id: "cu_sith", nombre: "Cu Sith" },
             { id: "aletehia", nombre: "Aletehia" },
             { id: "glaistig", nombre: "Glaistig" }
         ];
+
+        data.mundos = listaMundos.map(m => ({
+            ...m,
+            checked: this.mundosActivos.includes(m.id)
+        }));
 
         // --- LÓGICA DEL CATÁLOGO ---
         let catalogo = MercaderManager.obtenerCatalogoCompleto();
@@ -169,21 +174,23 @@ export class MercaderHud extends Application {
             ui.notifications.info("El escaparate del mercader ha sido vaciado.");
         });
 
-        // --- GENERAR MESA MERCADER  ---
-        html.find('#btn-generar-mesa').click(ev => {
+        html.find('.mundo-checkbox').change(ev => {
             const mundosSeleccionados = [];
             html.find('.mundo-checkbox:checked').each(function() {
                 mundosSeleccionados.push($(this).val());
             });
-
-            if (mundosSeleccionados.length === 0) {
+            this.mundosActivos = mundosSeleccionados;
+            // No hace falta re-renderizar aquí, solo guardamos el dato
+        });
+        // --- GENERAR MESA MERCADER  ---
+        html.find('#btn-generar-mesa').click(ev => {
+            if (this.mundosActivos.length === 0) {
                 return ui.notifications.warn("Debes seleccionar al menos un mundo.");
             }
 
-            // Llamamos al cerebro forzando 2 objetos y 12 poderes
-            this.ofertaActual = MercaderManager.generarOferta(mundosSeleccionados, 2, 12);
-            this.render(false);
-            ui.notifications.info("Se ha generado la Mesa del Mercader (2 Objetos / 12 Poderes).");
+            this.ofertaActual = MercaderManager.generarOferta(this.mundosActivos, 5, 30);
+            this.render(false); // Al re-renderizar, getData usará this.mundosActivos y mantendrá los checks
+            ui.notifications.info("Mesa Mercader generada.");
         });
 
         // Buscador de texto
@@ -210,6 +217,50 @@ export class MercaderHud extends Application {
 
             ui.notifications.info(`Añadida "${item.name}" a la oferta.`);
             this.render(false);
+        });
+
+        html.find('.ver-imagen').click(ev => {
+            ev.stopPropagation(); // Evitamos que el clic dispare otros eventos
+            const img = ev.currentTarget.dataset.img;
+            const name = ev.currentTarget.dataset.name;
+
+            new ImagePopout(img, {
+                title: name,
+                shareable: true
+            }).render(true);
+        });
+
+        // En mercader-hud.mjs -> activateListeners
+
+        html.find('.btn-rastrear').click(ev => {
+            const itemId = ev.currentTarget.dataset.itemId;
+            const info = MercaderManager.obtenerDetalleUbicacion(itemId);
+
+            if (!info) return;
+
+            // Construimos el HTML del desglose
+            let listadoJugadores = info.enJugadores.length > 0
+                ? info.enJugadores.map(j => `<li><b>${j.nombre}:</b> ${j.cantidad} copia(s)</li>`).join('')
+                : "<li>Ningún jugador tiene esta carta.</li>";
+
+            let content = `
+            <div style="font-family: 'Kalam', cursive; font-size: 14px;">
+                <p style="border-bottom: 1px solid #444; padding-bottom: 5px;">Distribución de <b>${info.nombre}</b> (Total: ${info.total})</p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="color: #6f6; margin-bottom: 5px;"><i class="fas fa-box-open"></i> <b>En el limbo (Stock):</b> ${info.disponibles}</li>
+                    <li style="color: #ffaa00; margin-bottom: 5px;"><i class="fas fa-users"></i> <b>En posesión:</b>
+                        <ul style="padding-left: 15px; font-size: 12px; color: #ccc;">${listadoJugadores}</ul>
+                    </li>
+                    <li style="color: #f66;"><i class="fas fa-trash"></i> <b>En la Papelera:</b> ${info.enPapelera}</li>
+                </ul>
+            </div>
+        `;
+
+            new Dialog({
+                title: `Rastreo: ${info.nombre}`,
+                content: content,
+                buttons: { cerrar: { label: "Cerrar" } }
+            }).render(true);
         });
 
     }
