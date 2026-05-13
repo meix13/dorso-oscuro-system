@@ -111,7 +111,11 @@ export class DJHUD extends Application {
             const token = canvas.tokens.placeables.find(t => t.actor?.id === criaturaActiva.id);
             data.bossIsFaceDown = token ? token.document.getFlag("dorso_oscuro", "isFaceDown") : true;
         } else {
-            data.disponibles = game.items.filter(i => i.type === "carta_alma" && i.system.esCriatura);
+            data.disponibles = game.items.filter(i =>
+                i.type === "carta_alma" &&
+                i.system.esCriatura &&
+                i.system.idCriatura !== ""
+            );
         }
 
 
@@ -140,78 +144,81 @@ export class DJHUD extends Application {
 
         // --- SELECTOR DE CRIATURA ---
         html.find('.select-boss').click(async ev => {
-            const bossId = ev.currentTarget.dataset.id;
-            const bossTemplate = game.items.get(bossId);
+            const almaId = ev.currentTarget.dataset.id;
+            const almaItem = game.items.get(almaId);
+            if (!almaItem) return;
 
-            ui.notifications.info(`Invocando a ${bossTemplate.name}...`);
-
-            // --- 1. LOCALIZAR LA RAÍZ DE LA CRIATURA ---
-            const carpetaAlma = bossTemplate.folder;
-            // CORRECCIÓN: Foundry usa .folder para ver quién es el padre, no .parent
-            const carpetaRaizBoss = carpetaAlma?.folder;
-
-            let itemsParaElBoss = [];
-            if (carpetaRaizBoss) {
-                // Buscamos todos los ítems que cuelguen de la carpeta raíz o de sus subcarpetas
-                itemsParaElBoss = game.items.filter(i => {
-                    let f = i.folder;
-                    while (f) {
-                        if (f.id === carpetaRaizBoss.id) return true;
-                        f = f.folder; // CORRECCIÓN: Subimos al siguiente padre
-                    }
-                    return false;
-                });
-            } else {
-                // Si no hay estructura, al menos nos llevamos el alma seleccionada
-                itemsParaElBoss = [bossTemplate];
+            // 1. OBTENEMOS EL ID ÚNICO DE LA CRIATURA
+            const idCriatura = almaItem.system.idCriatura;
+            if (!idCriatura) {
+                return ui.notifications.error(`La carta ${almaItem.name} no tiene un ID de Criatura configurado.`);
             }
 
-            // --- 2. GESTIÓN DE CARPETAS DE ACTORES (CARTAS/CRIATURAS) ---
-            let rootFolder = game.folders.find(f => f.name === "CARTAS" && f.type === "Actor");
-            if (!rootFolder) rootFolder = await Folder.create({name: "CARTAS", type: "Actor"});
+            // 2. DEFINIMOS EL DORSO PERSONALIZADO
+            const dorsoBoss = `systems/dorso_oscuro/assets/cartas/criaturas/${idCriatura}_dorso_cartas.jpg`;
 
-            let subFolder = game.folders.find(f => f.name === "CRIATURAS" && f.type === "Actor" && f.folder?.id === rootFolder.id);
-            if (!subFolder) subFolder = await Folder.create({name: "CRIATURAS", type: "Actor", folder: rootFolder.id});
+            // 3. BUSCAMOS TODAS LAS CARTAS DEL MAZO (Poderes y Objetos)
+            // Filtramos por idCriatura y nos aseguramos de que sean cartas de criatura
+            const mazoItems = game.items.filter(i =>
+                i.system.idCriatura === idCriatura &&
+                i.system.esDeCriatura === true &&
+                i.type !== "carta_alma" // El alma no va dentro del mazo de robo
+            );
 
-            // --- 3. CREACIÓN DEL BOSS (Preparado para la nueva Base de Datos) ---
-            // Intentamos leer el "nombre de sistema" (ej: "la_gargola") que pondremos con el Excel.
-            let nombreSistema = bossTemplate.system.carpetaSistema;
-
-            // Si es una carta antigua creada a mano que no tiene esa etiqueta, la limpiamos a lo bestia:
-            // Quitamos acentos, cambiamos espacios por guiones bajos y lo ponemos en minúsculas.
-            if (!nombreSistema) {
-                nombreSistema = bossTemplate.name.toLowerCase().trim()
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
-                    .replace(/\s+/g, '_'); // Cambia espacios por _
+            if (mazoItems.length === 0) {
+                ui.notifications.warn(`No se han encontrado cartas de poder/objeto para el ID: ${idCriatura}`);
             }
 
-            const dorsoUrl = `system/dorso_oscuro/assets/cartas/criaturas/${nombreSistema}/${nombreSistema}_dorso_cartas.jpg`;
+            // --- LÓGICA DE CREACIÓN DEL ACTOR TEMPORAL (BOSS SESSION) ---
+            // (Mantenemos la lógica de crear el actor para gestionar la energía y vida del boss)
 
-            const bossActor = await Actor.create({
-                name: `[BOSS] ${bossTemplate.name}`,
+            let bossActor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+            if (bossActor) await bossActor.delete();
+
+            bossActor = await Actor.create({
+                name: `BOSS: ${almaItem.name}`,
                 type: "personaje",
-                img: bossTemplate.img,
-                folder: subFolder.id,
-                flags: {dorso_oscuro: {isBossSession: true, dorsoUrl: dorsoUrl}}
+                img: almaItem.img,
+                flags: {
+                    dorso_oscuro: {
+                        isBossSession: true,
+                        idCriatura: idCriatura,
+                        almaOriginalId: almaId
+                    }
+                }
             });
 
-            const itemsToCreate = itemsParaElBoss.map(i => i.toObject());
-            await bossActor.createEmbeddedDocuments("Item", itemsToCreate);
+            // --- GENERACIÓN DE PILAS DE CARTAS (MAZO) ---
+            // Creamos el mazo de juego específico para esta sesión de Boss
+            const folder = game.folders.find(f => f.name === "MAZOS BOSS" && f.type === "Cards")
+                || await Folder.create({name: "MAZOS BOSS", type: "Cards"});
 
-            const dummySheet = new PersonajeSheet(bossActor);
-            await dummySheet._registrarMazoDeJuego();
+            const deck = await Cards.create({
+                name: `Mazo - ${almaItem.name}`,
+                type: "deck",
+                folder: folder.id
+            });
 
-            // Llenamos la vida del Boss y de su carta al máximo
-            const almaNueva = bossActor.items.find(i => i.name === bossTemplate.name);
-            await almaNueva.update({"system.vida.value": almaNueva.system.vida.max});
+            // Mapeamos los items encontrados al formato de cartas de Foundry
+            const cardsData = mazoItems.map(item => ({
+                name: item.name,
+                faces: [{ img: item.img, name: item.name }],
+                back: { img: dorsoBoss }, // <--- Usamos el nuevo dorso dinámico
+                flags: { dorso_oscuro: { itemId: item.id } }
+            }));
 
+            await deck.createEmbeddedDocuments("Card", cardsData);
+            await deck.shuffle();
+
+            // Vinculamos el mazo y el alma al actor del boss
             await bossActor.update({
-                "system.almaActivaId": almaNueva.id,
-                "system.hp.value": almaNueva.system.vida.max,
-                "system.hp.max": almaNueva.system.vida.max
+                "system.almaActivaId": almaId,
+                "system.deckId": deck.id,
+                "system.energia.value": almaItem.system.energiaAportada || 0
             });
 
-            this.render(true);
+            ui.notifications.info(`Sesión de Boss iniciada: ${almaItem.name}. Mazo creado con ${mazoItems.length} cartas.`);
+            this.render(false);
         });
 
         // --- ZOOM DE CARTA (CLIC DERECHO) ---
@@ -699,5 +706,20 @@ export class DJHUD extends Application {
             const ownership = newState ? { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER } : { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE };
             await item.update({ ownership });
         }
+    }
+
+
+    static obtenerMazoCriatura(idCriatura) {
+        if (!idCriatura) return [];
+
+        // Buscamos todas las cartas que:
+        // 1. Sean de criatura
+        // 2. Tengan el ID específico
+        // 3. NO sean el alma (para no meter el alma en el mazo de robo)
+        return game.items.filter(i =>
+            i.system.idCriatura === idCriatura &&
+            i.system.esDeCriatura === true &&
+            i.type !== "carta_alma"
+        );
     }
 }

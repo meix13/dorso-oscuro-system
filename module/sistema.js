@@ -150,7 +150,13 @@ Hooks.once('init', async function() {
             // --- A) EL ALMA DE LA CRIATURA DEL DJ ---
             if (actor.flags.dorso_oscuro?.isBossSession) {
                 const reversoPorDefecto = "systems/dorso_oscuro/assets/cartas/reverso_carta1.png";
-                const reverso = data.backImg || actor.getFlag("dorso_oscuro", "dorsoUrl") || reversoPorDefecto;
+                let reverso = data.backImg || actor.getFlag("dorso_oscuro", "dorsoUrl") || reversoPorDefecto;
+
+                if (item.system.esDeCriatura && item.system.idCriatura) {
+                    // Si es una criatura, construimos la ruta automáticamente
+                    reverso = `systems/dorso_oscuro/assets/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
+                }
+
                 const estaOculta = data.faceDown || false;
 
                 const tokenData = await actor.getTokenDocument({
@@ -241,6 +247,9 @@ Hooks.once('init', async function() {
                     // Si queremos cambiar el dorso vertical, lo cambiamos aquí, por ahora usamos el de carta normal
                     reverso = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
                 }
+            }else if (item.system.esDeCriatura && item.system.idCriatura) {
+                // Si es una criatura, construimos la ruta automáticamente
+                reverso = `systems/dorso_oscuro/assets/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
             }
 
 

@@ -64,6 +64,22 @@
                         <label style="flex: 1.5; font-size: 16px;">¿Es carta de Criatura?</label>
                         <input type="checkbox" name="system.esDeCriatura" {{checked system.esDeCriatura}} style="flex: 0 0 30px;">
                     </div>
+                    {{!-- En carta-sheet.hbs, dentro del bloque isGM, cerca de esDeCriatura --}}
+                    {{#if system.esDeCriatura}}
+                        <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 5px;">
+                            <label style="flex: 1; font-size: 16px; color: #ff4500;"><i class="fas fa-fingerprint"></i> ID de Criatura:</label>
+                            <input type="text" name="system.idCriatura" value="{{system.idCriatura}}"
+                                   placeholder="ej: pescador"
+                                   style="flex: 1; background: #111; color: #00ccff; text-align: center; border: 1px solid #333;">
+                        </div>
+
+                        {{#if system.idCriatura}}
+                            <div style="font-size: 10px; color: #888; font-style: italic; margin-top: -5px; margin-bottom: 10px;">
+                                <i class="fas fa-folder-tree"></i> Ruta Dorso: systems/dorso_oscuro/assets/cartas/criaturas/{{system.idCriatura}}_dorso_cartas.jpg
+                            </div>
+                        {{/if}}
+
+                    {{/if}}
 
                     {{#unless system.esDeCriatura}}
                         <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px;">
@@ -120,6 +136,22 @@
                     <label style="flex: 1; font-size: 20px; color: #ff6666;"><i class="fas fa-dragon"></i> ¿Es una Criatura (Jefe)?</label>
                     <input type="checkbox" name="system.esCriatura" {{checked system.esCriatura}} style="flex: 0 0 30px;">
                 </div>
+                {{#if system.esCriatura}}
+                    <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 5px;">
+                        <label style="flex: 1; font-size: 16px; color: #ff4500;"><i class="fas fa-fingerprint"></i> ID de Criatura:</label>
+                        <input type="text" name="system.idCriatura" value="{{system.idCriatura}}"
+                               placeholder="ej: pescador"
+                               style="flex: 1; background: #111; color: #00ccff; text-align: center; border: 1px solid #333;">
+                    </div>
+
+                    {{#if system.idCriatura}}
+                        <div style="font-size: 10px; color: #888; font-style: italic; margin-top: -5px; margin-bottom: 10px;">
+                            <i class="fas fa-folder-tree"></i> Ruta Dorso: systems/dorso_oscuro/assets/cartas/criaturas/{{system.idCriatura}}_dorso_cartas.jpg
+                        </div>
+                    {{/if}}
+
+                {{/if}}
+
             {{/if}}
 
             {{!-- Campos exclusivos para EQUIPO --}}
