@@ -38,8 +38,11 @@ export class DJHUD extends Application {
         const data = await super.getData();
 
         // 1. RADAR DE JUGADORES
-        const personajes = game.actors.filter(a => a.type === "personaje" && a.hasPlayerOwner && a.system.almaActivaId);
-
+        const personajes = game.actors.filter(a =>
+            a.type === "personaje" &&
+            !a.flags.dorso_oscuro?.isBossSession && // Ignoramos al Boss en el radar de jugadores
+            a.system.almaActivaId // Solo si tienen un alma seleccionada
+        );
         data.jugadores = personajes.map(actor => {
             const alma = actor.items.get(actor.system.almaActivaId);
             const hand = game.cards.get(actor.system.handId);
