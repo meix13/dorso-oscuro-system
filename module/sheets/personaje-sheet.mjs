@@ -47,8 +47,20 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
         // --- CARTAS DE EQUIPO GLOBALES ---
         // Buscamos las cartas de equipo que el jugador tiene permiso de ver (las que el DJ ha desbloqueado)
-        context.equipoDisponible = game.items.filter(i => i.type === "carta_equipo" && i.testUserPermission(game.user, "OBSERVER"));
 
+        const unlocked = game.settings.get("dorso_oscuro", "equiposDesbloqueados") || {};
+        // Filtramos para que SOLO aparezcan las cartas que el DJ ha desbloqueado
+        context.equipoDisponible = game.items.filter(i =>
+            i.type === "carta_equipo" &&
+            unlocked[i.id] === true  // <--- ESTA ES LA CLAVE
+        ).map(item => {
+            return {
+                id: item.id,
+                name: item.name,
+                img: item.img,
+                formato: item.system.formato
+            };
+        });
 
         return context;
     }

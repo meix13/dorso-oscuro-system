@@ -242,10 +242,10 @@ Hooks.once('init', async function() {
             // --- Dorso para Cartas de Equipo ---
             if (item.type === "carta_equipo") {
                 if (item.system.formato === "horizontal") {
-                    reverso = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
+                    reverso = "systems/dorso_oscuro/assets/cartas/reverso_equipo.jpg";
                 } else {
                     // Si queremos cambiar el dorso vertical, lo cambiamos aquí, por ahora usamos el de carta normal
-                    reverso = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
+                    reverso = "systems/dorso_oscuro/assets/cartas/reverso_equipo.jpg";
                 }
             }else if (item.system.esDeCriatura && item.system.idCriatura) {
                 // Si es una criatura, construimos la ruta automáticamente
@@ -550,7 +550,7 @@ Hooks.once('init', async function() {
 
                     // Si es equipo y no tiene el flag guardado, forzamos el suyo
                     if (flags.type === "carta_equipo") {
-                        dorsoFinal = "systems/dorso_oscuro/assets/cartas/dorso_equipo_MOD20_100x140.jpg";
+                        dorsoFinal = "systems/dorso_oscuro/assets/cartas/reverso_equipo.jpg";
                     }
 
                     const nuevaImagen = nuevoEstado ? dorsoFinal : flags.imgReal;

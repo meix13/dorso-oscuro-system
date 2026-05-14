@@ -144,8 +144,21 @@
 
                             {{!-- Retrato de la criatura arrastrable --}}
                             <div class="boss-card-container item" data-item-id="{{bossAlma.id}}" style="position: relative; margin: 0 auto 8px auto; width: 125px; cursor: grab;" draggable="true">
-                                <img src="{{activeBoss.img}}" style="width: 100%; height: 175px; object-fit: cover; border: 2px solid gold; border-radius: 5px; pointer-events: none; box-shadow: 0 4px 10px rgba(0,0,0,0.7);" draggable="false">
 
+
+                                <div class="boss-soul-display" style="flex: 0 0 100px; position: relative;">
+                                    {{#if bossAlma}}
+                                        <img src="{{bossAlma.img}}"  draggable="false" style="width: 100%; border: 2px solid #8b0000; border-radius: 5px; box-shadow: 0 0 10px rgba(139,0,0,0.5);">
+
+                                        {{!-- NUEVO: BOTÓN DE TRANSFORMACIÓN --}}
+                                        <div class="transform-boss"
+                                             data-id-criatura="{{activeBoss.flags.dorso_oscuro.idCriatura}}"
+                                             style="position: absolute; bottom: -5px; right: -5px; background: #4a0000; color: #ffcc00; border: 1px solid #ffcc00; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2; box-shadow: 0 0 5px black;"
+                                             title="Cambiar Fase / Evolucionar">
+                                            <i class="fas fa-sync-alt"></i>
+                                        </div>
+                                    {{/if}}
+                                </div>
                                 {{!-- Etiqueta visual Oculta Reactiva --}}
                                 {{#if bossIsFaceDown}}
                                     <div style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: gold; padding: 2px 5px; border-radius: 3px; font-size: 10px; border: 1px solid gold;">

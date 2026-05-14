@@ -109,11 +109,18 @@
                             </select>
                         </div>
 
-                        <div class="stat-row flexrow" style="align-items: center;">
-                            <label style="flex: 1.5; font-size: 16px;">Copias Totales (Existencias)</label>
-                            <input type="number" name="system.cantidadExistente" value="{{system.cantidadExistente}}" style="flex: 0 0 60px; background: #111; color: #fff; text-align: center; border: 1px solid #444;">
-                        </div>
+
                     {{/unless}}
+                    {{!-- Fila de Existencias (Ahora visible para todos: Jugadores y Criaturas) --}}
+                    <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 5px;">
+                        <label style="flex: 1; font-size: 16px; color: #00ccff;">
+                            <i class="fas fa-layer-group"></i>
+                            {{#if system.esDeCriatura}}Copias en Mazo:{{else}}Existencias Mundo:{{/if}}
+                        </label>
+                        <input type="number" name="system.cantidadExistente" value="{{system.cantidadExistente}}"
+                               style="flex: 0 0 60px; background: #111; color: #fff; text-align: center; border: 1px solid #333;">
+                    </div>
+
                 </div>
             {{/if}}
 

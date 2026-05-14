@@ -141,14 +141,13 @@ export class DJHUD extends Application {
 
         return data;
 
-
-        return data;
     }
 
     activateListeners(html) {
         super.activateListeners(html);
 
         // --- SELECTOR DE CRIATURA (BOSS) ACTUALIZADO ---
+        // --- selector de criatura (BOSS) ---
         html.find('.select-boss').click(async ev => {
             const almaId = ev.currentTarget.dataset.id;
             const almaItemOriginal = game.items.get(almaId);
@@ -157,7 +156,7 @@ export class DJHUD extends Application {
             const idCriatura = almaItemOriginal.system.idCriatura;
             if (!idCriatura) return ui.notifications.error("Esta alma no tiene ID de Criatura.");
 
-            // 1. Borrar sesión anterior si existe
+            // 1. Borrar sesión anterior
             let oldBoss = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
             if (oldBoss) await oldBoss.delete();
 
@@ -166,55 +165,65 @@ export class DJHUD extends Application {
                 name: `BOSS: ${almaItemOriginal.name}`,
                 type: "personaje",
                 img: almaItemOriginal.img,
-                flags: { dorso_oscuro: { isBossSession: true, idCriatura: idCriatura } }
+                flags: {
+                    dorso_oscuro: {
+                        isBossSession: true,
+                        idCriatura: idCriatura,
+                        almaOriginalId: almaId // Guardamos cuál es la fase inicial
+                    }
+                }
             });
 
-            // 3. Importar los Ítems al Actor (Vital para la Vida y Energía)
+            // 3. BUSCAR Y DUPLICAR ÍTEMS SEGÚN EXISTENCIAS
             const mazoItemsMundo = game.items.filter(i =>
                 i.system.idCriatura === idCriatura && i.system.esDeCriatura && i.type !== "carta_alma"
             );
 
-            // Creamos copias de los items dentro del actor
-            const itemsCreados = await bossActor.createEmbeddedDocuments("Item", [
-                almaItemOriginal.toObject(),
-                ...mazoItemsMundo.map(i => i.toObject())
-            ]);
+            const itemsParaCrear = [almaItemOriginal.toObject()]; // Empezamos con el alma
 
+            for (const item of mazoItemsMundo) {
+                const copias = item.system.cantidadExistente || 1;
+                for (let i = 0; i < copias; i++) {
+                    const obj = item.toObject();
+                    // Si hay más de una copia, les ponemos un número para distinguirlas en el HUD del DJ
+                    if (copias > 1) obj.name += ` (${i + 1})`;
+                    itemsParaCrear.push(obj);
+                }
+            }
+
+            // Creamos todos los ítems (copias incluidas) en el inventario del Boss
+            const itemsCreados = await bossActor.createEmbeddedDocuments("Item", itemsParaCrear);
             const almaEnActor = itemsCreados.find(i => i.type === "carta_alma");
 
-            // 4. Crear las 5 Pilas de Cartas (Mazo, Mano, Descarte, Juego, Eliminadas)
+            // 4. CREAR PILAS (Mazo, Mano, etc.)
             const folder = game.folders.find(f => f.name === "MAZOS BOSS" && f.type === "Cards")
                 || await Folder.create({name: "MAZOS BOSS", type: "Cards"});
 
-            const createStack = async (suffix, type) => {
-                return await Cards.create({
-                    name: `${suffix} - ${almaItemOriginal.name}`,
-                    type: type,
-                    folder: folder.id
-                });
-            };
+            const deck = await Cards.create({ name: `Mazo - ${almaItemOriginal.name}`, type: "deck", folder: folder.id });
+            const hand = await Cards.create({ name: `Mano - ${almaItemOriginal.name}`, type: "hand", folder: folder.id });
+            const discard = await Cards.create({ name: `Descarte - ${almaItemOriginal.name}`, type: "pile", folder: folder.id });
+            const enJuego = await Cards.create({ name: `En Juego - ${almaItemOriginal.name}`, type: "pile", folder: folder.id });
+            const eliminadas = await Cards.create({ name: `Eliminadas - ${almaItemOriginal.name}`, type: "pile", folder: folder.id });
 
-            const deck = await createStack("Mazo", "deck");
-            const hand = await createStack("Mano", "hand");
-            const discard = await createStack("Descarte", "pile");
-            const enJuego = await createStack("En Juego", "pile");
-            const eliminadas = await createStack("Eliminadas", "pile");
-
-            // 5. Poblar el Mazo con los ítems del Actor
+            // 5. POBLAR EL MAZO CON LAS COPIAS INDEPENDIENTES
             const dorsoBoss = `systems/dorso_oscuro/assets/cartas/criaturas/${idCriatura}_dorso_cartas.jpg`;
-            const cartasParaMazo = itemsCreados.filter(i => i.type !== "carta_alma").map(item => ({
+
+            // Filtramos las cartas (excluyendo el alma) y creamos una carta en el mazo por cada ítem en el actor
+            const cartasData = itemsCreados.filter(i => i.type !== "carta_alma").map(item => ({
                 name: item.name,
                 faces: [{ img: item.img, name: item.name }],
                 back: { img: dorsoBoss },
                 flags: { dorso_oscuro: { itemId: item.id } }
             }));
 
-            await deck.createEmbeddedDocuments("Card", cartasParaMazo);
+            await deck.createEmbeddedDocuments("Card", cartasData);
             await deck.shuffle();
 
-            // 6. Vincular todo al Actor
+            // 6. VINCULAR AL ACTOR
             await bossActor.update({
                 "system.almaActivaId": almaEnActor.id,
+                "system.hp.value": almaEnActor.system.vida.value,
+                "system.hp.max": almaEnActor.system.vida.max,
                 "system.deckId": deck.id,
                 "system.handId": hand.id,
                 "system.discardId": discard.id,
@@ -223,8 +232,92 @@ export class DJHUD extends Application {
                 "system.energia.value": almaItemOriginal.system.energiaAportada || 0
             });
 
-            ui.notifications.info(`Boss ${almaItemOriginal.name} listo para el combate.`);
+            ui.notifications.info(`Boss iniciado. Generadas ${cartasData.length} cartas (incluyendo copias).`);
             this.render(true);
+        });
+
+        // --- BOTÓN DE TRANSFORMACIÓN (CAMBIO DE FASE) ---
+        html.find('.transform-boss').click(async ev => {
+            const idCriatura = ev.currentTarget.dataset.idCriatura;
+            // Buscamos el actor del boss por su flag
+            const bossActor = game.actors.find(a => a.flags.dorso_oscuro?.isBossSession);
+
+            if (!bossActor || !idCriatura) return;
+
+            // 1. Buscamos todas las cartas de alma en el mundo que tengan el mismo idCriatura
+            const almasFase = game.items.filter(i =>
+                i.type === "carta_alma" &&
+                i.system.idCriatura === idCriatura
+            );
+
+            if (almasFase.length <= 1) {
+                return ui.notifications.info("Esta criatura no tiene otras cartas de alma para poder cambiar (configuradas con el mismo ID, como el caso de la Glaistig).");
+            }
+
+            // 2. Preparamos el diálogo de selección
+            let buttons = {};
+            for (let alma of almasFase) {
+                // No mostramos la fase en la que ya está (usamos la flag que guardamos al iniciar)
+                if (alma.id === bossActor.flags.dorso_oscuro.almaOriginalId) continue;
+
+                buttons[alma.id] = {
+                    label: `<img src="${alma.img}" style="width:20px; height:20px; vertical-align:middle; margin-right:5px; border:1px solid #444;"> ${alma.name}`,
+                    callback: async () => {
+                        // --- PROCESO DE TRANSFORMACIÓN CON VIDA HEREDADA EXACTA ---
+
+                        // A. Buscamos el alma que tiene puesta AHORA MISMO
+                        const almaActual = bossActor.items.get(bossActor.system.almaActivaId);
+
+                        // Si por lo que sea no encuentra la carta, cae al valor del actor (el backup)
+                        const hpActual = almaActual ? almaActual.system.vida.value : bossActor.system.hp.value;
+                        const hpMaxAnterior = almaActual ? almaActual.system.vida.max : bossActor.system.hp.max;
+
+                        // B. Limpiar el alma antigua del inventario del Boss
+                        const almasEnInventario = bossActor.items.filter(i => i.type === "carta_alma");
+                        await bossActor.deleteEmbeddedDocuments("Item", almasEnInventario.map(i => i.id));
+
+                        // C. Instanciar la nueva alma en el Boss
+                        const [nuevaAlmaDoc] = await bossActor.createEmbeddedDocuments("Item", [alma.toObject()]);
+
+                        // D. ¡CLAVE! Modificar la carta recién creada para que herede la vida exacta
+                        await nuevaAlmaDoc.update({
+                            "system.vida.value": hpActual,
+                            "system.vida.max": hpMaxAnterior
+                        });
+
+                        // E. Actualizar el Actor
+                        await bossActor.update({
+                            "name": `BOSS: ${alma.name}`,
+                            "img": alma.img,
+                            "system.almaActivaId": nuevaAlmaDoc.id,
+                            "system.hp.value": hpActual,
+                            "system.hp.max": hpMaxAnterior,
+                            "system.energia.value": alma.system.energiaAportada || 0,
+                            "flags.dorso_oscuro.almaOriginalId": alma.id // Actualizamos la referencia de fase
+                        });
+
+                        // F. Sincronización visual del Token en el tablero
+                        const tokenBoss = canvas.tokens.placeables.find(t => t.actor?.id === bossActor.id);
+                        if (tokenBoss) {
+                            await tokenBoss.document.update({
+                                "texture.src": alma.img
+                            });
+                            // Al llamar a sincronizar, ahora leerá la vida heredada correctamente
+                            await this._sincronizarTokenAlma(bossActor.id, nuevaAlmaDoc.id);
+                        }
+
+                        ui.notifications.info(`¡Transformación completada! ${alma.name} entra en escena con ${hpActual} PV.`);
+                        this.render(true);
+                    }
+                };
+            }
+
+            new Dialog({
+                title: "Evolución de Criatura",
+                content: `<p style="text-align:center;">Selecciona la siguiente fase para <b>${bossActor.name}</b>:</p>`,
+                buttons: buttons,
+                default: "cerrar"
+            }).render(true);
         });
 
         // --- ZOOM DE CARTA (CLIC DERECHO) ---
@@ -695,19 +788,23 @@ export class DJHUD extends Application {
 
 
     async _onToggleEquipo(itemId) {
-        const unlocked = game.settings.get("dorso_oscuro", "equiposDesbloqueados");
+        // 1. Usamos deepClone para que Foundry detecte el cambio de datos perfectamente
+        const unlocked = foundry.utils.deepClone(game.settings.get("dorso_oscuro", "equiposDesbloqueados") || {});
         const newState = !unlocked[itemId];
 
-        // 1. Actualizar el estado global
+        // 2. Actualizar el estado global
         unlocked[itemId] = newState;
         await game.settings.set("dorso_oscuro", "equiposDesbloqueados", unlocked);
 
-        // 2. Gestionar permisos (Poner a "Observador" para todos los jugadores)
+        // 3. Gestionar permisos nativos (OBSERVER para ver, NONE para ocultar)
         const item = game.items.get(itemId);
         if (item) {
             const ownership = newState ? { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.OBSERVER } : { default: CONST.DOCUMENT_OWNERSHIP_LEVELS.NONE };
             await item.update({ ownership });
         }
+
+        // Refrescamos el HUD para ver el botón en el color correcto
+        this.render();
     }
 
 
