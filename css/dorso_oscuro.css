@@ -626,5 +626,51 @@ select option:checked {
     border-color: #00ccff !important;                    /* Borde azul brillante */
     box-shadow: 0 0 8px rgba(0, 204, 255, 0.5) !important;
 }
+/* =========================================================
+   ARREGLO DEL EDITOR DE TEXTO ENRIQUECIDO (PROSEMIRROR)
+========================================================= */
 
-/* Si tu botón de vender a la papelera usa una clase específica (como .yes o .vender), podemos darle un toque verde/rojo, pero con este código base ya se leerán TODOS perfectamente. */
+/* Fondo de la barra de herramientas del editor */
+.dorso_oscuro .editor-menu {
+    background: #111 !important;
+    border: 1px solid #444 !important;
+    border-bottom: 2px solid #00ccff !important; /* Línea neón para separar del texto */
+    border-radius: 4px 4px 0 0;
+    padding: 3px;
+}
+
+/* Color por defecto de los botones, textos e iconos (Blancos/Gris claro) */
+.dorso_oscuro .editor-menu button,
+.dorso_oscuro .editor-menu .pm-dropdown,
+.dorso_oscuro .editor-menu button i,
+.dorso_oscuro .editor-menu button span {
+    color: #e0e0e0 !important;
+}
+
+/* Si usan SVGs en lugar de FontAwesome */
+.dorso_oscuro .editor-menu svg {
+    fill: #e0e0e0 !important;
+}
+
+/* Color al pasar el ratón por encima o al estar activos (Azul neón) */
+.dorso_oscuro .editor-menu button:hover,
+.dorso_oscuro .editor-menu button:hover i,
+.dorso_oscuro .editor-menu button:hover span,
+.dorso_oscuro .editor-menu button.active,
+.dorso_oscuro .editor-menu button.active i,
+.dorso_oscuro .editor-menu .pm-dropdown:hover {
+    color: #00ccff !important;
+    text-shadow: 0 0 5px rgba(0, 204, 255, 0.5) !important;
+}
+
+.dorso_oscuro .editor-menu button:hover svg,
+.dorso_oscuro .editor-menu button.active svg {
+    fill: #00ccff !important;
+    filter: drop-shadow(0 0 2px rgba(0, 204, 255, 0.8));
+}
+
+/* Aseguramos que la zona de escribir tenga buen contraste */
+.dorso_oscuro .editor-content {
+    color: #e0e0e0 !important;
+    padding: 10px !important;
+}

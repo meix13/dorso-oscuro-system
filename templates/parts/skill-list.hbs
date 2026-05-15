@@ -1,25 +1,35 @@
-{{!-- templates/parts/skill-list.hbs --}}
-<ul class="skills-list">
+<ul class="skills-list flexcol" style="gap: 5px; padding: 0; margin: 0; list-style: none;">
     {{#each skills as |item|}}
-        <li class="item skill-row" data-item-id="{{item._id}}">
-            <div class="skill-main-info">
-                <a class="tirar-habilidad">
-                    <span class="skill-name">{{item.name}}</span>
-                    <span class="skill-attr">[{{item.system.atributoBase}}]</span>
+        <li class="item skill-row flexrow" data-item-id="{{item._id}}" style="align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.3);">
+
+            <div class="skill-main-info flexrow" style="align-items: center; flex: 1;">
+                {{!-- BOTÓN PARA LANZAR (DADO) --}}
+                <a class="tirar-habilidad" title="Lanzar Habilidad" style="color: #00ccff; margin-right: 8px; font-size: 18px; transition: transform 0.2s; cursor: pointer;">
+                    <i class="fas fa-dice-d20"></i>
                 </a>
+
+                {{!-- Textos con "cursor: default" para que no parezcan botones --}}
+                <span class="skill-name" style="font-weight: bold; font-size: 16px; color: #1a1a1a; cursor: default;">{{item.name}}</span>
+                <span class="skill-attr" style="margin-left: 5px; font-size: 12px; color: #444; cursor: default;">[{{item.system.atributoBase}}]</span>
             </div>
 
-            {{!-- Añadimos flexrow y align-items para que la papelera quede alineada --}}
-            <div class="skill-values" style="display: flex; align-items: center;">
-                <input type="number" value="{{item.system.valorActual}}" data-edit="system.valorActual">
-                <span class="sep" style="margin: 0 5px;">/</span>
-                <span class="max">{{item.system.valorMax}}</span>
+            <div class="skill-values flexrow" style="align-items: center; flex: 0 0 auto; gap: 5px;">
+                <input type="number" data-edit="system.valorActual" value="{{item.system.valorActual}}" min="0" max="{{item.system.valorMax}}" style="width: 35px; text-align: center; border: 1px solid rgba(0,0,0,0.4); background: rgba(255,255,255,0.6); border-radius: 4px; font-weight: bold;">
+                <span style="font-size: 14px; color: #444; font-weight: bold;">/ {{item.system.valorMax}}</span>
 
-                {{!-- NUEVO: Botón de borrar --}}
-                <a class="item-delete" style="margin-left: 15px; color: #8b0000; cursor: pointer;" title="Borrar Habilidad">
-                    <i class="fas fa-trash"></i>
+                {{!-- BOTÓN PARA EDITAR (LÁPIZ) --}}
+                <a class="item-edit" title="Editar Habilidad" style="color: #4a3424; margin-left: 10px; font-size: 16px; transition: color 0.2s; cursor: pointer;">
+                    <i class="fas fa-edit"></i>
                 </a>
+
+                {{!-- LA PAPELERA: SOLO VISIBLE PARA EL DJ --}}
+                {{#if @root.user.isGM}}
+                    <a class="item-delete" style="margin-left: 5px; color: #8b0000; font-size: 16px; cursor: pointer;" title="Borrar Habilidad">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                {{/if}}
             </div>
+
         </li>
     {{/each}}
 </ul>

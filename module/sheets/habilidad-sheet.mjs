@@ -7,25 +7,28 @@ export class HabilidadSheet extends foundry.appv1.sheets.ItemSheet {
             classes: ["dorso_oscuro", "sheet", "item", "mystery-theme"],
             template: "systems/dorso_oscuro/templates/habilidad-sheet.hbs",
             width: 450,
-            height: 400
+            height: 520
         });
     }
 
     async getData() {
         const context = super.getData();
-        context.system = context.item.system;
+        const item = context.item;
+
+        context.system = item.system;
+        context.isOwned = !!item.actor;
+        context.isGM = game.user.isGM;
+        context.owner = item.isOwner;
+
+        // Generamos el texto enriquecido (asegurando que si es undefined pase un "")
+        context.enrichedDescription = await TextEditor.enrichHTML(item.system.descripcion || "", {
+            async: true,
+            secrets: item.isOwner
+        });
 
         context.config = {
-            atributos: {
-                "mental": "Mental",
-                "fisico": "Físico",
-                "social": "Social"
-            },
-            // NUEVO: Opciones de tipo de habilidad
-            tipos: {
-                "tecnica": "Técnica",
-                "general": "General"
-            }
+            atributos: { "mental": "Mental", "fisico": "Físico", "social": "Social" },
+            tipos: { "tecnica": "Técnica", "general": "General" }
         };
 
         return context;

@@ -24,7 +24,10 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         context.config = {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" }
         };
-
+        context.enrichedNotas = await TextEditor.enrichHTML(context.system.notas || "", {
+            async: true,
+            secrets: this.actor.isOwner
+        });
 
         // Filtros de Habilidades (se quedan igual)
         context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
@@ -77,12 +80,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         html.find('.tirar-atributo').click(this._onTirarAtributo.bind(this));
         html.find('.estabilidad-box').click(this._onCambiarEstabilidad.bind(this));
 
-        // Abrir ficha de habilidad al hacer doble clic o clic en editar
-        html.find('.item .skill-name').click(ev => {
-            const li = $(ev.currentTarget).parents(".item");
-            const item = this.actor.items.get(li.data("itemId"));
-            item.sheet.render(true);
-        });
+
 
         //NUEVO: Escuchador para guardar valores de habilidades "al vuelo"
         html.find('.skill-values input').change(ev => {
@@ -203,21 +201,26 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             return ui.notifications.warn(`No te quedan puntos en ${item.name}`);
         }
 
-        // Creamos un diálogo emergente
+        // Creamos un diálogo emergente mejorado
         new Dialog({
             title: `Usar ${item.name}`,
             content: `
-        <p>¿Cuántos puntos quieres gastar? (Máx: ${puntosDisponibles})</p>
-        <input type="number" id="puntos-gasto" value="1" min="1" max="${puntosDisponibles}">
-      `,
+                <div style="padding: 10px; text-align: center; color: #e0e0e0;">
+                    <p style="font-size: 16px; margin-bottom: 15px;">¿Cuántos puntos de <b>${item.name}</b> quieres gastar?<br><span style="font-size: 13px; color: #aaa;">(Máximo disponible: ${puntosDisponibles})</span></p>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-bolt" style="color: #00ccff; font-size: 24px;"></i>
+                        <input type="number" id="puntos-gasto" value="1" min="1" max="${puntosDisponibles}" style="width: 80px; height: 45px; text-align: center; background: #111; color: #fff; border: 2px solid #00ccff; font-size: 24px; font-weight: bold; border-radius: 5px; font-family: 'Kalam', cursive;">
+                    </div>
+                </div>
+            `,
             buttons: {
                 lanzar: {
                     icon: '<i class="fas fa-dice"></i>',
                     label: "Lanzar Dado",
-                    callback: async (html) => {
-                        const gasto = parseInt(html.find('#puntos-gasto').val());
+                    callback: async (htmlContent) => {
+                        const gasto = parseInt(htmlContent.find('#puntos-gasto').val());
 
-                        if (gasto > puntosDisponibles || gasto <= 0) {
+                        if (gasto > puntosDisponibles || gasto <= 0 || isNaN(gasto)) {
                             return ui.notifications.error("Cantidad inválida");
                         }
 
@@ -232,13 +235,13 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                         // C) Mostrar en el Chat
                         roll.toMessage({
                             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                            flavor: `<h3>${item.name}</h3>Utiliza Atributo ${atributoBase.toUpperCase()} gastando ${gasto} puntos.`
+                            flavor: `<h3><i class="fas fa-dice-d20"></i> ${item.name}</h3>Utiliza Atributo <b>${atributoBase.toUpperCase()}</b> gastando <b>${gasto}</b> punto(s).`
                         });
                     }
                 }
             },
             default: "lanzar"
-        }).render(true);
+        }, { width: 350, classes: ["dorso_oscuro", "dialog"] }).render(true);
     }
 
     async _onCambiarEstabilidad(event) {
