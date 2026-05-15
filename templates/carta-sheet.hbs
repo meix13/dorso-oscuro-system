@@ -42,7 +42,6 @@
                     <label style="flex: 1; font-size: 20px;">Energía que aporta (+)</label>
                     <input type="number" name="system.energiaAportada" value="{{system.energiaAportada}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
                 </div>
-
                 <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
                     <label style="flex: 1; font-size: 20px;">¿Instantánea?</label>
                     <input type="checkbox" name="system.esInstantanea" {{checked system.esInstantanea}} style="flex: 0 0 30px;">
@@ -54,6 +53,14 @@
                 <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; border-top: 1px dashed #444; padding-top: 10px;">
                     <label style="flex: 1.5; font-size: 18px; color: #ff6666;"><i class="fas fa-heart"></i> Vida de la Carta <span style="font-size: 12px; color: #888;">(0 = No tiene)</span></label>
                     <input type="number" name="system.vida.max" value="{{system.vida.max}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #ff4444;">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px; border-top: 1px dashed #444; padding-top: 10px;">
+                    <label style="flex: 1.5; font-size: 18px; color: #00ccff;"><i class="fas fa-search"></i> Busca en Mazo</label>
+                    <input type="number" name="system.permiteBuscarMazo" value="{{system.permiteBuscarMazo}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #00ccff;" title="Nº de cartas que permite llevar del Mazo a la Mano">
+                </div>
+                <div class="stat-row flexrow" style="align-items: center; margin-bottom: 10px;">
+                    <label style="flex: 1.5; font-size: 18px; color: #ffaa00;"><i class="fas fa-history"></i> Busca en Descarte</label>
+                    <input type="number" name="system.permiteBuscarDescarte" value="{{system.permiteBuscarDescarte}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #ffaa00;" title="Nº de cartas que permite recuperar del Descarte a la Mano">
                 </div>
                 <div style="border: 1px solid #444; background: rgba(0,0,0,0.2); padding: 10px; margin-bottom: 10px; border-radius: 5px;">
                     <h3 style="color: #00ccff; border-bottom: 1px dashed #00ccff; margin-bottom: 10px; font-size: 16px;">

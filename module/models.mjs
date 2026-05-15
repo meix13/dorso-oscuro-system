@@ -115,7 +115,9 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             cantidadExistente: new fields.NumberField({initial: 5, integer: true, min: 1}),
             esEspecial: new fields.BooleanField({initial: false}),
             costeEsencia: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            idCriatura: new fields.StringField({initial: ""})
+            idCriatura: new fields.StringField({initial: ""}),
+            permiteBuscarMazo: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            permiteBuscarDescarte: new fields.NumberField({initial: 0, integer: true, min: 0})
 
         }
     }

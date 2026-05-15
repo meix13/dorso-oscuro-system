@@ -265,7 +265,8 @@ Hooks.once('init', async function() {
                     tokenName = `❤️ ${item.system.vida.max}  |  ${item.name}`;
                 }
             }
-// ... (un poco más abajo en la misma función dropCanvasData)
+
+
             const tokenData = {
                 name: tokenName,
                 texture: { src: estaOculta ? reverso : item.img },
@@ -273,6 +274,12 @@ Hooks.once('init', async function() {
                 height: height,
                 x: data.x - (canvas.grid.size * width) / 2,
                 y: data.y - (canvas.grid.size * height) / 2,
+
+                // --- MEJORA DE PERMISOS Y VÍNCULO ---
+                actorId: actor ? actor.id : null, // Vinculamos el token al personaje en la raíz
+                actorLink: false,                // IMPORTANTE: Unlinked para que cada carta sea independiente
+                ownership: actor ? actor.ownership : { default: 0 }, // Hereda quién es el dueño del personaje
+
                 lockRotation: true,
                 displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
                 displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
@@ -280,7 +287,7 @@ Hooks.once('init', async function() {
                     dorso_oscuro: {
                         isCard: true,
                         itemId: item.id,
-                        actorId: actor ? actor.id : null, // <-- ESTA LÍNEA ES CLAVE
+                        actorId: actor ? actor.id : null,
                         type: item.type,
                         isFaceDown: estaOculta,
                         imgReal: item.img,
@@ -290,6 +297,9 @@ Hooks.once('init', async function() {
                 }
             };
             await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
+
+
+
         }
 
         // --- 3. ACTUALIZAR HUD AL FINAL ---
@@ -304,7 +314,10 @@ Hooks.once('init', async function() {
 
 // --- INTERCEPTAR BORRADO DE TOKENS (Pasar de En Juego a Descarte o Eliminadas) ---
     Hooks.on("deleteToken", async (tokenDocument, options, userId) => {
-        // ¡NUEVO!: Si es el DJ cerrando el tablero, ignoramos el proceso porque las pilas van a desaparecer.
+
+        // Ignoramos si es limpieza total (DJ cerrando tablero) o si estamos devolviendo a la mano
+        if (options.limpiezaTotal || options.devolviendoMano) return;
+        // Si es el DJ cerrando el tablero, ignoramos el proceso porque las pilas van a desaparecer.
         if (options.limpiezaTotal) return;
 
         // Solo ejecuta esto el jugador que ha borrado el token, para no duplicar acciones
@@ -584,12 +597,200 @@ Hooks.once('init', async function() {
         if (flags.type === "carta_alma") return;
 
         // Botones de descarte para cartas normales
+        // Botones de descarte para cartas normales
         const btnDescarte = $(`<div class="control-icon" title="Descarte"><i class="fas fa-trash-can" style="color: #aaa;"></i></div>`);
         const btnEliminadas = $(`<div class="control-icon" title="Destierro"><i class="fas fa-ban" style="color: #ff4444;"></i></div>`);
         $html.find('.col.left').append(btnDescarte);
         $html.find('.col.right').append(btnEliminadas);
 
-        // (Lógica de clics de descarte aquí...)
+        // --- 4. BOTONES DINÁMICOS Y GESTIÓN DE MANO ---
+        const actor = game.actors.get(flags.actorId);
+        const item = actor?.items.get(flags.itemId);
+
+        // Si el token es nuestro, tiene un ítem válido y es una carta jugable (Poder u Objeto)
+        if (actor && actor.isOwner && item && (item.type === "carta_poder" || item.type === "carta_objeto")) {
+
+            // --- NUEVO: BOTÓN DE DEVOLVER A LA MANO ---
+            const btnDevolver = $(`
+                <div class="control-icon" title="Devolver a la Mano (Reembolsa Energía)" style="border: 2px solid #66ff66; border-radius: 5px; background: rgba(0,50,0,0.8); margin-top: 5px;">
+                    <i class="fas fa-undo" style="color: #66ff66;"></i>
+                </div>
+            `);
+            $html.find('.col.left').append(btnDevolver); // Lo ponemos a la izquierda, debajo del descarte
+
+            btnDevolver.click(async () => {
+                const enJuego = game.cards.get(actor.system.enJuegoId);
+                const mano = game.cards.get(actor.system.handId);
+
+                if (!enJuego || !mano) return ui.notifications.error("Faltan las pilas de cartas.");
+
+                const card = enJuego.cards.find(c => c.flags.dorso_oscuro?.itemId === flags.itemId);
+
+                if (card) {
+                    // 1. Devolver la carta a la Mano
+                    await enJuego.pass(mano, [card.id]);
+
+                    // 2. Revertir el cálculo de energía (solo si no es Boss)
+                    const isBoss = actor.flags.dorso_oscuro?.isBossSession;
+                    if (!isBoss) {
+                        const coste = item.system.costeEnergia || 0;
+                        const aporteInmediato = item.type === "carta_poder" ? (item.system.energiaAportada || 0) : 0;
+
+                        // Hacemos exactamente la matemática inversa al dropCanvasData
+                        let energiaDevuelta = actor.system.energia.value + coste - aporteInmediato;
+
+                        // Topamos la energía para que no baje de 0 ni supere el 7 (o el máximo que tenga)
+                        energiaDevuelta = Math.max(0, Math.min(actor.system.energia.max || 7, energiaDevuelta));
+                        await actor.update({"system.energia.value": energiaDevuelta});
+                    }
+
+                    // 3. Borrar el Token de la mesa pasándole una señal especial para el Hook de borrado
+                    await tokenDoc.delete({ devolviendoMano: true });
+
+                    ui.notifications.info(`Carta devuelta a la mano. Energía restaurada.`);
+                    app.close(); // Cierra el Token HUD
+                } else {
+                    ui.notifications.warn("La carta ya no está en juego.");
+                }
+            });
+
+            // Forzamos la conversión a número por seguridad (El código que ya pusimos antes)
+            const maxMazo = Number(item.system.permiteBuscarMazo) || 0;
+            const maxDescarte = Number(item.system.permiteBuscarDescarte) || 0;
+
+            // Función creadora de botones y diálogos según el tipo
+            const crearBotonBusqueda = (tipo, max, icono, color) => {
+                if (max <= 0) return; // Si está a 0, ignoramos
+
+                const titulo = tipo === "mazo" ? `Resolver: Buscar hasta ${max} cartas en el Mazo` : `Resolver: Recuperar hasta ${max} cartas del Descarte`;
+                const btn = $(`
+                    <div class="control-icon" title="${titulo}" style="border: 2px solid ${color}; border-radius: 5px; background: rgba(0,20,50,0.8);">
+                        <i class="fas ${icono}" style="color: ${color};"></i>
+                    </div>
+                `);
+
+                $html.find('.col.right').append(btn); // Lo apilamos a la derecha
+
+                btn.click(async () => {
+                    const mano = game.cards.get(actor.system.handId);
+                    const pilaOrigen = game.cards.get(tipo === "mazo" ? actor.system.deckId : actor.system.discardId);
+
+                    if (!mano || !pilaOrigen) return ui.notifications.error("Dorso Oscuro | Faltan las pilas de cartas del jugador.");
+
+                    // En el mazo solo miramos las "availableCards", en el descarte miramos todas
+                    const cartasDisponibles = tipo === "mazo" ? pilaOrigen.availableCards : pilaOrigen.cards.contents;
+
+                    if (cartasDisponibles.length === 0) {
+                        return ui.notifications.warn(`Tu pila de ${tipo} está vacía.`);
+                    }
+
+                    // Construimos la cuadrícula visual de cartas usando CSS GRID para mantener proporciones
+                    let cardsHtml = `
+                        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; margin-bottom: 15px; max-height: 450px; overflow-y: auto; padding: 15px; background: rgba(0,0,0,0.5); border-radius: 5px;">`;
+
+                    cartasDisponibles.forEach(c => {
+                        cardsHtml += `
+                            <div class="search-card-option" data-card-id="${c.id}" title="${c.name}" style="position: relative; cursor: pointer; border: 2px solid transparent; border-radius: 5px; transition: all 0.2s;">
+                                <img src="${c.faces[0].img}" style="width: 100%; border-radius: 3px; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.5); display: block;">
+                                
+                                <a class="view-card-btn" data-img="${c.faces[0].img}" data-name="${c.name}" title="Ver Carta en Grande" style="position: absolute; top: -8px; right: -8px; background: #003366; color: white; border: 1px solid #00ccff; border-radius: 50%; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; font-size: 13px; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.8); transition: transform 0.2s;">
+                                    <i class="fas fa-search-plus"></i>
+                                </a>
+                            </div>
+                        `;
+                    });
+
+                    cardsHtml += `</div>
+                    <p style="text-align: center; color: #d4c4a8; font-family: 'Kalam', cursive; font-size: 16px;">
+                        Seleccionadas: <span id="contador-busqueda">0</span> / ${max}
+                    </p>`;
+
+                    let dialogBusqueda = new Dialog({
+                        title: tipo === "mazo" ? "Búsqueda en el Mazo" : "Recuperar del Descarte",
+                        content: cardsHtml,
+                        buttons: {
+                            confirmar: {
+                                icon: '<i class="fas fa-check"></i>',
+                                label: "Llevar a la Mano",
+                                callback: async (htmlContent) => {
+                                    const selectedIds = [];
+                                    htmlContent.find('.search-card-option.selected').each(function() {
+                                        selectedIds.push($(this).data('cardId'));
+                                    });
+
+                                    if (selectedIds.length > 0) {
+                                        // Pasa el array de cartas seleccionadas a la mano
+                                        await pilaOrigen.pass(mano, selectedIds);
+                                        ui.notifications.info(`${selectedIds.length} carta(s) enviada(s) a tu mano con éxito.`);
+
+                                        // Regla sagrada: ¡Si se mira el mazo, siempre se baraja después!
+                                        if (tipo === "mazo") await pilaOrigen.shuffle();
+                                        app.close(); // Cerramos el HUD del Token
+                                    } else {
+                                        ui.notifications.warn("No seleccionaste ninguna carta, acción cancelada.");
+                                    }
+                                }
+                            },
+                            cancelar: {
+                                icon: '<i class="fas fa-times"></i>',
+                                label: "Cancelar"
+                            }
+                        },
+                        render: (htmlContent) => {
+                            let seleccionadas = 0;
+
+                            // 1. Lógica del botón de VER EN GRANDE
+                            htmlContent.find('.view-card-btn').click(function(ev) {
+                                ev.stopPropagation(); // MUY IMPORTANTE: Evita que al hacer clic en la lupa se seleccione la carta
+                                const imgSrc = $(this).data('img');
+                                const cardName = $(this).data('name');
+
+                                new ImagePopout(imgSrc, {
+                                    title: cardName,
+                                    shareable: false // No hace falta compartirla al chat
+                                }).render(true);
+                            });
+
+                            // Efecto hover para la lupa
+                            htmlContent.find('.view-card-btn').hover(
+                                function() { $(this).css({'transform': 'scale(1.15)', 'background': '#005599'}); },
+                                function() { $(this).css({'transform': 'scale(1)', 'background': '#003366'}); }
+                            );
+
+                            // 2. Lógica de SELECCIÓN DE CARTA
+                            htmlContent.find('.search-card-option').click(function() {
+                                const isSelected = $(this).hasClass('selected');
+
+                                if (isSelected) {
+                                    // Deseleccionar
+                                    $(this).removeClass('selected').css({'border-color': 'transparent', 'transform': 'scale(1)', 'opacity': '1'});
+                                    seleccionadas--;
+                                } else {
+                                    // Seleccionar
+                                    if (seleccionadas >= max) {
+                                        return ui.notifications.warn(`El efecto de esta carta solo te permite elegir un máximo de ${max}.`);
+                                    }
+                                    $(this).addClass('selected').css({'border-color': color, 'transform': 'scale(0.95)', 'opacity': '0.6'});
+                                    seleccionadas++;
+                                }
+                                // Actualizar contador en la UI
+                                htmlContent.find('#contador-busqueda').text(seleccionadas);
+                            });
+                        },
+                        default: "confirmar"
+                    }, { width: 700, classes: ["dorso_oscuro"] }); // Hacemos el diálogo un pelín más ancho (700px)
+
+                    dialogBusqueda.render(true);
+                });
+            };
+
+            // Llamamos a la función constructora para ambos casos
+            crearBotonBusqueda("mazo", maxMazo, "fa-search", "#00ccff");
+            crearBotonBusqueda("descarte", maxDescarte, "fa-history", "#ffaa00");
+        }
+
+
+
     });
 
     // --- NUEVO HOOK: Refrescar el Panel del DJ cuando un token cambia en mesa ---
