@@ -1,11 +1,12 @@
 // module/sistema.js
-import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData, CartaEquipoData } from "./models.mjs";
+import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData, CartaEquipoData, ObjetoData } from "./models.mjs";
 import { PersonajeSheet } from "./sheets/personaje-sheet.mjs";
 import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
 import { CartaSheet } from "./sheets/carta-sheet.mjs";
 import { ManoHUD } from "./apps/mano-hud.mjs";
 import { DJHUD } from "./apps/dj-hud.mjs";
 import { MercaderHud } from "./apps/mercader-hud.mjs";
+import { ObjetoSheet } from "./sheets/objeto-sheet.mjs";
 
 
 
@@ -31,12 +32,14 @@ Hooks.once('init', async function() {
 
     CONFIG.Actor.dataModels.personaje = PersonajeData;
 
-    // Registramos las habilidades y las nuevas cartas
+    // Registramos las habilidades, objetos y las cartas
     CONFIG.Item.dataModels.habilidad = HabilidadData;
     CONFIG.Item.dataModels.carta_alma = CartaAlmaData;
     CONFIG.Item.dataModels.carta_poder = CartaJugableData;
     CONFIG.Item.dataModels.carta_objeto = CartaJugableData;
     CONFIG.Item.dataModels.carta_equipo = CartaEquipoData;
+    CONFIG.Item.dataModels.arma = ObjetoData;
+    CONFIG.Item.dataModels.objeto = ObjetoData;
 
     // Actualizamos Actors a su ruta estricta en V13/V14
     foundry.documents.collections.Actors.unregisterSheet("core", foundry.appv1.sheets.ActorSheet);
@@ -56,6 +59,12 @@ Hooks.once('init', async function() {
         types: ["carta_alma", "carta_poder", "carta_objeto","carta_equipo"],
         makeDefault: true
     });
+
+    foundry.documents.collections.Items.registerSheet("dorso_oscuro", ObjetoSheet, {
+        types: ["objeto", "arma"],
+        makeDefault: true
+    });
+
 
     await loadTemplates([
         "systems/dorso_oscuro/templates/parts/skill-list.hbs"
@@ -798,6 +807,23 @@ Hooks.once('init', async function() {
         if (changes.flags?.dorso_oscuro || changes.texture) {
             const djHud = Object.values(ui.windows).find(w => w.id === "dj-hud");
             if (djHud) djHud.render(false);
+        }
+    });
+
+    // --- IMÁGENES POR DEFECTO PARA ARMAS Y OBJETOS ---
+    Hooks.on("preCreateItem", (item, data, options, userId) => {
+        // Foundry asigna "icons/svg/item-bag.svg" a todos los items por defecto al nacer
+        // Verificamos si no tiene imagen o si trae la de por defecto
+        if (!data.img || data.img === "icons/svg/item-bag.svg") {
+
+            if (item.type === "arma") {
+                // Icono nativo de espada en Foundry
+                item.updateSource({ img: "icons/svg/sword.svg" });
+
+            } else if (item.type === "objeto") {
+                // Icono nativo de cofre/mochila en Foundry
+                item.updateSource({ img: "icons/svg/chest.svg" });
+            }
         }
     });
 

@@ -1,0 +1,56 @@
+<form class="{{cssClass}} flexcol" autocomplete="off" style="background: rgba(15, 15, 20, 0.95); padding: 15px; height: 100%; color: #e0e0e0;">
+
+    {{!-- CABECERA --}}
+    <header class="sheet-header flexrow" style="align-items: center; border-bottom: 2px solid {{#if isArma}}#ff4444{{else}}#b388ff{{/if}}; padding-bottom: 10px; margin-bottom: 15px; flex: 0 0 auto;">
+
+        {{!-- MAGIA DE FOUNDRY: data-edit="img" abre el explorador de archivos --}}
+        {{#if isGM}}
+            <img src="{{item.img}}" data-edit="img" title="Subir o cambiar imagen" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 2px solid {{#if isArma}}#ff4444{{else}}#b388ff{{/if}}; margin-right: 15px; cursor: pointer; background: rgba(0,0,0,0.5);" />
+        {{else}}
+            <img src="{{item.img}}" title="{{item.name}}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 5px; border: 2px solid {{#if isArma}}#ff4444{{else}}#b388ff{{/if}}; margin-right: 15px; cursor: default; background: rgba(0,0,0,0.5);" />
+        {{/if}}
+
+        <h1 style="margin: 0; flex: 1;">
+            <input name="name" type="text" value="{{item.name}}" placeholder="Nombre del Ítem" {{#unless isGM}}disabled{{/unless}} style="color: {{#if isArma}}#ff4444{{else}}#b388ff{{/if}}; font-family: 'Kalam', cursive; font-size: 28px; background: transparent; border: none; width: 100%; padding: 0;" />
+        </h1>
+    </header>
+
+    {{!-- CUERPO --}}
+    <main class="sheet-body flexcol" style="flex: 1; overflow-y: auto;">
+
+        {{!-- Fila de Atributos Numéricos --}}
+        <div class="flexrow" style="gap: 20px; margin-bottom: 15px;">
+
+            {{!-- Campo DAÑO (Especialmente importante para Armas) --}}
+            <div class="stat-row flexcol" style="flex: 1; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; border: 1px solid #444;">
+                <label style="color: #ffaa00; font-weight: bold; margin-bottom: 5px; font-size: 13px;">
+                    <i class="fas fa-tint"></i> DAÑO
+                </label>
+                {{!-- Bloqueado si no es GM --}}
+                <input type="number" name="system.danio" value="{{system.danio}}" {{#unless isGM}}disabled{{/unless}} style="background: #111; color: #fff; border: none; border-bottom: 2px solid #ffaa00; text-align: center; font-size: 22px; font-weight: bold;">
+            </div>
+
+            {{!-- Campo PREPARACIÓN (Dificultad para invocarlo en el sueño) --}}
+            <div class="stat-row flexcol" style="flex: 1; text-align: center; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; border: 1px solid #444;">
+                <label style="color: #00ccff; font-weight: bold; margin-bottom: 5px; font-size: 13px;">
+                    <i class="fas fa-cog"></i> DIFICULTAD PREP.
+                </label>
+                <input type="number" name="system.preparacionNecesaria" value="{{system.preparacionNecesaria}}" {{#unless isGM}}disabled{{/unless}} style="background: #111; color: #fff; border: none; border-bottom: 2px solid #00ccff; text-align: center; font-size: 22px; font-weight: bold;">
+            </div>
+
+        </div>
+
+        {{!-- El Editor de Texto Directo (Inline) --}}
+        <div class="description-editor flexcol" style="margin-top: 5px; flex: 1; display: flex; flex-direction: column;">
+            <label style="font-weight: bold; display: block; margin-bottom: 5px; color: {{#if isArma}}#ff4444{{else}}#b388ff{{/if}}; border-bottom: 1px dashed {{#if isArma}}#ff4444{{else}}#b388ff{{/if}}; padding-bottom: 5px; font-size: 16px;">
+                <i class="fas fa-book-open"></i> DESCRIPCIÓN
+            </label>
+
+            <div style="background: rgba(0,0,0,0.4); padding: 10px; border-radius: 5px; flex: 1; border: 1px solid #333; min-height: 150px; overflow-y: auto;">
+                {{!-- Pasamos editable=isGM para que solo el DJ pueda escribir --}}
+                {{editor enrichedDescription target="system.descripcion" button=false owner=owner editable=isGM engine="prosemirror" collaborate=false}}
+            </div>
+        </div>
+
+    </main>
+</form>

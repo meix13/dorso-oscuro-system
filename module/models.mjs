@@ -135,3 +135,14 @@ export class CartaEquipoData extends foundry.abstract.TypeDataModel {
         };
     }
 }
+
+export class ObjetoData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        const fields = foundry.data.fields;
+        return {
+            descripcion: new fields.HTMLField(),
+            danio: new fields.NumberField({initial: 0, integer: true}),
+            preparacionNecesaria: new fields.NumberField({initial: 0, integer: true})
+        };
+    }
+}
