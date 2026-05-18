@@ -142,7 +142,45 @@ export class ObjetoData extends foundry.abstract.TypeDataModel {
         return {
             descripcion: new fields.HTMLField(),
             danio: new fields.NumberField({initial: 0, integer: true}),
-            preparacionNecesaria: new fields.NumberField({initial: 0, integer: true})
+            preparacionNecesaria: new fields.NumberField({initial: 0, integer: true}),
+            // NUEVO: Registro de rutas para la importación
+            carpetaSistema: new fields.StringField({initial: ""}),
+            imagenRuta: new fields.StringField({initial: ""})
+        };
+    }
+}
+
+
+export class MonstruoData extends foundry.abstract.TypeDataModel {
+    static defineSchema() {
+        const fields = foundry.data.fields;
+        return {
+            fisico: new fields.SchemaField({
+                mod: new fields.NumberField({initial: 0, integer: true}),
+                dado: new fields.StringField({initial: "1d6", choices: ["1d4", "1d6", "1d8"]})
+            }),
+            perseguir: new fields.SchemaField({
+                mod: new fields.NumberField({initial: 0, integer: true}),
+                dado: new fields.StringField({initial: "1d6", choices: ["1d4", "1d6", "1d8"]})
+            }),
+            proteccion: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            razonable: new fields.NumberField({initial: 0, integer: true, min: 0, max: 3}),
+            umbral: new fields.NumberField({initial: 3, integer: true, min: 0}),
+            hp: new fields.SchemaField({
+                value: new fields.NumberField({initial: 10, integer: true, min: 0}),
+                max: new fields.NumberField({initial: 10, integer: true, min: 1})
+            }),
+
+            // --- ¡NUEVO!: Array de Ataques Estructurados ---
+            ataques: new fields.ArrayField(new fields.SchemaField({
+                nombre: new fields.StringField({initial: "Nuevo Ataque"}),
+                tipo: new fields.StringField({initial: "Cuerpo a cuerpo"}),
+                formulaAtaque: new fields.StringField({initial: "1d6"}),
+                formulaDanio: new fields.StringField({initial: "1d6"}),
+                especial: new fields.StringField({initial: ""})
+            })),
+
+            descripcion: new fields.HTMLField({initial: ""})
         };
     }
 }

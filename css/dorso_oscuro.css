@@ -674,3 +674,71 @@ select option:checked {
     color: #e0e0e0 !important;
     padding: 10px !important;
 }
+
+/* =========================================================
+   ESTILOS ESPECÍFICOS: TEMA PERGAMINO (Ficha Monstruo/PJ)
+========================================================= */
+
+/* --- 1. Editor de Texto camuflado con el pergamino --- */
+.mystery-paper-theme .editor-menu {
+    background: rgba(255, 255, 255, 0.4) !important; /* Fondo semi-transparente claro */
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    border-bottom: 1px dashed #1a1a1a !important;
+}
+
+.mystery-paper-theme .editor-menu button,
+.mystery-paper-theme .editor-menu .pm-dropdown,
+.mystery-paper-theme .editor-menu button i,
+.mystery-paper-theme .editor-menu button span,
+.mystery-paper-theme .editor-menu svg {
+    color: #1a1a1a !important; /* Textos e iconos en color tinta */
+    fill: #1a1a1a !important;
+}
+
+.mystery-paper-theme .editor-menu button:hover,
+.mystery-paper-theme .editor-menu button:hover i,
+.mystery-paper-theme .editor-menu button:hover span,
+.mystery-paper-theme .editor-menu button.active,
+.mystery-paper-theme .editor-menu .pm-dropdown:hover {
+    color: #2c4c68 !important; /* Un azul marino oscuro al pasar el ratón */
+    text-shadow: none !important;
+    background: rgba(0, 0, 0, 0.05) !important;
+}
+
+.mystery-paper-theme .editor-menu button:hover svg,
+.mystery-paper-theme .editor-menu button.active svg {
+    fill: #2c4c68 !important;
+    filter: none !important;
+}
+
+.mystery-paper-theme .editor-content {
+    color: #1a1a1a !important; /* Texto del editor en color tinta */
+    padding: 10px !important;
+}
+
+/* Quitamos los bordes por defecto del contenedor del editor */
+.paper-editor-container .editor {
+    border: none !important;
+    background: transparent !important;
+}
+
+/* --- 2. Retrato del Monstruo Irregular --- */
+.monster-portrait {
+    width: 100%;
+    height: 100%;
+    max-height: 240px;
+    object-fit: cover;
+    cursor: pointer;
+    mix-blend-mode: multiply; /* Funde el fondo blanco con el pergamino */
+
+    /* Magia CSS: Borde irregular orgánico simulando papel roto o mancha */
+    border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4)); /* Sombra para darle volumen */
+    transition: all 0.4s ease;
+}
+
+.monster-portrait:hover {
+    /* Al pasar el ratón cambia de forma levemente */
+    border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
+    transform: scale(1.02);
+}

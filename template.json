@@ -1,6 +1,6 @@
 {
   "Actor": {
-    "types": ["personaje"],
+    "types": ["personaje","monstruo"],
     "personaje": {}
   },
   "Item": {

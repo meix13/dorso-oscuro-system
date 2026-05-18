@@ -29,9 +29,13 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             secrets: this.actor.isOwner
         });
 
-        // Filtros de Habilidades (se quedan igual)
+        // Filtros de Habilidades
         context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
         context.habilidadesGenerales = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
+
+        // FILTROS DE INVENTARIO (Armas y Objetos) ---
+        context.armas = context.items.filter(i => i.type === "arma");
+        context.objetos = context.items.filter(i => i.type === "objeto");
 
         // En module/sheets/personaje-sheet.mjs -> getData()
 

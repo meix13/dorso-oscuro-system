@@ -1,5 +1,5 @@
 // module/sistema.js
-import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData, CartaEquipoData, ObjetoData } from "./models.mjs";
+import { PersonajeData, HabilidadData, CartaAlmaData, CartaJugableData, CartaEquipoData, ObjetoData, MonstruoData} from "./models.mjs";
 import { PersonajeSheet } from "./sheets/personaje-sheet.mjs";
 import { HabilidadSheet } from "./sheets/habilidad-sheet.mjs";
 import { CartaSheet } from "./sheets/carta-sheet.mjs";
@@ -7,6 +7,7 @@ import { ManoHUD } from "./apps/mano-hud.mjs";
 import { DJHUD } from "./apps/dj-hud.mjs";
 import { MercaderHud } from "./apps/mercader-hud.mjs";
 import { ObjetoSheet } from "./sheets/objeto-sheet.mjs";
+import { MonstruoSheet } from "./sheets/monstruo-sheet.mjs";
 
 
 
@@ -31,6 +32,7 @@ Hooks.once('init', async function() {
     }
 
     CONFIG.Actor.dataModels.personaje = PersonajeData;
+    CONFIG.Actor.dataModels.monstruo = MonstruoData;
 
     // Registramos las habilidades, objetos y las cartas
     CONFIG.Item.dataModels.habilidad = HabilidadData;
@@ -40,6 +42,7 @@ Hooks.once('init', async function() {
     CONFIG.Item.dataModels.carta_equipo = CartaEquipoData;
     CONFIG.Item.dataModels.arma = ObjetoData;
     CONFIG.Item.dataModels.objeto = ObjetoData;
+
 
     // Actualizamos Actors a su ruta estricta en V13/V14
     foundry.documents.collections.Actors.unregisterSheet("core", foundry.appv1.sheets.ActorSheet);
@@ -65,6 +68,10 @@ Hooks.once('init', async function() {
         makeDefault: true
     });
 
+    foundry.documents.collections.Actors.registerSheet("dorso_oscuro", MonstruoSheet, {
+        types: ["monstruo"],
+        makeDefault: true
+    });
 
     await loadTemplates([
         "systems/dorso_oscuro/templates/parts/skill-list.hbs"
@@ -74,18 +81,40 @@ Hooks.once('init', async function() {
 
     // --- INTERCEPTAR EL DRAG & DROP EN EL TABLERO ---
     Hooks.on("dropCanvasData", async (canvas, data) => {
-        if (data.type !== "CartaDorsoOscuro") return true;
+        // --- CHIVATO PARA LA CONSOLA (F12) ---
+        console.log("Dorso Oscuro | Datos arrastrados al tablero:", data);
 
-        let actor = game.actors.get(data.actorId);
-        let item = actor?.items.get(data.itemId);
+        // Aceptamos nuestro tipo personalizado O un Item nativo de Foundry
+        if (data.type !== "CartaDorsoOscuro" && data.type !== "Item") return true;
 
-        if (data.isGlobal) {
-            item = game.items.get(data.itemId);
-            if (!item) return true;
-        } else {
-            actor = game.actors.get(data.actorId);
-            item = actor?.items.get(data.itemId);
-            if (!actor || !item) return true;
+        let actor = null;
+        let item = null;
+
+        // LÓGICA 1: Si viene del directorio nativo de Items de Foundry
+        if (data.type === "Item") {
+            item = await fromUuid(data.uuid);
+
+            // Si no existe o no es una de nuestras cartas, dejamos que Foundry haga lo suyo nativamente
+            if (!item || !["carta_alma", "carta_poder", "carta_objeto", "carta_equipo"].includes(item.type)) {
+                return true;
+            }
+
+            // Si el item no tiene un 'parent', es un Item Global de la barra lateral
+            data.isGlobal = !item.isOwned;
+            if (!data.isGlobal) {
+                actor = item.parent;
+            }
+        }
+        // LÓGICA 2: Si viene desde nuestros HUDs (CartaDorsoOscuro)
+        else {
+            if (data.isGlobal) {
+                item = game.items.get(data.itemId);
+                if (!item) return true;
+            } else {
+                actor = game.actors.get(data.actorId);
+                item = actor?.items.get(data.itemId);
+                if (!actor || !item) return true;
+            }
         }
 
 
@@ -106,7 +135,18 @@ Hooks.once('init', async function() {
 
         // --- 1. LÓGICA DE ECONOMÍA Y CARTA EN MANO ---
         let cardPassed = false;
-        if (item.type !== "carta_alma" && item.type !== "carta_equipo") {
+
+        // NUEVO: Si la carta viene de la barra lateral (Global) y es el DJ, omitimos la lógica de mano y energía
+        if (data.isGlobal && game.user.isGM) {
+            ChatMessage.create({
+                speaker: { alias: "SISTEMA" },
+                content: `<b style="color: #ffaa00;">¡El Director de Juego despliega una carta especial sobre la mesa! (${item.name})</b>`
+            });
+        }
+        // Lógica normal para cartas bajadas desde la mano de un jugador/criatura
+        else if (item.type !== "carta_alma" && item.type !== "carta_equipo") {
+            if (!actor) return false; // Por seguridad, si no hay actor, cancelamos
+
             const hand = game.cards.get(actor.system.handId);
             const enJuego = game.cards.get(actor.system.enJuegoId);
 
@@ -121,26 +161,22 @@ Hooks.once('init', async function() {
                 return false;
             }
 
-            // --- NUEVO: BYPASS DE ENERGÍA PARA EL BOSS ---
+            // BYPASS DE ENERGÍA PARA EL BOSS
             const isBoss = actor.flags.dorso_oscuro?.isBossSession;
 
             if (!isBoss) {
-                // Si es un jugador, controlamos su energía
                 const coste = item.system.costeEnergia || 0;
                 const energiaActual = actor.system.energia.value || 0;
 
                 if (energiaActual < coste) {
                     ui.notifications.error(`¡No tienes energía! "${item.name}" cuesta ${coste}⚡ y tienes ${energiaActual}⚡.`);
-                    return false; // Bloqueo de arrastre
+                    return false;
                 }
 
                 const aporteInmediato = item.type === "carta_poder" ? (item.system.energiaAportada || 0) : 0;
                 let nuevaEnergia = actor.system.energia.value - coste + aporteInmediato;
                 await actor.update({"system.energia.value": Math.max(0, nuevaEnergia)});
-                // ui.notifications.info(`${actor.name} juega ${item.name}: -${coste}${aporteInmediato > 0 ? ' / +'+aporteInmediato : ''} Energía`);
             } else {
-                // Si es el Boss, barra libre
-                // ui.notifications.info(`La Criatura coloca una carta sobre el juego: ${item.name} `);
                 ChatMessage.create({
                     speaker: { alias: "SISTEMA" },
                     content: `<b style="color: #ff4444;">¡La Criatura coloca una carta oculta sobre la mesa!</b>`
