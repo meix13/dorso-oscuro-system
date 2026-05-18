@@ -734,6 +734,28 @@ export class DJHUD extends Application {
             await updateBossLife(input);
         });
 
+        // --- LIMPIAR ESTADOS DE LA CRIATURA (CURAR MERMA Y DECADENCIA) ---
+        html.find('.boss-clean-malus').click(async ev => {
+            const actorId = ev.currentTarget.dataset.actorId;
+            const actor = game.actors.get(actorId);
+            if (!actor) return;
+
+            if (actor.system.merma === 0 && actor.system.decadencia === 0) {
+                return ui.notifications.info("La criatura no tiene estados negativos que limpiar.");
+            }
+
+            // Reseteamos ambos valores en la base de datos a 0
+            await actor.update({
+                "system.merma": 0,
+                "system.decadencia": 0
+            });
+
+            // Forzamos la sincronización visual del token en el tablero
+            await this._sincronizarTokenAlma(actor.id, actor.system.almaActivaId);
+
+            ui.notifications.info(`Estados (Merma y Decadencia) eliminados de ${actor.name}.`);
+        });
+
 
     }
 

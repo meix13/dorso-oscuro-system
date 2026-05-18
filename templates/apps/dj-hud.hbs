@@ -188,6 +188,29 @@
                                 </div>
                             </div>
 
+                            {{!-- NUEVO: MALUS Y LIMPIAR (CRIATURA) --}}
+                            <div style="display: flex; gap: 5px; margin-bottom: 6px;">
+                                <div class="flexcol" style="background: rgba(139,0,0,0.4); border: 1px solid #822; padding: 4px; text-align: center; border-radius: 3px; flex: 1;">
+                                    <div style="font-size: 9px; color:#aaa;" title="Merma"><i class="fas fa-angles-down" style="color: #aa5500;"></i> MERMA</div>
+                                    <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">
+                                        <a class="dj-control" data-actor-id="{{activeBoss.id}}" data-type="merma" data-action="minus"><i class="fas fa-minus-square"></i></a>
+                                        <b style="font-size: 13px; color: white;">{{activeBoss.system.merma}}</b>
+                                        <a class="dj-control" data-actor-id="{{activeBoss.id}}" data-type="merma" data-action="plus"><i class="fas fa-plus-square"></i></a>
+                                    </div>
+                                </div>
+                                <div class="flexcol" style="background: rgba(139,0,0,0.4); border: 1px solid #822; padding: 4px; text-align: center; border-radius: 3px; flex: 1;">
+                                    <div style="font-size: 9px; color:#aaa;" title="Decadencia"><i class="fas fa-droplet" style="color: #aa0000;"></i> DECAD.</div>
+                                    <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">
+                                        <a class="dj-control" data-actor-id="{{activeBoss.id}}" data-type="decadencia" data-action="minus"><i class="fas fa-minus-square"></i></a>
+                                        <b style="font-size: 13px; color: white;">{{activeBoss.system.decadencia}}</b>
+                                        <a class="dj-control" data-actor-id="{{activeBoss.id}}" data-type="decadencia" data-action="plus"><i class="fas fa-plus-square"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+                            <button class="boss-clean-malus" data-actor-id="{{activeBoss.id}}" style="background: #225522; color: white; border: 1px solid #383; font-weight: bold; padding: 4px; cursor: pointer; width: 100%; font-size: 10px; margin-bottom: 6px;">
+                                <i class="fas fa-hand-sparkles"></i> LIMPIAR ESTADOS
+                            </button>
+
                             {{!-- BOTÓN (Reducido) --}}
                             <button class="close-boss-game" style="background: #222; color: #ff4444; border: 1px solid #ff4444; font-weight: bold; padding: 4px; cursor: pointer; width: 100%; font-size: 11px;">
                                 <i class="fas fa-skull"></i> FIN ENCUENTRO

@@ -147,6 +147,31 @@ export class ManoHUD extends Application {
             this.render();
         });
 
+        // --- NUEVO: LIMPIAR ESTADOS DEL JUGADOR (CURAR MERMA Y DECADENCIA) ---
+        html.find('.clean-malus-btn').click(async ev => {
+            if (this.actor.system.merma === 0 && this.actor.system.decadencia === 0) {
+                return ui.notifications.info("No tienes estados negativos que limpiar.");
+            }
+
+            // 1. Reseteamos ambos valores a 0 en la ficha del personaje
+            await this.actor.update({
+                "system.merma": 0,
+                "system.decadencia": 0
+            });
+
+            // 2. Sincronizamos visualmente el nombre e iconos de la carta de Alma en la mesa
+            await this._refreshTokenVisuals();
+
+            // 3. Limpiamos los iconos de efectos de cualquier otro token físico que tenga el jugador en el tablero
+            const tokens = this.actor.getActiveTokens();
+            for (let t of tokens) {
+                await t.document.update({ "effects": [] });
+            }
+
+            ui.notifications.info(`¡Estados eliminados! Tu Alma vuelve a estar limpia.`);
+            this.render();
+        });
+
         // --- BOTONES DE ROBO (NATIVO FOUNDRY) ---
         html.find('.draw-cards').click(async ev => {
             if (ManoHUD.isProcessing) return ui.notifications.warn("Procesando cartas, espera un instante...");
