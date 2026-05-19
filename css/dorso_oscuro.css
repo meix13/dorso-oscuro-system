@@ -34,8 +34,8 @@ form.mystery-paper-theme {
 }
 
 /* --- 3. EL MARCO DE LA FICHA --- */
-.dorso_oscuro.sheet.actor.mystery-paper-theme::before,
-.dorso_oscuro.sheet.actor.mystery-paper-theme::after {
+.dorso_oscuro.sheet.mystery-paper-theme::before,
+.dorso_oscuro.sheet.mystery-paper-theme::after {
     content: "";
     position: absolute;
     left: 0; right: 0;
@@ -46,13 +46,13 @@ form.mystery-paper-theme {
     z-index: 10;
 }
 
-.dorso_oscuro.sheet.actor.mystery-paper-theme::before {
+.dorso_oscuro.sheet.mystery-paper-theme::before {
     top: 0;
     background-image: url('../assets/borde_superior.png');
     background-position: top center;
 }
 
-.dorso_oscuro.sheet.actor.mystery-paper-theme::after {
+.dorso_oscuro.sheet.mystery-paper-theme::after {
     bottom: 0;
     background-image: url('../assets/borde_inferior.png');
     background-position: bottom center;
@@ -590,20 +590,41 @@ form.mystery-paper-theme {
     border-bottom: 2px solid #4a3424 !important;
 }
 
-/* --- ARREGLO DE CONTRASTE PARA LOS DESPLEGABLES (<option>) --- */
-select option {
-    background-color: #141414 !important; /* Fondo negro carbón/gris muy oscuro */
-    color: #ffffff !important;            /* Texto blanco puro */
-    font-family: 'Kalam', cursive;        /* Mantenemos la tipografía de tu sistema */
+//* --- ESTILO PARA LOS DESPLEGABLES (<select>) EN EL PERGAMINO --- */
+
+/* La caja principal del desplegable */
+.mystery-paper-theme select.parchment-select {
+    background: rgba(255, 255, 255, 0.3) !important;
+    color: #1a1a1a !important; /* Color de la tinta */
+    border: 1px solid rgba(0,0,0,0.3) !important;
+    border-radius: 4px;
+    padding: 5px;
+    font-family: 'Kalam', cursive !important;
+    font-size: 16px !important;
+    cursor: pointer;
+    width: 100%;
 }
 
-/* Opcional: Un pequeño efecto para cuando pasas el ratón por las opciones (solo funciona en algunos navegadores) */
-select option:hover,
-select option:focus,
-select option:active,
-select option:checked {
-    background-color: #00ccff !important; /* El azul brillante de tu interfaz */
-    color: #000000 !important;
+/* Cuando pinchas en el desplegable (Foco) */
+.mystery-paper-theme select.parchment-select:focus {
+    outline: none;
+    border-bottom: 2px solid #8b0000 !important; /* Toque rojizo de sangre/tinta al hacer clic */
+    background: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* La lista de opciones que se despliega */
+.mystery-paper-theme select.parchment-select option {
+    background-color: #eaddc5 !important; /* Tono pergamino sólido para que no se transparente lo de atrás */
+    color: #1a1a1a !important;            /* Texto negro tinta */
+    font-family: 'Kalam', cursive !important;
+    font-size: 16px !important;
+}
+
+/* Efecto al pasar el ratón por las opciones o al seleccionarlas */
+.mystery-paper-theme select.parchment-select option:checked,
+.mystery-paper-theme select.parchment-select option:hover {
+    background-color: #d1bfae !important; /* Un pergamino un poco más tostado/oscuro */
+    color: #8b0000 !important;            /* El texto se vuelve rojo al seleccionarlo */
 }
 
 /* --- ARREGLO PARA LOS BOTONES DE DIÁLOGO (Confirmaciones, Mercader, etc.) --- */

@@ -4,8 +4,9 @@ export class ObjetoSheet extends foundry.appv1.sheets.ItemSheet {
 
     static get defaultOptions() {
         return foundry.utils.mergeObject(super.defaultOptions, {
-            classes: ["dorso_oscuro", "sheet", "item", "mystery-theme"],
-            template: "systems/dorso_oscuro/templates/objeto-sheet.hbs", // La ruta a tu nuevo HTML
+            // Reemplazamos "mystery-theme" por "mystery-paper-theme"
+            classes: ["dorso_oscuro", "sheet", "item", "mystery-paper-theme"],
+            template: "systems/dorso_oscuro/templates/objeto-sheet.hbs",
             width: 450,
             height: 520
         });
@@ -29,6 +30,14 @@ export class ObjetoSheet extends foundry.appv1.sheets.ItemSheet {
         context.enrichedDescription = await TextEditor.enrichHTML(item.system.descripcion || "", {
             async: true,
             secrets: item.isOwner
+        });
+
+        const habilidadesArma = game.items.filter(i => i.type === "habilidad" && i.system.se_usa_con_arma);
+
+        // Creamos un objeto para pasárselo a selectOptions
+        context.opcionesHabilidades = {"": "--- Ninguna ---"};
+        habilidadesArma.forEach(h => {
+            context.opcionesHabilidades[h.name] = h.name;
         });
 
         return context;

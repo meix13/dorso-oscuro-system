@@ -15,6 +15,17 @@ import { MonstruoSheet } from "./sheets/monstruo-sheet.mjs";
 Hooks.once('init', async function() {
     console.log("Dorso Oscuro | Inicializando");
 
+    // Definir iconos por defecto para tipos de ítem
+    // Definir iconos por defecto para tipos de ítem en la interfaz
+    CONFIG.Item.typeIcons["habilidad"] = "icons/svg/book.svg";
+    CONFIG.Item.typeIcons["carta_alma"] = "icons/svg/aura.svg";
+    CONFIG.Item.typeIcons["carta_poder"] = "icons/svg/card-joker.svg";
+    CONFIG.Item.typeIcons["carta_objeto"] = "icons/svg/card-joker.svg";
+    CONFIG.Item.typeIcons["carta_equipo"] = "icons/svg/shield.svg";
+    CONFIG.Item.typeIcons["objeto"] = "icons/svg/chest.svg";
+    CONFIG.Item.typeIcons["arma"] = "icons/svg/sword.svg";
+    CONFIG.Actor.typeIcons["monstruo"] = "icons/svg/blood.svg"; // Cambiado a Actor porque monstruo es Actor
+
     // --- REGISTRO DE AJUSTES DEL SISTEMA ---
     game.settings.register("dorso_oscuro", "equiposDesbloqueados", {
         name: "Cartas de Equipo Descubiertas",
@@ -846,19 +857,25 @@ Hooks.once('init', async function() {
         }
     });
 
-    // --- IMÁGENES POR DEFECTO PARA ARMAS Y OBJETOS ---
+    // --- IMÁGENES POR DEFECTO PARA TODOS LOS TIPOS DE ITEM ---
     Hooks.on("preCreateItem", (item, data, options, userId) => {
-        // Foundry asigna "icons/svg/item-bag.svg" a todos los items por defecto al nacer
-        // Verificamos si no tiene imagen o si trae la de por defecto
+        // Verificamos si no tiene imagen o si trae la bolsa por defecto de Foundry
         if (!data.img || data.img === "icons/svg/item-bag.svg") {
 
-            if (item.type === "arma") {
-                // Icono nativo de espada en Foundry
-                item.updateSource({ img: "icons/svg/sword.svg" });
+            // Diccionario con las rutas de las imágenes para cada tipo de template.json
+            const iconosPorDefecto = {
+                "habilidad": "icons/svg/book.svg",
+                "carta_alma": "icons/svg/aura.svg",
+                "carta_poder": "icons/svg/card-joker.svg",
+                "carta_objeto": "icons/svg/card-joker.svg",
+                "carta_equipo": "icons/svg/shield.svg",
+                "arma": "icons/svg/sword.svg",
+                "objeto": "icons/svg/chest.svg"
+            };
 
-            } else if (item.type === "objeto") {
-                // Icono nativo de cofre/mochila en Foundry
-                item.updateSource({ img: "icons/svg/chest.svg" });
+            // Si el tipo de ítem que estamos creando está en el diccionario, aplicamos su icono
+            if (iconosPorDefecto[item.type]) {
+                item.updateSource({ img: iconosPorDefecto[item.type] });
             }
         }
     });

@@ -55,7 +55,8 @@ export class HabilidadData extends foundry.abstract.TypeDataModel {
             valorActual: new fields.NumberField({initial: 3, min: 0, integer: true}),
             atributoBase: new fields.StringField({initial: "mental", choices: ["mental", "social", "fisico"]}),
             // NUEVO: Tipo de habilidad
-            tipo: new fields.StringField({initial: "general", choices: ["tecnica", "general"]})
+            tipo: new fields.StringField({initial: "general", choices: ["tecnica", "general"]}),
+            se_usa_con_arma: new fields.BooleanField({initial: false})
         };
     }
 }
@@ -141,9 +142,9 @@ export class ObjetoData extends foundry.abstract.TypeDataModel {
         const fields = foundry.data.fields;
         return {
             descripcion: new fields.HTMLField(),
-            danio: new fields.NumberField({initial: 0, integer: true}),
+            danio: new fields.StringField({initial: "1d6"}), // CAMBIADO a String (fórmula)
+            habilidadAsociada: new fields.StringField({initial: ""}), // NUEVO
             preparacionNecesaria: new fields.NumberField({initial: 0, integer: true}),
-            // NUEVO: Registro de rutas para la importación
             carpetaSistema: new fields.StringField({initial: ""}),
             imagenRuta: new fields.StringField({initial: ""})
         };

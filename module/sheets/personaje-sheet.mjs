@@ -84,6 +84,8 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         html.find('.tirar-atributo').click(this._onTirarAtributo.bind(this));
         html.find('.estabilidad-box').click(this._onCambiarEstabilidad.bind(this));
 
+        html.find('.tirar-habilidad').click(this._onTirarHabilidad.bind(this));
+        html.find('.arma-roll').click(this._onTirarArma.bind(this)); // NUEVO ESCUCHADOR
 
 
         //NUEVO: Escuchador para guardar valores de habilidades "al vuelo"
@@ -425,6 +427,85 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             "system.eliminadasId": banished.id,
             "system.enJuegoId": inPlay.id
         });
+    }
+
+    async _onTirarArma(event) {
+        event.preventDefault();
+        const li = $(event.currentTarget).parents(".item");
+        const arma = this.actor.items.get(li.data("itemId"));
+
+        const habilidadName = arma.system.habilidadAsociada;
+        if (!habilidadName) {
+            return ui.notifications.warn(`El arma ${arma.name} no tiene ninguna habilidad asociada.`);
+        }
+
+        // Buscamos si el personaje tiene esta habilidad
+        const habilidad = this.actor.items.find(i => i.type === "habilidad" && i.name === habilidadName);
+
+        if (!habilidad) {
+            return ui.notifications.error(`No posees la habilidad "${habilidadName}" necesaria para usar ${arma.name}.`);
+        }
+
+        const puntosDisponibles = habilidad.system.valorActual;
+        const atributoBase = habilidad.system.atributoBase;
+        const dadoAtributo = this.actor.system.atributos[atributoBase];
+
+        new Dialog({
+            title: `Atacar con ${arma.name}`,
+            content: `
+                <div style="padding: 10px; text-align: center; color: #e0e0e0;">
+                    <p style="font-size: 16px; margin-bottom: 15px;">¿Cuántos puntos de <b>${habilidad.name}</b> quieres gastar para atacar?<br><span style="font-size: 13px; color: #aaa;">(Máximo disponible: ${puntosDisponibles})</span></p>
+                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <i class="fas fa-bolt" style="color: #00ccff; font-size: 24px;"></i>
+                        <input type="number" id="puntos-gasto-arma" value="0" min="0" max="${puntosDisponibles}" style="width: 80px; height: 45px; text-align: center; background: #111; color: #fff; border: 2px solid #00ccff; font-size: 24px; font-weight: bold; border-radius: 5px; font-family: 'Kalam', cursive;">
+                    </div>
+                </div>
+            `,
+            buttons: {
+                lanzar: {
+                    icon: '<i class="fas fa-crosshairs"></i>',
+                    label: "Atacar",
+                    callback: async (htmlContent) => {
+                        const gasto = parseInt(htmlContent.find('#puntos-gasto-arma').val()) || 0;
+
+                        if (gasto > puntosDisponibles || gasto < 0) {
+                            return ui.notifications.error("Cantidad de gasto inválida.");
+                        }
+
+                        // A) Restar puntos si el gasto es mayor a 0
+                        if (gasto > 0) {
+                            await habilidad.update({ "system.valorActual": puntosDisponibles - gasto });
+                        }
+
+                        // B) Tirada de Habilidad (Ej: 1d6 + 2, o solo 1d6)
+                        const formulaAtaque = gasto > 0 ? `${dadoAtributo} + ${gasto}` : `${dadoAtributo}`;
+                        const rollAtaque = new Roll(formulaAtaque);
+                        await rollAtaque.evaluate();
+
+                        await rollAtaque.toMessage({
+                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                            flavor: `<h3><i class="fas fa-crosshairs"></i> Ataque con ${arma.name}</h3>Utiliza <b>${habilidad.name}</b> (${atributoBase.toUpperCase()}) gastando <b>${gasto}</b> punto(s).`
+                        });
+
+                        // C) Tirada de Daño del arma
+                        if (arma.system.danio) {
+                            try {
+                                const rollDanio = new Roll(arma.system.danio);
+                                await rollDanio.evaluate();
+                                await rollDanio.toMessage({
+                                    speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                                    flavor: `<h3><i class="fas fa-tint" style="color: #8b0000;"></i> Daño: ${arma.name}</h3>`
+                                });
+                            } catch (error) {
+                                console.error("Dorso Oscuro | Error en la fórmula de daño:", error);
+                                ui.notifications.error(`La fórmula de daño "${arma.system.danio}" no es válida.`);
+                            }
+                        }
+                    }
+                }
+            },
+            default: "lanzar"
+        }, { width: 350, classes: ["dorso_oscuro", "dialog"] }).render(true);
     }
 
 
