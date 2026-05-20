@@ -39,6 +39,17 @@ export class MonstruoSheet extends foundry.appv1.sheets.ActorSheet {
     activateListeners(html) {
         super.activateListeners(html);
 
+        // Mostrar Retrato (Ojo)
+        html.find('.show-portrait').click(ev => {
+            ev.preventDefault();
+            // Creamos un popout nativo de Foundry con la imagen del monstruo
+            const imagePopout = new ImagePopout(this.actor.img, {
+                title: this.actor.name,
+                uuid: this.actor.uuid
+            });
+            imagePopout.render(true);
+        });
+
         // Tiradas de Físico / Perseguir
         html.find('.rollable').click(this._onRollAtributo.bind(this));
 
