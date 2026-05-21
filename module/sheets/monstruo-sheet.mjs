@@ -24,8 +24,18 @@ export class MonstruoSheet extends foundry.appv1.sheets.ActorSheet {
                 "Cuerpo a cuerpo": "Cuerpo a cuerpo",
                 "A distancia": "A distancia",
                 "Especial": "Especial"
+            },
+            mundos: {
+                "general": "Mundo General",
+                "ghilliam": "Ghilliam Duh",
+                "cu_sith": "Cu Sith",
+                "aletehia": "Aletehia",
+                "glaistig": "Glaistig",
+                "final": "Jaula de Yhound"
             }
         };
+
+
 
         context.enrichedDescription = await TextEditor.enrichHTML(context.system.descripcion || "", {
             async: true,

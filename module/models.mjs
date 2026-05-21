@@ -171,8 +171,10 @@ export class MonstruoData extends foundry.abstract.TypeDataModel {
                 value: new fields.NumberField({initial: 10, integer: true, min: 0}),
                 max: new fields.NumberField({initial: 10, integer: true, min: 1})
             }),
-
-            // --- ¡NUEVO!: Array de Ataques Estructurados ---
+            mundo: new fields.StringField({
+                initial: "ghilliam",
+                choices: ["ghilliam", "cu_sith", "aletehia", "glaistig", "final","general"],
+            }),
             ataques: new fields.ArrayField(new fields.SchemaField({
                 nombre: new fields.StringField({initial: "Nuevo Ataque"}),
                 tipo: new fields.StringField({initial: "Cuerpo a cuerpo"}),
@@ -180,7 +182,6 @@ export class MonstruoData extends foundry.abstract.TypeDataModel {
                 formulaDanio: new fields.StringField({initial: "1d6"}),
                 especial: new fields.StringField({initial: ""})
             })),
-
             descripcion: new fields.HTMLField({initial: ""})
         };
     }
