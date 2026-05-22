@@ -542,14 +542,16 @@ form.mystery-paper-theme {
 
 /* --- 5. DIARIOS / JOURNAL ENTRIES (Efecto integrado sin doble capa) --- */
 
-/* 1. Ponemos el pergamino SOLO en el contenedor principal (la mitad derecha del diario) */
-.journal-sheet .journal-entry-content {
+/* 1. Ponemos el pergamino SOLO en el contenedor principal (la mitad derecha del diario) y en la ventana de edición de páginas */
+.journal-sheet .journal-entry-content,
+.journal-entry-page .window-content {
     background: url('../assets/fondo_ficha.jpg') no-repeat top center / cover !important;
 }
 
 /* 2. Hacemos transparente el interior (la página) para quitar el efecto parche/doble imagen */
 .journal-sheet .journal-page-content,
-.journal-sheet .editor-content {
+.journal-sheet .editor-content,
+.journal-entry-page .editor-content {
     background: transparent !important;
     box-shadow: none !important; /* Quitamos las sombras internas de Foundry */
     border: none !important;
@@ -562,7 +564,9 @@ form.mystery-paper-theme {
 .journal-sheet .journal-page-content h1,
 .journal-sheet .journal-page-content h2,
 .journal-sheet .journal-page-content h3,
-.journal-sheet .journal-page-content h4 {
+.journal-sheet .journal-page-content h4,
+.journal-sheet .journal-page-header h1,
+.journal-sheet .journal-page-header h2 {
     color: #4a3424 !important;
     border-bottom: 2px solid #4a3424 !important;
     font-family: 'Kalam', cursive !important;
@@ -701,7 +705,9 @@ form.mystery-paper-theme {
 ========================================================= */
 
 /* --- 1. Editor de Texto camuflado con el pergamino --- */
-.mystery-paper-theme .editor-menu {
+.mystery-paper-theme .editor-menu,
+.journal-sheet .editor-menu,
+.journal-entry-page .editor-menu {
     background: rgba(255, 255, 255, 0.4) !important; /* Fondo semi-transparente claro */
     border: 1px solid rgba(0, 0, 0, 0.2) !important;
     border-bottom: 1px dashed #1a1a1a !important;
@@ -711,7 +717,17 @@ form.mystery-paper-theme {
 .mystery-paper-theme .editor-menu .pm-dropdown,
 .mystery-paper-theme .editor-menu button i,
 .mystery-paper-theme .editor-menu button span,
-.mystery-paper-theme .editor-menu svg {
+.mystery-paper-theme .editor-menu svg,
+.journal-sheet .editor-menu button,
+.journal-sheet .editor-menu .pm-dropdown,
+.journal-sheet .editor-menu button i,
+.journal-sheet .editor-menu button span,
+.journal-sheet .editor-menu svg,
+.journal-entry-page .editor-menu button,
+.journal-entry-page .editor-menu .pm-dropdown,
+.journal-entry-page .editor-menu button i,
+.journal-entry-page .editor-menu button span,
+.journal-entry-page .editor-menu svg {
     color: #1a1a1a !important; /* Textos e iconos en color tinta */
     fill: #1a1a1a !important;
 }
@@ -720,19 +736,35 @@ form.mystery-paper-theme {
 .mystery-paper-theme .editor-menu button:hover i,
 .mystery-paper-theme .editor-menu button:hover span,
 .mystery-paper-theme .editor-menu button.active,
-.mystery-paper-theme .editor-menu .pm-dropdown:hover {
+.mystery-paper-theme .editor-menu .pm-dropdown:hover,
+.journal-sheet .editor-menu button:hover,
+.journal-sheet .editor-menu button:hover i,
+.journal-sheet .editor-menu button:hover span,
+.journal-sheet .editor-menu button.active,
+.journal-sheet .editor-menu .pm-dropdown:hover,
+.journal-entry-page .editor-menu button:hover,
+.journal-entry-page .editor-menu button:hover i,
+.journal-entry-page .editor-menu button:hover span,
+.journal-entry-page .editor-menu button.active,
+.journal-entry-page .editor-menu .pm-dropdown:hover {
     color: #2c4c68 !important; /* Un azul marino oscuro al pasar el ratón */
     text-shadow: none !important;
     background: rgba(0, 0, 0, 0.05) !important;
 }
 
 .mystery-paper-theme .editor-menu button:hover svg,
-.mystery-paper-theme .editor-menu button.active svg {
+.mystery-paper-theme .editor-menu button.active svg,
+.journal-sheet .editor-menu button:hover svg,
+.journal-sheet .editor-menu button.active svg,
+.journal-entry-page .editor-menu button:hover svg,
+.journal-entry-page .editor-menu button.active svg {
     fill: #2c4c68 !important;
     filter: none !important;
 }
 
-.mystery-paper-theme .editor-content {
+.mystery-paper-theme .editor-content,
+.journal-sheet .editor-content,
+.journal-entry-page .editor-content {
     color: #1a1a1a !important; /* Texto del editor en color tinta */
     padding: 10px !important;
 }

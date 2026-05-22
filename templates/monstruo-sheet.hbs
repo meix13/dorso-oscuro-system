@@ -85,15 +85,29 @@
         </div>
     </div>
 
-    {{!-- SECCIÓN DE ATAQUES Y LORE --}}
+    {{!-- SECCIÓN DE LORE Y ATAQUES --}}
     <div class="flexcol" style="flex: 1; position: relative; min-width: 700px;">
         <img src="systems/dorso_oscuro/assets/runa_central.png" style="position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 50%; opacity: 0.08; pointer-events: none; z-index: 0;" />
 
-        {{!-- CABECERA ATAQUES --}}
+        {{!-- DESCRIPCIÓN Y LORE (ARRIBA) --}}
+        <h3 style="font-size: 26px; color: #2c4c68; border-bottom: 2px solid rgba(0,0,0,0.2); margin-bottom: 5px; z-index: 1;">Descripción y Lore</h3>
+        <div class="paper-editor-container" style="flex: 0 0 auto; min-height: 150px; z-index: 1; font-family: sans-serif; font-size: 16px; margin-bottom: 20px; background: rgba(255,255,255,0.2); border-radius: 5px; padding: 10px;">
+            {{!-- El parámetro button=true hace que Foundry muestre automáticamente un botón de editar para el DJ/Owner --}}
+            {{editor enrichedDescription target="system.descripcion" button=true owner=owner editable=editable engine="prosemirror" collaborate=false}}
+        </div>
+
+        {{!-- CABECERA ATAQUES (ABAJO) --}}
         <div class="flexrow" style="justify-content: space-between; align-items: center; border-bottom: 2px solid rgba(0,0,0,0.2); margin-bottom: 10px; z-index: 1;">
             <h3 style="font-size: 26px; color: #2c4c68; margin: 0;">Ataques</h3>
             {{#if isGM}}
-                <a class="ataque-create" style="cursor: pointer; color: #8b0000; font-weight: bold; font-size: 16px; font-family: sans-serif;"><i class="fas fa-plus-circle"></i> Añadir Ataque</a>
+                <div style="display: flex; gap: 15px;">
+                    <a class="ataque-toggle-edit" style="cursor: pointer; color: #2c4c68; font-weight: bold; font-size: 16px; font-family: sans-serif;" title="Alternar Modo Edición">
+                        <i class="fas fa-edit"></i> {{#if editModeAtaques}}Ver Modo Lectura{{else}}Editar Ataques{{/if}}
+                    </a>
+                    {{#if editModeAtaques}}
+                        <a class="ataque-create" style="cursor: pointer; color: #8b0000; font-weight: bold; font-size: 16px; font-family: sans-serif;"><i class="fas fa-plus-circle"></i> Añadir Ataque</a>
+                    {{/if}}
+                </div>
             {{/if}}
         </div>
 
@@ -102,7 +116,7 @@
             {{#each system.ataques as |ataque index|}}
                 <div class="ataque-item" style="background: rgba(255,255,255,0.4); border: 1px dashed rgba(0,0,0,0.4); border-radius: 5px; padding: 10px; font-family: sans-serif;">
 
-                    {{#if @root.isGM}}
+                    {{#if @root.editModeAtaques}}
                     {{!-- MODO EDICIÓN (SOLO DJ) --}}
                         <div class="flexrow" style="gap: 10px; margin-bottom: 8px; align-items: center;">
                             <input type="text" name="system.ataques.{{index}}.nombre" value="{{ataque.nombre}}" placeholder="Nombre del Ataque" style="flex: 2; font-weight: bold; font-size: 16px; border-bottom: 1px solid #1a1a1a;">
@@ -119,7 +133,6 @@
                             <label style="flex: 0 0 50px; font-weight: bold; font-size: 14px; text-align: right; margin-right: 5px;">Daño:</label>
                             <input type="text" name="system.ataques.{{index}}.formulaDanio" value="{{ataque.formulaDanio}}" placeholder="1D8" style="flex: 1; text-align: center; border: 1px dashed #1a1a1a; font-family: monospace;">
                             <a class="roll-formula" data-formula="{{ataque.formulaDanio}}" data-nombre="{{ataque.nombre}}" data-especial="{{ataque.especial}}" data-tipo="Daño" title="Tirar Daño" style="color: #8b0000; font-size: 18px; cursor: pointer;"><i class="fas fa-tint"></i></a>
-
                         </div>
 
                         <div class="flexrow" style="align-items: flex-start; margin-top: 5px;">
@@ -155,11 +168,6 @@
             {{#unless system.ataques.length}}
                 <div style="text-align: center; color: #1a1a1a; font-style: italic; font-family: 'Kalam', cursive; font-size: 20px;">No hay ataques definidos.</div>
             {{/unless}}
-        </div>
-
-        <h3 style="font-size: 26px; color: #2c4c68; border-bottom: 2px solid rgba(0,0,0,0.2); margin-bottom: 5px; z-index: 1;">Descripción y Lore</h3>
-        <div class="paper-editor-container" style="flex: 1; min-height: 150px; z-index: 1; font-family: sans-serif; font-size: 16px;">
-            {{editor enrichedDescription target="system.descripcion" button=false owner=owner editable=editable engine="prosemirror" collaborate=false}}
         </div>
     </div>
 

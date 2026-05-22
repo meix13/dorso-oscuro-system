@@ -16,6 +16,7 @@ export class MonstruoSheet extends foundry.appv1.sheets.ActorSheet {
         context.system = context.data.system;
         context.isGM = game.user.isGM;
         context.owner = this.actor.isOwner;
+        context.editModeAtaques = this.editModeAtaques || false;
 
         context.config = {
             opcionesDado: { "1d4": "1D4", "1d6": "1D6", "1d8": "1D8" },
@@ -68,6 +69,13 @@ export class MonstruoSheet extends foundry.appv1.sheets.ActorSheet {
 
         // Eventos exclusivos de edición (Solo GM)
         if (!this.isEditable) return;
+
+        // Toggle Modo Edición de Ataques
+        html.find('.ataque-toggle-edit').click(ev => {
+            ev.preventDefault();
+            this.editModeAtaques = !this.editModeAtaques;
+            this.render(false);
+        });
 
         // Añadir Ataque
         html.find('.ataque-create').click(async ev => {
