@@ -29,9 +29,16 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             secrets: this.actor.isOwner
         });
 
-        // Filtros de Habilidades
-        context.habilidadesTecnicas = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "tecnica");
-        context.habilidadesGenerales = context.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
+
+        // Filtros de Habilidades ordenadas alfabéticamente
+        context.habilidadesTecnicas = context.items
+            .filter(i => i.type === "habilidad" && i.system.tipo === "tecnica")
+            .sort((a, b) => a.name.localeCompare(b.name));
+
+        context.habilidadesGenerales = context.items
+            .filter(i => i.type === "habilidad" && i.system.tipo === "general")
+            .sort((a, b) => a.name.localeCompare(b.name));
+
 
         // FILTROS DE INVENTARIO (Armas y Objetos) ---
         context.armas = context.items.filter(i => i.type === "arma");
@@ -75,6 +82,12 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
     // 3. Escuchar Eventos del DOM (Clics)
     activateListeners(html) {
         super.activateListeners(html);
+
+
+        // Botones de Descanso y Recuperación
+        html.find('.btn-dormir').click(this._onDormir.bind(this));
+        html.find('.btn-recuperacion-total').click(this._onRecuperacionTotal.bind(this));
+
 
         // Escuchamos el clic en la habilidad y en el lápiz de editar (los que ya tenías)
         html.find('.tirar-habilidad').click(this._onTirarHabilidad.bind(this));
@@ -506,6 +519,149 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             },
             default: "lanzar"
         }, { width: 350, classes: ["dorso_oscuro", "dialog"] }).render(true);
+    }
+
+
+    // --- LÓGICA DE DORMIR ---
+    async _onDormir(event) {
+        event.preventDefault();
+
+        // Filtramos solo las habilidades generales del actor
+        const generales = this.actor.items.filter(i => i.type === "habilidad" && i.system.tipo === "general");
+
+        // Creamos los checkboxes para el diálogo
+        let checkboxes = generales.map(h => `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 4px;">
+                <label for="chk-${h.id}" style="font-family: 'Kalam', cursive; font-size: 16px;">${h.name} <span style="font-size: 12px; color: #aaa;">(${h.system.valorActual}/${h.system.valorMax})</span></label>
+                <input type="checkbox" class="dormir-skill-chk" id="chk-${h.id}" value="${h.id}" data-name="${h.name}" ${h.system.valorActual === h.system.valorMax ? 'disabled' : ''}>
+            </div>
+        `).join('');
+
+        const content = `
+            <div style="padding: 10px; color: #e0e0e0;">
+                <p style="text-align:center; font-family: 'Kalam', cursive; font-size: 16px; margin-bottom: 15px;">Elige hasta <strong>3 habilidades generales</strong> para recuperar al máximo:</p>
+                <div style="max-height: 220px; overflow-y: auto; background: rgba(0,0,0,0.4); padding: 10px; border-radius: 5px; border: 1px solid #444; color: #fff;">
+                    ${checkboxes || '<p style="text-align: center; color: #888;">No hay habilidades generales.</p>'}
+                </div>
+                <p style="text-align:center; font-size: 14px; font-weight: bold; margin-top: 10px; min-height: 20px;" id="dormir-warning"></p>
+            </div>
+        `;
+
+        new Dialog({
+            title: "Descansar y Entrar al Dorso Oscuro",
+            content: content,
+            buttons: {
+                dormir: {
+                    icon: '<i class="fas fa-moon"></i>',
+                    label: "Dormir",
+                    callback: async (htmlContent) => {
+                        const selectedIds = [];
+                        const selectedNames = [];
+                        htmlContent.find('.dormir-skill-chk:checked').each(function() {
+                            selectedIds.push($(this).val());
+                            selectedNames.push($(this).data('name'));
+                        });
+
+                        const updates = [];
+
+                        // 1. Recuperar Habilidades Elegidas
+                        for (let id of selectedIds) {
+                            const item = this.actor.items.get(id);
+                            if (item) {
+                                updates.push({ _id: id, "system.valorActual": item.system.valorMax });
+                            }
+                        }
+                        if (updates.length > 0) {
+                            await this.actor.updateEmbeddedDocuments("Item", updates);
+                        }
+
+                        // 2. Recuperar Salud (+1)
+                        let saludActual = this.actor.system.hp.value;
+                        let saludMax = this.actor.system.hp.max;
+                        let saludRecuperada = 0;
+                        if (saludActual < saludMax) {
+                            await this.actor.update({ "system.hp.value": saludActual + 1 });
+                            saludRecuperada = 1;
+                        }
+
+                        // 3. Recuperar Estabilidad (1d4+2)
+                        const roll = new Roll("1d4 + 2");
+                        await roll.evaluate();
+                        let estActual = this.actor.system.estabilidad;
+                        let estMax = 22; // Máximo establecido en tu sistema
+                        let nuevaEstabilidad = Math.min(estMax, estActual + roll.total);
+                        let recReal = nuevaEstabilidad - estActual;
+                        await this.actor.update({ "system.estabilidad": nuevaEstabilidad });
+
+                        // 4. Mandar Resumen al Chat
+                        let mensaje = `<h3 style="border-bottom: 1px solid #4a3424; color: #4a3424;"><i class="fas fa-bed"></i> Descanso Completado</h3>`;
+                        mensaje += `<p><b>${this.actor.name}</b> ha dormido recuperando sus fuerzas.</p><ul style="font-size: 14px; margin-top: 5px;">`;
+
+                        // Salud
+                        mensaje += `<li><b>Salud:</b> ${saludRecuperada > 0 ? `Recupera +1 <span style="color: #444;">(${saludActual + 1}/${saludMax})</span>` : `Ya estaba al máximo.`}</li>`;
+
+                        // Estabilidad
+                        mensaje += `<li><b>Estabilidad:</b> Recupera +${recReal} <span style="color: #444;">(Tirada: ${roll.total}) [${nuevaEstabilidad}/22]</span></li>`;
+
+                        // Habilidades
+                        mensaje += `<li><b>Hab. Generales:</b> ${selectedNames.length > 0 ? selectedNames.join(', ') : `Ninguna`}</li>`;
+
+                        mensaje += `</ul>`;
+
+                        await roll.toMessage({
+                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
+                            flavor: mensaje
+                        });
+                    }
+                },
+                cancelar: {
+                    icon: '<i class="fas fa-times"></i>',
+                    label: "Cancelar"
+                }
+            },
+            render: (htmlContent) => {
+                // Controlar que no marquen más de 3
+                htmlContent.find('.dormir-skill-chk').change(function() {
+                    if (htmlContent.find('.dormir-skill-chk:checked').length > 3) {
+                        this.checked = false;
+                        htmlContent.find('#dormir-warning').text('¡Solo puedes recuperar 3 habilidades!').css('color', '#ffaa00');
+                    } else {
+                        htmlContent.find('#dormir-warning').text('');
+                    }
+                });
+            },
+            default: "dormir"
+        }, { width: 400, classes: ["dorso_oscuro", "dialog"] }).render(true);
+    }
+
+    // --- LÓGICA DE RECUPERACIÓN TOTAL ---
+    async _onRecuperacionTotal(event) {
+        event.preventDefault();
+
+        Dialog.confirm({
+            title: `Recuperación Total - ${this.actor.name}`,
+            content: `
+                <div style="text-align: center; padding: 10px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 30px; color: #ffaa00; margin-bottom: 10px;"></i>
+                    <p style="font-family: 'Kalam', cursive; font-size: 18px;">Esto solo pasa al cambiar de capítulo.</p>
+                    <p style="font-size: 14px; color: #aaa;">¿Estás seguro de que quieres recuperar al máximo TODAS tus habilidades Técnicas y Generales?</p>
+                </div>
+            `,
+            yes: async () => {
+                const habilidades = this.actor.items.filter(i => i.type === "habilidad");
+                const updates = habilidades.map(h => ({
+                    _id: h.id,
+                    "system.valorActual": h.system.valorMax
+                }));
+
+                if (updates.length > 0) {
+                    await this.actor.updateEmbeddedDocuments("Item", updates);
+                    ui.notifications.info(`Todas las habilidades de ${this.actor.name} han sido restauradas al máximo.`);
+                }
+            },
+            no: () => {},
+            defaultYes: false
+        }, { classes: ["dorso_oscuro", "dialog"] });
     }
 
 

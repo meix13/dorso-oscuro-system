@@ -795,3 +795,36 @@ form.mystery-paper-theme {
     border-radius: 50% 50% 50% 50% / 50% 50% 50% 50%;
     transform: scale(1.02);
 }
+
+/* =========================================================
+   BOTONES DE DESCANSO Y RECUPERACIÓN (Estilo Pergamino)
+========================================================= */
+.mystery-paper-theme .rest-controls button {
+    background: #eaddc5; /* Tono pergamino sólido */
+    color: #1a1a1a;      /* Tinta oscura */
+    border: 1px solid rgba(0,0,0,0.4);
+    font-family: 'Kalam', cursive;
+    flex: 0 0 auto;
+    padding: 5px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 1px 2px 4px rgba(0,0,0,0.2);
+    transition: all 0.2s ease;
+}
+
+/* Efecto al pasar el ratón (Hover) */
+.mystery-paper-theme .rest-controls button:hover {
+    background: #d1bfae; /* Pergamino más tostado */
+    transform: translateY(-1px);
+    box-shadow: 2px 3px 5px rgba(0,0,0,0.3);
+}
+
+/* Toque de color sutil solo en los iconos */
+.mystery-paper-theme .rest-controls .btn-dormir i {
+    color: #4a3424; /* Marrón oscuro imitando madera/tinta */
+}
+
+.mystery-paper-theme .rest-controls .btn-recuperacion-total i {
+    color: #8b0000; /* Granate oscuro sangre/fuego */
+}
