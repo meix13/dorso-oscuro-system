@@ -828,3 +828,21 @@ form.mystery-paper-theme {
 .mystery-paper-theme .rest-controls .btn-recuperacion-total i {
     color: #8b0000; /* Granate oscuro sangre/fuego */
 }
+
+/* =========================================================
+   ESTILOS DE VALORES ACTUAL / MÁXIMO
+========================================================= */
+.mystery-paper-theme .value-separator {
+    color: #8b0000; /* Tono granate para romper la continuidad visual */
+    font-weight: bold;
+    margin: 0 4px;
+    font-size: 16px;
+    user-select: none;
+}
+
+.mystery-paper-theme .value-max {
+    font-size: 14px;
+    color: #555; /* Gris más apagado para restar peso al máximo */
+    font-weight: normal; /* Quitamos el bold para diferenciarlo del input */
+    user-select: none;
+}

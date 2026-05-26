@@ -50,11 +50,23 @@
 
             {{!-- PARTE MEDIA: Stats, Umbral y Esencia --}}
             <section class="stats-mid flexrow">
+
                 <div class="track-stats flexcol">
-                    <div class="input-line">Estabilidad: <input type="number" name="system.estabilidad" value="{{system.estabilidad}}"> / 22</div>
-                    <div class="input-line">Salud: <input type="number" name="system.hp.value" value="{{system.hp.value}}"> / {{system.hp.max}}</div>
-                    <div class="input-line">Cordura: <input type="number" name="system.cordura" value="{{system.cordura}}"> / 5</div>
-                    <div class="input-line">Crédito: <input type="number" name="system.credito" value="{{system.credito}}"></div>
+                    <div class="input-line">
+                        Estabilidad: <input type="number" name="system.estabilidad" value="{{system.estabilidad}}">
+                        <span class="value-max"><span class="value-separator">/</span>22</span>
+                    </div>
+                    <div class="input-line">
+                        Salud: <input type="number" name="system.hp.value" value="{{system.hp.value}}">
+                        <span class="value-max"><span class="value-separator">/</span>{{system.hp.max}}</span>
+                    </div>
+                    <div class="input-line">
+                        Cordura: <input type="number" name="system.cordura" value="{{system.cordura}}">
+                        <span class="value-max"><span class="value-separator">/</span>5</span>
+                    </div>
+                    <div class="input-line">
+                        Crédito: <input type="number" name="system.credito" value="{{system.credito}}">
+                    </div>
                 </div>
 
                 <div class="icon-stats flexrow">

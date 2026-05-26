@@ -13,6 +13,15 @@
       "name": "Miguel Ángel Lucas"
     }
   ],
+  "relationships": {
+    "requires": [
+      {
+        "id": "fxmaster",
+        "type": "module",
+        "reason": "Necesario para los efectos visuales y climáticos del sistema."
+      }
+    ]
+  },
   "esmodules": [
     "module/sistema.js"
   ],
