@@ -868,3 +868,12 @@ form.mystery-paper-theme {
     border-color: #00ccff !important;
     box-shadow: 0 0 8px rgba(0, 204, 255, 0.6) !important;
 }
+
+.card-in-hand:hover .manual-discard-btn {
+    display: flex !important;
+}
+.manual-discard-btn:hover {
+    background: #555 !important;
+    border-color: #fff !important;
+    transform: scale(1.1);
+}

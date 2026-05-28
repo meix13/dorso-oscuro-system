@@ -66,8 +66,31 @@
                                 </div>
                             </div>
 
+
+                            {{!-- MALUS DEL JUGADOR --}}
+                            <div class="malus-controls grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 5px;">
+                                <div class="stat-box flexcol" style="background: rgba(139,0,0,0.4); border: 1px solid #822; padding: 4px; text-align: center; border-radius: 3px;">
+                                    <div style="font-size: 10px; color:#aaa;" title="Merma"><i class="fas fa-angles-down" style="color: #aa5500;"></i> MERMA</div>
+                                    <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">
+                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="merma" data-action="minus"><i class="fas fa-minus-square"></i></a>
+                                        <b style="font-size: 13px; color: white;">{{jug.system.merma}}</b>
+                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="merma" data-action="plus"><i class="fas fa-plus-square"></i></a>
+                                    </div>
+                                </div>
+                                <div class="stat-box flexcol" style="background: rgba(139,0,0,0.4); border: 1px solid #822; padding: 4px; text-align: center; border-radius: 3px;">
+                                    <div style="font-size: 10px; color:#aaa;" title="Decadencia"><i class="fas fa-droplet" style="color: #aa0000;"></i> DECAD.</div>
+                                    <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">
+                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="decadencia" data-action="minus"><i class="fas fa-minus-square"></i></a>
+                                        <b style="font-size: 13px; color: white;">{{jug.system.decadencia}}</b>
+                                        <a class="dj-control" data-actor-id="{{jug.actor.id}}" data-type="decadencia" data-action="plus"><i class="fas fa-plus-square"></i></a>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{!-- CONTROLES --}}
                             <div class="status-controls grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px; margin-top: 8px;">
+
+
                                 <div class="stat-box flexcol" style="background: rgba(80,0,0,0.4); border: 1px solid #622; padding: 4px; text-align: center; border-radius: 3px;">
                                     <div style="font-size: 10px; color:#aaa;"><i class="fas fa-heart" style="color: #ff4444;"></i> VIDA</div>
                                     <div class="flexrow" style="align-items: center; justify-content: center; gap: 5px;">

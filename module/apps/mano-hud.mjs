@@ -39,8 +39,14 @@ export class ManoHUD extends Application {
         const numDescarte = discard ? discard.cards.size : 0;
         const numEliminadas = eliminadas ? eliminadas.cards.size : 0;
 
-        data.mano = hand ? hand.cards : [];
-
+        // --- MAPEAMOS LA MANO PARA OBTENER EL NOMBRE REAL DEL ÍTEM ---
+        data.mano = hand ? hand.cards.map(c => {
+            const itemId = c.getFlag("dorso_oscuro", "itemId");
+            const itemOriginal = this.actor.items.get(itemId);
+            const cartaData = c.toObject(); // Convertimos el documento a datos planos para Handlebars
+            cartaData.nombreReal = itemOriginal ? itemOriginal.name : cartaData.name;
+            return cartaData;
+        }) : [];
         // Estos son los números que lee el HTML
         data.conteoMazo = numMazoDisponible;
         data.conteoDescarte = numDescarte;
@@ -74,6 +80,35 @@ export class ManoHUD extends Application {
 
     activateListeners(html) {
         super.activateListeners(html);
+
+        // --- ELIMINAR CARTA MANUALMENTE AL DESCARTE ---
+        html.find('.manual-discard-btn').click(async ev => {
+            ev.stopPropagation(); // Evita que se active el zoom o el drag
+
+            const itemId = $(ev.currentTarget).parents('.item').data('itemId');
+            const hand = game.cards.get(this.actor.system.handId);
+            const discard = game.cards.get(this.actor.system.discardId);
+
+            if (hand && discard) {
+                const card = hand.cards.find(c => c.flags.dorso_oscuro?.itemId === itemId);
+                const itemOriginal = this.actor.items.get(itemId);
+
+                // Sacamos el nombre real cruzando con el actor
+                const nombreReal = itemOriginal ? itemOriginal.name : (card ? card.name : "Carta Desconocida");
+
+                if (card) {
+                    Dialog.confirm({
+                        title: "Descartar Carta",
+                        content: `<p style="text-align:center;">¿Estás seguro de que quieres enviar <b>${nombreReal}</b> al descarte?</p>`,
+                        yes: async () => {
+                            await card.pass(discard);
+                            ui.notifications.info(`Carta ${nombreReal} enviada al descarte.`);
+                            this.render(true);
+                        }
+                    });
+                }
+            }
+        });
 
         // --- ELIMINAR CARTA MANUALMENTE DESDE LA MANO ---
         html.find('.manual-ban-btn').click(async ev => {
