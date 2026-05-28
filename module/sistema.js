@@ -529,6 +529,50 @@ Hooks.once('init', async function() {
                 }
             }
         }
+
+        // ==========================================
+        // 🔥 NUEVO: AUTO-DESPLIEGUE DE TABLEROS CORE 🔥
+        // ==========================================
+        // Comprobamos si el mundo está totalmente vacío de escenas
+        if (game.scenes.size === 0) {
+            console.log("Dorso Oscuro | Detectado mundo nuevo. Desplegando tableros de juego...");
+
+            // Apuntamos al compendio del sistema: "id-sistema.name-pack"
+            const pack = game.packs.get("dorso_oscuro.tableros-core");
+
+            if (pack) {
+                // Cargamos los documentos puros del compendio
+                const escenasCompendio = await pack.getDocuments();
+
+                if (escenasCompendio.length > 0) {
+
+                    // 1. CREAMOS LA CARPETA (Si no existe)
+                    let folder = game.folders.find(f => f.name === "Tableros de Juego" && f.type === "Scene");
+                    if (!folder) {
+                        // Puedes cambiar el nombre y el color hexadecimal (aquí puse un tono marrón oscuro)
+                        folder = await Folder.create({ name: "Tableros de Juego", type: "Scene", color: "#4a3424" });
+                    }
+
+                    // 2. CONVERTIMOS LOS DATOS Y ASIGNAMOS LA CARPETA
+                    const escenasData = escenasCompendio.map(e => {
+                        let obj = e.toObject();
+                        obj.folder = folder.id; // Vinculamos la escena a la carpeta recién creada
+                        return obj;
+                    });
+
+                    // 3. CREAMOS LAS ESCENAS EN EL MUNDO
+                    const escenasImportadas = await Scene.createDocuments(escenasData);
+
+                    ui.notifications.info("¡Bienvenido a Dorso Oscuro! Se han desplegado los tableros de juego iniciales.");
+
+                    // 4. ACTIVAMOS LA PRIMERA ESCENA
+                    if (escenasImportadas.length > 0) {
+                        await escenasImportadas[0].update({ active: true });
+                    }
+                }
+            }
+        }
+
     });
 
     // --- ACTUALIZACIÓN REACTIVA GLOBAL ---

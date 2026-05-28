@@ -40,5 +40,7 @@
         "ASSISTANT": "OWNER"
       }
     }
-  ]
+  ],
+  "manifest": "https://github.com/meix13/dorso-oscuro-system/releases/latest/download/system.json",
+  "download": "https://github.com/meix13/dorso-oscuro-system/releases/latest/download/dorso_oscuro.zip"
 }

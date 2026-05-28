@@ -846,3 +846,25 @@ form.mystery-paper-theme {
     font-weight: normal; /* Quitamos el bold para diferenciarlo del input */
     user-select: none;
 }
+
+/* =========================================================
+   ARREGLO PARA BOTONES EN VENTANAS OSCURAS (Importar Aventura, Ajustes, etc.)
+========================================================= */
+.app.window-app:not(.mystery-paper-theme) .window-content button {
+    background-color: #141414 !important; /* Fondo muy oscuro para contrastar */
+    color: #ffffff !important;            /* Texto blanco puro */
+    border: 1px solid #4a90e2 !important; /* Borde azul brillante */
+    box-shadow: 0 0 5px rgba(74, 144, 226, 0.3) !important;
+    text-shadow: none !important;
+    font-weight: bold;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Efecto al pasar el ratón (Hover) */
+.app.window-app:not(.mystery-paper-theme) .window-content button:hover,
+.app.window-app:not(.mystery-paper-theme) .window-content button:focus {
+    background-color: rgba(74, 144, 226, 0.2) !important;
+    color: #00ccff !important;
+    border-color: #00ccff !important;
+    box-shadow: 0 0 8px rgba(0, 204, 255, 0.6) !important;
+}
