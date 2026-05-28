@@ -28,5 +28,17 @@
   "styles": [
     "css/dorso_oscuro.css"
   ],
-  "packs": []
+  "packs": [
+    {
+      "name": "tableros-core",
+      "label": "Dorso Oscuro - Tableros Base",
+      "path": "packs/tableros-core",
+      "type": "Scene",
+      "system": "dorso_oscuro",
+      "ownership": {
+        "PLAYER": "NONE",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ]
 }
