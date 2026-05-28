@@ -208,9 +208,9 @@ Hooks.once('init', async function() {
                 const reversoPorDefecto = "systems/dorso_oscuro/assets/cartas/reverso_carta1.png";
                 let reverso = data.backImg || actor.getFlag("dorso_oscuro", "dorsoUrl") || reversoPorDefecto;
 
-                if (item.system.esDeCriatura && item.system.idCriatura) {
+                if (item.system.esCriatura && item.system.idCriatura) {
                     // Si es una criatura, construimos la ruta automáticamente
-                    reverso = `systems/dorso_oscuro/assets/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
+                    reverso = `modules/dorso_oscuro_aventura1/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
                 }
 
                 const estaOculta = data.faceDown || false;
@@ -305,7 +305,7 @@ Hooks.once('init', async function() {
                 }
             }else if (item.system.esDeCriatura && item.system.idCriatura) {
                 // Si es una criatura, construimos la ruta automáticamente
-                reverso = `systems/dorso_oscuro/assets/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
+                reverso = `modules/dorso_oscuro_aventura1/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
             }
 
 
