@@ -43,6 +43,14 @@ Hooks.once('init', async function() {
         default: false
     });
 
+    game.settings.register("dorso_oscuro", "importacionTablerosRealizada", {
+        name: "Importación Tableros Realizada",
+        scope: "world",
+        config: false, // Oculto en el menú
+        type: Boolean,
+        default: false
+    });
+
     // --- APAGAR LA REGLA DE ARRASTRE NATIVA (ESTILO JUEGO DE MESA) ---
     if (CONFIG.Token && CONFIG.Token.rulerClass) {
         Object.defineProperty(CONFIG.Token.rulerClass.prototype, "isVisible", {
@@ -92,7 +100,7 @@ Hooks.once('init', async function() {
         makeDefault: true
     });
 
-    await loadTemplates([
+    await foundry.applications.handlebars.loadTemplates([
         "systems/dorso_oscuro/templates/parts/skill-list.hbs"
     ]);
 
@@ -525,13 +533,51 @@ Hooks.once('init', async function() {
     Hooks.once("ready", async () => {
 
         // ==========================================
-        // AUTO-IMPORTACIÓN DE COMPENDIOS BASE
+        // AUTO-IMPORTACIÓN Y ORDENACIÓN DE COMPENDIOS
         // ==========================================
         if (game.user.isGM && !game.settings.get("dorso_oscuro", "importacionBaseRealizada")) {
-            console.log("Dorso Oscuro | Primera ejecución detectada. Importando compendios...");
-            ui.notifications.info("Dorso Oscuro: Importando cartas y habilidades base. Un momento...");
+            console.log("Dorso Oscuro | Primera ejecución detectada. Creando árbol de carpetas e importando...");
+            ui.notifications.info("Dorso Oscuro: Inicializando y ordenando cartas base. Un momento...");
 
-            // Aquí pones el 'id-sistema.nombre-pack' de los compendios que creaste
+            // 1. CREACIÓN DE LA ESTRUCTURA ANIDADA (CARTAS)
+            // Carpeta Raíz: CARTAS
+            let folderCartas = game.folders.find(f => f.name === "CARTAS INICIALES" && f.type === "Item");
+            if (!folderCartas) {
+                folderCartas = await Folder.create({ name: "CARTAS INICIALES", type: "Item", color: "#543da9" });
+            }
+
+            // Subcarpeta: Almas iniciales (Hija de CARTAS)
+            let folderAlmas = game.folders.find(f => f.name === "Almas iniciales" && f.type === "Item" && (f.folder === folderCartas.id || f.folder?.id === folderCartas.id));
+            if (!folderAlmas) {
+                folderAlmas = await Folder.create({ name: "Almas iniciales", type: "Item", folder: folderCartas.id, color: "#543da9" });
+            }
+
+            // Subcarpeta: Poderes y Objetos (Hija de CARTAS)
+            let folderPoderesObjetos = game.folders.find(f => f.name === "Poderes y Objetos" && f.type === "Item" && (f.folder === folderCartas.id || f.folder?.id === folderCartas.id));
+            if (!folderPoderesObjetos) {
+                folderPoderesObjetos = await Folder.create({ name: "Poderes y Objetos", type: "Item", folder: folderCartas.id, color: "#543da9" });
+            }
+
+            // Subcarpeta: Iniciales (Hija de Poderes y Objetos)
+            let folderIniciales = game.folders.find(f => f.name === "Inicial" && f.type === "Item" && (f.folder === folderPoderesObjetos.id || f.folder?.id === folderPoderesObjetos.id));
+            if (!folderIniciales) {
+                folderIniciales = await Folder.create({ name: "Inicial", type: "Item", folder: folderPoderesObjetos.id, color: "#543da9" });
+            }
+
+            // Subcarpeta: Poderes (Hija de Iniciales)
+            let folderPoderes = game.folders.find(f => f.name === "Poderes" && f.type === "Item" && (f.folder === folderIniciales.id || f.folder?.id === folderIniciales.id));
+            if (!folderPoderes) {
+                folderPoderes = await Folder.create({ name: "Poderes", type: "Item", folder: folderIniciales.id, color: "#543da9" });
+            }
+
+            // Subcarpeta: Objetos (Hija de Iniciales)
+            let folderObjetos = game.folders.find(f => f.name === "Objetos" && f.type === "Item" && (f.folder === folderIniciales.id || f.folder?.id === folderIniciales.id));
+            if (!folderObjetos) {
+                folderObjetos = await Folder.create({ name: "Objetos", type: "Item", folder: folderIniciales.id, color: "#543da9" });
+            }
+
+
+            // 2. PROCESADO E IMPORTACIÓN DE COMPENDIOS
             const compendiosAImportar = [
                 "dorso_oscuro.habilidades",
                 "dorso_oscuro.cartas-base",
@@ -542,35 +588,57 @@ Hooks.once('init', async function() {
                 const pack = game.packs.get(packId);
                 if (!pack) continue;
 
-                // 1. Creamos una carpeta en la barra lateral para mantenerlo todo limpio
-                let folder = game.folders.find(f => f.name === pack.metadata.label && f.type === "Item");
-                if (!folder) {
-                    folder = await Folder.create({
-                        name: pack.metadata.label,
-                        type: "Item",
-                        color: "#8b0000" // Rojo oscuro del Dorso
-                    });
-                }
-
-                // 2. Extraemos el contenido del compendio
                 const documentosCompendio = await pack.getDocuments();
+                if (documentosCompendio.length === 0) continue;
 
-                if (documentosCompendio.length > 0) {
-                    // 3. Preparamos los datos para inyectarles el ID de la carpeta
-                    const datosImportacion = documentosCompendio.map(doc => {
+                // CASO A: El compendio de Cartas Base se ordena de forma inteligente
+                if (packId === "dorso_oscuro.cartas-base") {
+                    const datosCartas = documentosCompendio.map(doc => {
                         let obj = doc.toObject();
-                        obj.folder = folder.id;
+
+                        // Discriminamos por tipo de ítem para asignar la subcarpeta correcta
+                        if (obj.type === "carta_alma") {
+                            obj.folder = folderAlmas.id;
+                        } else if (obj.type === "carta_poder") {
+                            obj.folder = folderPoderes.id;
+                        } else if (obj.type === "carta_objeto") {
+                            obj.folder = folderObjetos.id;
+                        } else {
+                            // Por si acaso en el futuro añades equipo u otros tipos base a las cartas
+                            obj.folder = folderCartas.id;
+                        }
                         return obj;
                     });
 
-                    // 4. Creamos todos los Ítems en el mundo de golpe
-                    await Item.createDocuments(datosImportacion);
+                    await Item.createDocuments(datosCartas);
+                }
+                // CASO B: Habilidades y Armas mantienen su carpeta raíz limpia como antes
+                else {
+                    // Forzamos el nombre a MAYÚSCULAS
+                    const nombreCarpeta = pack.metadata.label.toUpperCase();
+
+                    let folderNormal = game.folders.find(f => f.name === nombreCarpeta && f.type === "Item");
+                    if (!folderNormal) {
+                        folderNormal = await Folder.create({
+                            name: nombreCarpeta,
+                            type: "Item",
+                            color: "#4a3424"
+                        });
+                    }
+
+                    const datosNormales = documentosCompendio.map(doc => {
+                        let obj = doc.toObject();
+                        obj.folder = folderNormal.id;
+                        return obj;
+                    });
+
+                    await Item.createDocuments(datosNormales);
                 }
             }
 
-            // 5. Marcamos el ajuste como verdadero para que no se repita en el futuro
+            // Guardamos el estado para evitar duplicidades en el futuro
             await game.settings.set("dorso_oscuro", "importacionBaseRealizada", true);
-            ui.notifications.info("¡Importación completada! Todo está listo para jugar.");
+            ui.notifications.info("¡Estructura de CARTAS generada e importada con éxito!");
         }
 
         // --- APAGAR ROTACIÓN AUTOMÁTICA DEL CORE (V13/V14) ---
@@ -589,44 +657,67 @@ Hooks.once('init', async function() {
         }
 
         // ==========================================
-        // 🔥 NUEVO: AUTO-DESPLIEGUE DE TABLEROS CORE 🔥
+        // AUTO-IMPORTACIÓN DE TABLEROS DE JUEGO (Scenes)
         // ==========================================
-        // Comprobamos si el mundo está totalmente vacío de escenas
-        if (game.scenes.size === 0) {
-            console.log("Dorso Oscuro | Detectado mundo nuevo. Desplegando tableros de juego...");
+        if (game.user.isGM && !game.settings.get("dorso_oscuro", "importacionTablerosRealizada")) {
+            console.log("Dorso Oscuro | Importando tableros base...");
+            const packEscenas = game.packs.get("dorso_oscuro.tableros-core");
 
-            // Apuntamos al compendio del sistema: "id-sistema.name-pack"
-            const pack = game.packs.get("dorso_oscuro.tableros-core");
-
-            if (pack) {
-                // Cargamos los documentos puros del compendio
-                const escenasCompendio = await pack.getDocuments();
+            if (packEscenas) {
+                const escenasCompendio = await packEscenas.getDocuments();
 
                 if (escenasCompendio.length > 0) {
 
-                    // 1. CREAMOS LA CARPETA (Si no existe)
-                    let folder = game.folders.find(f => f.name === "Tableros de Juego" && f.type === "Scene");
-                    if (!folder) {
-                        // Puedes cambiar el nombre y el color hexadecimal (aquí puse un tono marrón oscuro)
-                        folder = await Folder.create({ name: "Tableros de Juego", type: "Scene", color: "#4a3424" });
+                    // 1. CREAMOS O BUSCAMOS LA CARPETA PARA LOS TABLEROS
+                    let folderEscenas = game.folders.find(f => f.name === "TABLEROS" && f.type === "Scene");
+                    if (!folderEscenas) {
+                        folderEscenas = await Folder.create({
+                            name: "TABLEROS",
+                            type: "Scene",
+                            color: "#8b0000"
+                        });
                     }
 
                     // 2. CONVERTIMOS LOS DATOS Y ASIGNAMOS LA CARPETA
                     const escenasData = escenasCompendio.map(e => {
                         let obj = e.toObject();
-                        obj.folder = folder.id; // Vinculamos la escena a la carpeta recién creada
+
+                        // ¡Corregido! Asignamos el ID de la carpeta que acabamos de crear/buscar
+                        obj.folder = folderEscenas.id;
+
+                        // ANULAMOS la miniatura corrupta que viene del compendio
+                        obj.thumb = null;
                         return obj;
                     });
 
                     // 3. CREAMOS LAS ESCENAS EN EL MUNDO
                     const escenasImportadas = await Scene.createDocuments(escenasData);
 
-                    ui.notifications.info("¡Bienvenido a Dorso Oscuro! Se han desplegado los tableros de juego iniciales.");
-
-                    // 4. ACTIVAMOS LA PRIMERA ESCENA
-                    if (escenasImportadas.length > 0) {
-                        await escenasImportadas[0].update({ active: true });
+                    // 4. FORZAMOS LA GENERACIÓN DE MINIATURAS EN EL NUEVO MUNDO
+                    ui.notifications.info("Dorso Oscuro: Generando miniaturas de los tableros. Un momento...");
+                    for (let escena of escenasImportadas) {
+                        try {
+                            // Obligamos a Foundry a crear el thumbnail nativo usando el fondo de la escena
+                            const thumbData = await escena.createThumbnail();
+                            if (thumbData && thumbData.thumb) {
+                                await escena.update({ thumb: thumbData.thumb });
+                            }
+                        } catch (error) {
+                            console.warn(`Dorso Oscuro | No se pudo generar la miniatura de ${escena.name}`, error);
+                        }
                     }
+                    // 5. ACTIVAR EL TABLERO DE INICIO
+                    // Pon aquí el nombre exacto de la escena que quieres cargar
+                    const nombreEscenaInicio = "Tablero de Juego";
+
+                    // Busca la escena por su nombre, o coge la primera por defecto si no la encuentra
+                    const escenaInicio = escenasImportadas.find(e => e.name === nombreEscenaInicio) || escenasImportadas[0];
+
+                    if (escenaInicio) {
+                        await escenaInicio.activate();
+                        ui.notifications.info(`Dorso Oscuro: Tablero '${escenaInicio.name}' activado con éxito.`);
+                    }
+                    await game.settings.set("dorso_oscuro", "importacionTablerosRealizada", true);
                 }
             }
         }
