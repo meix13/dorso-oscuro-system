@@ -35,6 +35,14 @@ Hooks.once('init', async function() {
         default: {} // Guardaremos algo como { "id-de-la-carta": true }
     });
 
+    game.settings.register("dorso_oscuro", "importacionBaseRealizada", {
+        name: "Importación Base Realizada",
+        scope: "world",
+        config: false, // Oculto en el menú de ajustes
+        type: Boolean,
+        default: false
+    });
+
     // --- APAGAR LA REGLA DE ARRASTRE NATIVA (ESTILO JUEGO DE MESA) ---
     if (CONFIG.Token && CONFIG.Token.rulerClass) {
         Object.defineProperty(CONFIG.Token.rulerClass.prototype, "isVisible", {
@@ -515,6 +523,56 @@ Hooks.once('init', async function() {
     });
 
     Hooks.once("ready", async () => {
+
+        // ==========================================
+        // AUTO-IMPORTACIÓN DE COMPENDIOS BASE
+        // ==========================================
+        if (game.user.isGM && !game.settings.get("dorso_oscuro", "importacionBaseRealizada")) {
+            console.log("Dorso Oscuro | Primera ejecución detectada. Importando compendios...");
+            ui.notifications.info("Dorso Oscuro: Importando cartas y habilidades base. Un momento...");
+
+            // Aquí pones el 'id-sistema.nombre-pack' de los compendios que creaste
+            const compendiosAImportar = [
+                "dorso_oscuro.habilidades",
+                "dorso_oscuro.cartas-base",
+                "dorso_oscuro.armas"
+            ];
+
+            for (let packId of compendiosAImportar) {
+                const pack = game.packs.get(packId);
+                if (!pack) continue;
+
+                // 1. Creamos una carpeta en la barra lateral para mantenerlo todo limpio
+                let folder = game.folders.find(f => f.name === pack.metadata.label && f.type === "Item");
+                if (!folder) {
+                    folder = await Folder.create({
+                        name: pack.metadata.label,
+                        type: "Item",
+                        color: "#8b0000" // Rojo oscuro del Dorso
+                    });
+                }
+
+                // 2. Extraemos el contenido del compendio
+                const documentosCompendio = await pack.getDocuments();
+
+                if (documentosCompendio.length > 0) {
+                    // 3. Preparamos los datos para inyectarles el ID de la carpeta
+                    const datosImportacion = documentosCompendio.map(doc => {
+                        let obj = doc.toObject();
+                        obj.folder = folder.id;
+                        return obj;
+                    });
+
+                    // 4. Creamos todos los Ítems en el mundo de golpe
+                    await Item.createDocuments(datosImportacion);
+                }
+            }
+
+            // 5. Marcamos el ajuste como verdadero para que no se repita en el futuro
+            await game.settings.set("dorso_oscuro", "importacionBaseRealizada", true);
+            ui.notifications.info("¡Importación completada! Todo está listo para jugar.");
+        }
+
         // --- APAGAR ROTACIÓN AUTOMÁTICA DEL CORE (V13/V14) ---
         // Solo lo ejecuta el DJ para no saturar la base de datos con los jugadores
         if (game.user.isGM) {
