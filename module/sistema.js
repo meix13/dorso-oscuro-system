@@ -26,6 +26,15 @@ Hooks.once('init', async function() {
     CONFIG.Item.typeIcons["arma"] = "icons/svg/sword.svg";
     CONFIG.Actor.typeIcons["monstruo"] = "icons/svg/blood.svg"; // Cambiado a Actor porque monstruo es Actor
 
+
+    game.settings.register("dorso_oscuro", "permisosConfigurados", {
+        name: "Permisos de Jugador Configurados",
+        scope: "world",
+        config: false, // Oculto en el menú
+        type: Boolean,
+        default: false
+    });
+
     // --- REGISTRO DE AJUSTES DEL SISTEMA ---
     game.settings.register("dorso_oscuro", "equiposDesbloqueados", {
         name: "Cartas de Equipo Descubiertas",
@@ -531,6 +540,56 @@ Hooks.once('init', async function() {
     });
 
     Hooks.once("ready", async () => {
+
+
+        // ==========================================
+        // AUTO-CONFIGURACIÓN DE PERMISOS
+        // ==========================================
+        if (game.user.isGM && !game.settings.get("dorso_oscuro", "permisosConfigurados")) {
+            console.log("Dorso Oscuro | Otorgando permisos por defecto a los jugadores...");
+
+            // Obtenemos los permisos nativos de la base de datos de Foundry (Clonados para modificarlos seguros)
+            const permisosCore = foundry.utils.deepClone(game.settings.get("core", "permissions"));
+            const rolJugador = CONST.USER_ROLES.PLAYER; // El ID nativo del rol de Jugador (1)
+
+            // Las claves nativas de Foundry para los permisos que necesitas
+            const permisosRequeridos = [
+                "ACTOR_CREATE",  // Create Actor
+                "ITEM_CREATE",   // Create Card
+                "CARDS_CREATE",  // Create Card
+                "TOKEN_CREATE",  // Create Token
+                "TOKEN_DELETE"   // Delete Token
+            ];
+
+            let actualizado = false;
+
+            for (const perm of permisosRequeridos) {
+                // Si el permiso existe en el mundo y el jugador no lo tiene
+                if (permisosCore[perm] && !permisosCore[perm].includes(rolJugador)) {
+                    permisosCore[perm].push(rolJugador);
+                    actualizado = true;
+                }
+                // Si el permiso aún no se ha inicializado en la BD de Foundry, lo creamos para todos los roles
+                else if (!permisosCore[perm]) {
+                    permisosCore[perm] = [
+                        CONST.USER_ROLES.PLAYER,
+                        CONST.USER_ROLES.TRUSTED,
+                        CONST.USER_ROLES.ASSISTANT,
+                        CONST.USER_ROLES.GAMEMASTER
+                    ];
+                    actualizado = true;
+                }
+            }
+
+            // Si hemos modificado algo, lo subimos a la base de datos de golpe
+            if (actualizado) {
+                await game.settings.set("core", "permissions", permisosCore);
+                console.log("Dorso Oscuro | Permisos básicos de jugador configurados.");
+            }
+
+            // Marcamos para que no vuelva a sobreescribir si el DJ decide quitarlos luego a mano
+            await game.settings.set("dorso_oscuro", "permisosConfigurados", true);
+        }
 
         // ==========================================
         // AUTO-IMPORTACIÓN Y ORDENACIÓN DE COMPENDIOS
