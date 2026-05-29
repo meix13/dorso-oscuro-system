@@ -39,6 +39,24 @@
         "PLAYER": "NONE",
         "ASSISTANT": "OWNER"
       }
+    },
+    {
+      "name": "habilidades",
+      "label": "Habilidades",
+      "path": "packs/habilidades-base",
+      "type": "Item"
+    },
+    {
+      "name": "cartas-base",
+      "label": "Cartas Iniciales",
+      "path": "packs/cartas-base",
+      "type": "Item"
+    },
+    {
+      "name": "armas",
+      "label": "Armas",
+      "path": "packs/armas-base",
+      "type": "Item"
     }
   ],
   "manifest": "https://github.com/meix13/dorso-oscuro-system/releases/latest/download/system.json",
