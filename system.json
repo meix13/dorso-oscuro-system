@@ -2,7 +2,7 @@
   "id": "dorso_oscuro",
   "title": "Sistema de rol para Dorso Oscuro",
   "description": "El sistema de rol para el juego con cartas Dorso Oscuro.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "compatibility": {
     "minimum": "14",
     "verified": "14"
