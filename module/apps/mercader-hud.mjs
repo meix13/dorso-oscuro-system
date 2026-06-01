@@ -5,9 +5,9 @@ export class MercaderHud extends Application {
     constructor(options = {}) {
         super(options);
         this.ofertaActual = { objetos: [], poderes: [] };
-        // NUEVO: Filtros actuales del catálogo
         this.filtros = { nombre: "", mundo: "", tipo: "" };
         this.mundosActivos = ["inicial"];
+        this.cantidadesOferta = { objetos: 2, poderes: 7 };
     }
 
     static get defaultOptions() {
@@ -28,6 +28,7 @@ export class MercaderHud extends Application {
     async getData() {
         const data = await super.getData();
         data.oferta = this.ofertaActual;
+        data.cantidades = this.cantidadesOferta;
 
         const listaMundos = [
             { id: "inicial", nombre: "Inicial (Base)" },
@@ -82,6 +83,10 @@ export class MercaderHud extends Application {
             const numObj = parseInt(html.find('#num-objetos').val()) || 2;
             const numPod = parseInt(html.find('#num-poderes').val()) || 7;
 
+            // NUEVO: Salvamos la configuración del usuario en la clase
+            this.cantidadesOferta.objetos = numObj;
+            this.cantidadesOferta.poderes = numPod;
+
             const mundosSeleccionados = [];
             html.find('.mundo-checkbox:checked').each(function() {
                 mundosSeleccionados.push($(this).val());
@@ -91,7 +96,6 @@ export class MercaderHud extends Application {
                 return ui.notifications.warn("Debes seleccionar al menos un mundo para generar cartas.");
             }
 
-            // Llamamos al cerebro del mercader
             this.ofertaActual = MercaderManager.generarOferta(mundosSeleccionados, numObj, numPod);
             this.render(false);
         });
@@ -111,53 +115,90 @@ export class MercaderHud extends Application {
             ev.originalEvent.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         });
 
-        // --- PASAR TODA LA OFERTA AL TABLERO ---
         html.find('#btn-pasar-tablero').click(async ev => {
-            if (!this.ofertaActual.objetos.length && !this.ofertaActual.poderes.length) {
-                return ui.notifications.warn("No hay una oferta generada para pasar al tablero.");
+            ev.preventDefault();
+
+            // 1. OBTENER LAS CARTAS DE LA TIENDA ACTUAL
+            // Juntamos los objetos y poderes de tu variable interna
+            const itemsOferta = [...this.ofertaActual.objetos, ...this.ofertaActual.poderes];
+
+            // Buscamos el ítem real en la base de datos de Foundry usando su ID
+            const cartasTienda = itemsOferta.map(c => game.items.get(c.id || c._id)).filter(i => i);
+
+            if (!cartasTienda || cartasTienda.length === 0) {
+                return ui.notifications.warn("No hay cartas en la oferta para pasar al tablero.");
             }
 
-            const totalCartas = [...this.ofertaActual.objetos, ...this.ofertaActual.poderes];
+            // 2. SEPARAR POR CATEGORÍAS (Objetos primero, luego Poderes)
+            const objetos = cartasTienda.filter(i => i.type === "carta_objeto");
+            const poderes = cartasTienda.filter(i => i.type === "carta_poder");
+
+            const grupos = [
+                { items: objetos, titulo: "Objetos" },
+                { items: poderes, titulo: "Poderes" }
+            ];
+
+            ui.notifications.info("Desplegando la Tienda en el tablero...");
+            const tokensToCreate = [];
             const gridSize = canvas.grid.size;
-
-            // Punto de inicio: centro de la pantalla actual del DJ
             const viewCenter = canvas.stage.pivot;
-            let startX = viewCenter.x - (gridSize * 10); // Un poco a la izquierda
-            let startY = viewCenter.y - (gridSize * 5);  // Un poco arriba
 
-            const tokensACrear = [];
-            const cartasPorFila = 8;
-            const espaciadoX = 2.8; // Un pelín más que el ancho (2.5) para que no se peguen
-            const espaciadoY = 4.0; // Un pelín más que el alto (3.6)
+            // Centramos la cámara
+            let startX = viewCenter.x - (gridSize * 15);
+            let startY = viewCenter.y - (gridSize * 10);
 
-            totalCartas.forEach((item, index) => {
-                const fila = Math.floor(index / cartasPorFila);
-                const columna = index % cartasPorFila;
-                const precio = item.system.costeEsencia || 0;
-                tokensACrear.push({
-                    name: `💰 ${precio}  |  ${item.name}`,
-                    texture: { src: item.img },
-                    width: 2.5,
-                    height: 3.6,
-                    x: startX + (columna * espaciadoX * gridSize),
-                    y: startY + (fila * espaciadoY * gridSize),
-                    lockRotation: true,
-                    displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
-                    flags: {
-                        dorso_oscuro: {
-                            isCard: true,
-                            isMercader: true, // ETIQUETA CLAVE
-                            itemId: item.id,
-                            type: item.type,
-                            nombreReal: item.name,
-                            imgReal: item.img
+            const maxFilas = 5;
+            const espaciadoX = 2.8;
+            const espaciadoY = 4.0;
+
+            let columnaGlobalActual = 0;
+
+            // 3. GENERAR EN COLUMNAS EXACTAMENTE IGUAL QUE EL DRAFT
+            for (let grupo of grupos) {
+                if (grupo.items.length === 0) continue;
+
+                let indexDentroDelGrupo = 0;
+
+                for (let item of grupo.items) {
+                    const fila = indexDentroDelGrupo % maxFilas;
+                    const columnaLocal = Math.floor(indexDentroDelGrupo / maxFilas);
+                    const precio = item.system.costeEsencia || 0;
+
+                    tokensToCreate.push({
+                        name: `💰 ${precio}  |  ${item.name}`,
+                        texture: { src: item.img },
+                        width: 2.5,
+                        height: 3.6,
+                        x: startX + ((columnaGlobalActual + columnaLocal) * espaciadoX * gridSize),
+                        y: startY + (fila * espaciadoY * gridSize),
+                        lockRotation: true,
+                        displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+                        flags: {
+                            dorso_oscuro: {
+                                isCard: true,
+                                isMercader: true, // Funciona con tu botón de recoger
+                                isGlobal: true,   // <--- MAGIA: Activa el botón de entregar carta
+                                itemId: item.id,
+                                type: item.type,
+                                nombreReal: item.name,
+                                imgReal: item.img
+                            }
                         }
-                    }
-                });
-            });
+                    });
 
-            await canvas.scene.createEmbeddedDocuments("Token", tokensACrear);
-            ui.notifications.info(`Se han desplegado ${totalCartas.length} cartas en la mesa.`);
+                    indexDentroDelGrupo++;
+                }
+
+                // Dejamos un pasillo vacío entre los Objetos y los Poderes
+                const columnasUsadasPorEsteGrupo = Math.ceil(indexDentroDelGrupo / maxFilas);
+                columnaGlobalActual += columnasUsadasPorEsteGrupo + 1;
+            }
+
+            // 4. SPAWN DE CARTAS EN LA MESA
+            if (tokensToCreate.length > 0) {
+                await canvas.scene.createEmbeddedDocuments("Token", tokensToCreate);
+                this.close(); // Opcional: Cierra el menú del mercader para que veas la mesa limpia
+            }
         });
 
         // --- RECOGER TOKENS DEL MERCADER ---
@@ -200,7 +241,7 @@ export class MercaderHud extends Application {
                 return ui.notifications.warn("Debes seleccionar al menos un mundo.");
             }
 
-            this.ofertaActual = MercaderManager.generarOferta(this.mundosActivos, 5, 30);
+            this.ofertaActual = MercaderManager.generarOferta(this.mundosActivos, 2, 15);
             this.render(false); // Al re-renderizar, getData usará this.mundosActivos y mantendrá los checks
             ui.notifications.info("Mesa Mercader generada.");
         });
