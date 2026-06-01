@@ -1,0 +1,18 @@
+<form class="{{cssClass}} flexcol" autocomplete="off" style="text-align: center; background: #111; padding: 20px; border: 1px solid #333; border-radius: 10px;">
+    <h2 style="color: #00ccff; font-family: 'Kalam', cursive; border-bottom: 1px dashed #444; padding-bottom: 10px;">
+        <input name="name" type="text" value="{{actor.name}}" style="background: transparent; border: none; color: inherit; text-align: center; font-weight: bold; width: 100%;"/>
+    </h2>
+
+    <div style="flex: 1; display: flex; justify-content: center; align-items: center; padding: 20px 0;">
+        <img src="{{actor.img}}" data-edit="img" title="Cambiar imagen" style="width: 200px; height: 200px; object-fit: contain; border: none; cursor: pointer; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.8);" />
+    </div>
+
+    {{#if isGM}}
+        <div style="margin-top: 10px; border-top: 1px dashed #444; padding-top: 10px;">
+            <label style="color: #aaa; font-size: 14px; cursor: pointer;">
+                <input type="checkbox" name="system.esFichaMesa" {{checked system.esFichaMesa}}>
+                Activar modo Ficha de Mesa (Oculta del desplegable)
+            </label>
+        </div>
+    {{/if}}
+</form>

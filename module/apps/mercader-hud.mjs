@@ -65,6 +65,18 @@ export class MercaderHud extends Application {
     activateListeners(html) {
         super.activateListeners(html);
 
+        // Botón 1: Crear cartas iniciales en los mazos
+        html.find('.btn-crear-cartas-iniciales').click(async ev => {
+            ev.preventDefault();
+            await MercaderManager.inyectarCartasInicialesMasivo();
+        });
+
+        html.find('.btn-draft-inicial').click(async ev => {
+            ev.preventDefault();
+            await MercaderManager.generarDraftInicial();
+            this.close(); // Opcional: cierra el HUD tras generar el draft
+        });
+
         // --- GENERAR OFERTA ---
         html.find('#btn-generar-oferta').click(ev => {
             const numObj = parseInt(html.find('#num-objetos').val()) || 2;

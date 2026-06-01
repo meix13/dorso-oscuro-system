@@ -232,4 +232,171 @@ export class MercaderManager {
 
         return detalle;
     }
+
+    /**
+     * DESPLEGAR DRAFT EN MESA (Formato Columnas Verticales)
+     */
+    static async generarDraftInicial() {
+        // 1. Filtramos las cartas del mundo marcadas para el draft
+        const itemsDraft = game.items.filter(i => i.system.esDraftInicial);
+
+        if (itemsDraft.length === 0) {
+            return ui.notifications.warn("Dorso Oscuro | No hay cartas marcadas para el Draft Inicial en el mundo.");
+        }
+
+        ui.notifications.info("Generando Draft Inicial en columnas...");
+        const tokensToCreate = [];
+        const gridSize = canvas.grid.size;
+
+        // Punto de inicio: Desplazamos más a la izquierda y menos hacia arriba
+        const viewCenter = canvas.stage.pivot;
+        let startX = viewCenter.x - (gridSize * 15);
+        let startY = viewCenter.y - (gridSize * 10);
+
+        const maxFilas = 5; // Límite máximo de cartas hacia abajo
+        const espaciadoX = 2.8;
+        const espaciadoY = 4.0;
+
+        // 2. SEPARAMOS POR CATEGORÍAS (Orden solicitado: Almas -> Objetos -> Poderes)
+        const almas = itemsDraft.filter(i => i.type === "carta_alma");
+        const objetos = itemsDraft.filter(i => i.type === "carta_objeto");
+        const poderes = itemsDraft.filter(i => i.type === "carta_poder");
+        const otros = itemsDraft.filter(i => !["carta_alma", "carta_poder", "carta_objeto"].includes(i.type));
+
+        const grupos = [
+            { items: almas, titulo: "Almas" },
+            { items: objetos, titulo: "Objetos" },
+            { items: poderes, titulo: "Poderes" },
+            { items: otros, titulo: "Otros" }
+        ];
+
+        // Esta variable controlará en qué columna global vamos pintando
+        let columnaGlobalActual = 0;
+
+        // 3. ITERAMOS GRUPO A GRUPO
+        for (let grupo of grupos) {
+            if (grupo.items.length === 0) continue;
+
+            let indexDentroDelGrupo = 0;
+
+            for (let item of grupo.items) {
+                const cantidad = item.system.cantidadDraft || 1;
+
+                for (let i = 0; i < cantidad; i++) {
+                    // Matemáticas invertidas:
+                    // Y = El resto de dividir por maxFilas (baja 0, 1, 2, 3, 4...)
+                    // X = El número entero de dividir por maxFilas (columna 0, luego 1...)
+                    const fila = indexDentroDelGrupo % maxFilas;
+                    const columnaLocal = Math.floor(indexDentroDelGrupo / maxFilas);
+
+                    const precio = item.system.costeEsencia || 0;
+                    let nombreMostrado = item.type === "carta_alma" ? item.name : `💰 ${precio}  |  ${item.name}`;
+
+                    tokensToCreate.push({
+                        name: nombreMostrado,
+                        texture: { src: item.img },
+                        width: 2.5,
+                        height: 3.6,
+                        // Sumamos la columna global + la columna que ocupe dentro de su propio grupo
+                        x: startX + ((columnaGlobalActual + columnaLocal) * espaciadoX * gridSize),
+                        y: startY + (fila * espaciadoY * gridSize),
+                        lockRotation: true,
+                        displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
+                        flags: {
+                            dorso_oscuro: {
+                                isCard: true,
+                                isMercader: true,
+                                isGlobal: true,
+                                itemId: item.id,
+                                type: item.type,
+                                nombreReal: item.name,
+                                imgReal: item.img
+                            }
+                        }
+                    });
+
+                    indexDentroDelGrupo++;
+                }
+            }
+
+            // SALTO DE SECCIÓN: Calculamos cuántas columnas ha ocupado este grupo
+            // Math.ceil nos dice el total de columnas. Ej: 12 cartas / 5 = 2.4 -> Ocupa 3 columnas.
+            const columnasUsadasPorEsteGrupo = Math.ceil(indexDentroDelGrupo / maxFilas);
+
+            // Sumamos las columnas usadas a la global, más 1 extra como margen de "pasillo" entre secciones
+            columnaGlobalActual += columnasUsadasPorEsteGrupo + 1;
+        }
+
+        // 4. Spawneamos todo de golpe
+        if (tokensToCreate.length > 0) {
+            await canvas.scene.createEmbeddedDocuments("Token", tokensToCreate);
+        }
+    }
+
+
+    /**
+     * INYECCIÓN MASIVA E INTELIGENTE DE CARTAS INICIALES
+     * Inserta en la ficha de cada PJ hasta tener 4 Ataques, 4 Curas y 4 Defensas base.
+     */
+    static async inyectarCartasInicialesMasivo() {
+        // 1. Buscamos las cartas patrón en la base de datos global de Ítems del mundo
+        const nombresBase = ["Ataque", "Cura", "Defensa"];
+        const cartasPatron = {};
+
+        for (const nombre of nombresBase) {
+            const item = game.items.find(i => i.name === nombre && (i.type === "carta_poder" || i.type === "carta_objeto"));
+            if (!item) {
+                return ui.notifications.error(`Dorso Oscuro | No se encontró la carta patrón llamada exactamente "${nombre}" en la pestaña de Objetos.`);
+            }
+            cartasPatron[nombre] = item;
+        }
+
+        // 2. Filtramos los Personajes Jugadores reales de la sesión (excluyendo mesas, bosses y papeleras)
+        const jugadores = game.actors.filter(a =>
+            a.type === "personaje" &&
+            !a.flags.dorso_oscuro?.isBossSession &&
+            !a.flags.dorso_oscuro?.isPapelera &&
+            !a.system.esFichaMesa
+        );
+
+        if (jugadores.length === 0) return ui.notifications.warn("No hay personajes jugadores en la partida.");
+
+        let totalModificado = 0;
+        ui.notifications.info("Analizando y completando barajas iniciales...");
+
+        // 3. Procesamos ficha por ficha
+        for (let actor of jugadores) {
+            // Contamos qué cartas tiene ya en su inventario de Items propio de la ficha
+            const cartasEnFicha = actor.items.contents;
+            const cartasAAñadir = [];
+
+            for (const nombre of nombresBase) {
+                const copiasActuales = cartasEnFicha.filter(c => c.name === nombre).length;
+                const faltantes = 4 - copiasActuales;
+
+                // Si le faltan cartas para llegar a 4 en su ficha, preparamos el objeto clonado del patrón
+                if (faltantes > 0) {
+                    const patron = cartasPatron[nombre];
+
+                    for (let i = 0; i < faltantes; i++) {
+                        // Creamos una copia limpia del objeto para inyectarlo en el actor
+                        cartasAAñadir.push(patron.toObject());
+                    }
+                }
+            }
+
+            // Si hay cartas faltantes, las inyectamos directamente en el Actor (Ficha de personaje)
+            if (cartasAAñadir.length > 0) {
+                await actor.createEmbeddedDocuments("Item", cartasAAñadir);
+                totalModificado++;
+                console.log(`Dorso Oscuro | Ficha de ${actor.name} completada con ${cartasAAñadir.length} cartas base.`);
+            }
+        }
+
+        if (totalModificado > 0) {
+            ui.notifications.info(`¡Barajas completadas! Se han añadido las cartas iniciales directamente en las fichas de ${totalModificado} jugadores.`);
+        } else {
+            ui.notifications.info("Todos los jugadores ya tenían sus 4 copias base en sus fichas. No hizo falta añadir nada.");
+        }
+    }
 }

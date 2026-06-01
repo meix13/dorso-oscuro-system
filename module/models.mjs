@@ -40,7 +40,8 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
             discardId: new fields.StringField({initial: ""}),
             almaActivaId: new fields.StringField({initial: ""}),
             eliminadasId: new fields.StringField({initial: ""}),
-            enJuegoId: new fields.StringField({initial: ""})
+            enJuegoId: new fields.StringField({initial: ""}),
+            esFichaMesa: new fields.BooleanField({initial: false, label: "Es ficha de mesa (No PJ)"}),
 
         };
     }
@@ -80,7 +81,9 @@ export class CartaAlmaData extends foundry.abstract.TypeDataModel {
             limiteManoBonus: new fields.NumberField({initial: 0, integer: true, min: 0}),
             esCriatura: new fields.BooleanField({initial: false}),
             carpetaSistema: new fields.StringField({ initial: "" }),
-            idCriatura: new fields.StringField({initial: ""})
+            idCriatura: new fields.StringField({initial: ""}),
+            esDraftInicial: new fields.BooleanField({initial: false, label: "Draft Inicial"}),
+            cantidadDraft: new fields.NumberField({initial: 1, integer: true, min: 1, label: "Cantidad en Draft"})
         };
     }
 }
@@ -118,7 +121,9 @@ export class CartaJugableData extends foundry.abstract.TypeDataModel {
             costeEsencia: new fields.NumberField({initial: 0, integer: true, min: 0}),
             idCriatura: new fields.StringField({initial: ""}),
             permiteBuscarMazo: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            permiteBuscarDescarte: new fields.NumberField({initial: 0, integer: true, min: 0})
+            permiteBuscarDescarte: new fields.NumberField({initial: 0, integer: true, min: 0}),
+            esDraftInicial: new fields.BooleanField({initial: false, label: "Draft Inicial"}),
+            cantidadDraft: new fields.NumberField({initial: 1, integer: true, min: 1, label: "Cantidad en Draft"})
 
         }
     }

@@ -8,6 +8,8 @@ import { DJHUD } from "./apps/dj-hud.mjs";
 import { MercaderHud } from "./apps/mercader-hud.mjs";
 import { ObjetoSheet } from "./sheets/objeto-sheet.mjs";
 import { MonstruoSheet } from "./sheets/monstruo-sheet.mjs";
+import { FichaMesaSheet } from "./sheets/ficha-mesa-sheet.mjs";
+import { MercaderPapeleraSheet } from "./sheets/mercader-papelera-sheet.mjs";
 
 
 
@@ -25,6 +27,7 @@ Hooks.once('init', async function() {
     CONFIG.Item.typeIcons["objeto"] = "icons/svg/chest.svg";
     CONFIG.Item.typeIcons["arma"] = "icons/svg/sword.svg";
     CONFIG.Actor.typeIcons["monstruo"] = "icons/svg/blood.svg"; // Cambiado a Actor porque monstruo es Actor
+
 
 
     game.settings.register("dorso_oscuro", "permisosConfigurados", {
@@ -70,6 +73,7 @@ Hooks.once('init', async function() {
     CONFIG.Actor.dataModels.personaje = PersonajeData;
     CONFIG.Actor.dataModels.monstruo = MonstruoData;
 
+
     // Registramos las habilidades, objetos y las cartas
     CONFIG.Item.dataModels.habilidad = HabilidadData;
     CONFIG.Item.dataModels.carta_alma = CartaAlmaData;
@@ -87,12 +91,8 @@ Hooks.once('init', async function() {
         makeDefault: true
     });
 
-    // Actualizamos Items a su ruta estricta en V13/V14
-    foundry.documents.collections.Items.unregisterSheet("core", foundry.appv1.sheets.ItemSheet);
-    foundry.documents.collections.Items.registerSheet("dorso_oscuro", HabilidadSheet, {
-        types: ["habilidad"],
-        makeDefault: true
-    });
+    foundry.documents.collections.Actors.registerSheet("dorso_oscuro", FichaMesaSheet, { types: ["personaje"], makeDefault: false });
+    foundry.documents.collections.Actors.registerSheet("dorso_oscuro", MercaderPapeleraSheet, { types: ["personaje"], makeDefault: false });
 
     foundry.documents.collections.Items.registerSheet("dorso_oscuro", CartaSheet, {
         types: ["carta_alma", "carta_poder", "carta_objeto","carta_equipo"],
@@ -830,7 +830,8 @@ Hooks.once('init', async function() {
     Hooks.on("updateCards", refrescarInterfaces);
 
 
-    // --- PERSONALIZAR EL HUD DEL TOKEN (BOTÓN TOGGLE REVELAR/OCULTAR) ---
+
+    // --- PERSONALIZAR EL HUD DEL TOKEN (CARTAS Y GESTIÓN) ---
     Hooks.on("renderTokenHUD", (app, html, data) => {
         const $html = $(html);
         const tokenDoc = app.object?.document;
@@ -844,7 +845,6 @@ Hooks.once('init', async function() {
 
         // --- 3. BOTÓN DE REVELAR / OCULTAR (TOGGLE) ---
         if (game.user.isGM) {
-
 
             const esAlmaJugador = flags.type === "carta_alma" && tokenDoc.actor?.getFlag("dorso_oscuro", "isTempAlma");
 
@@ -900,11 +900,68 @@ Hooks.once('init', async function() {
                     app.close();
                 });
             }
+
+            // --- NUEVO: BOTÓN ENTREGAR CARTA (Solo para DJ y cartas del Mercader/Draft) ---
+            if (flags.isGlobal) {
+                const darBtn = $(`
+                    <div class="control-icon" title="Entregar Carta a Jugador" style="border: 2px solid #00ccff; border-radius: 5px; background: rgba(0,20,50,0.8); margin-top: 5px;">
+                        <i class="fas fa-hand-holding-magic" style="color: #00ccff;"></i>
+                    </div>
+                `);
+
+                $html.find('.col.right').append(darBtn);
+
+                darBtn.click(() => {
+
+                    const jugadores = game.actors.filter(a =>
+                        a.type === "personaje" &&
+                        !a.flags.dorso_oscuro?.isBossSession &&
+                        !a.flags.dorso_oscuro?.isPapelera &&
+                        !a.system.esFichaMesa
+                    );
+                    if (jugadores.length === 0) return ui.notifications.warn("No hay jugadores en la partida.");
+
+                    let options = jugadores.map(j => `<option value="${j.id}">${j.name}</option>`).join("");
+
+                    new Dialog({
+                        title: "Entregar Carta",
+                        content: `
+                            <div style="padding: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; border: 1px solid #333; margin-bottom: 10px;">
+                                <p style="text-align:center; color: #d4c4a8; font-family: 'Kalam', cursive; font-size: 18px; margin-bottom: 15px; text-shadow: 1px 1px 3px black;">
+                                    ¿A qué jugador quieres entregar esta carta?
+                                </p>
+                                <div class="form-group">
+                                    <select id="jugador-destino" style="width: 100%; text-align: center; background: #111; color: #00ccff; border: 1px solid #00ccff; border-radius: 5px; padding: 6px; font-family: 'Kalam', cursive; font-size: 16px; cursor: pointer;">
+                                        ${options}
+                                    </select>
+                                </div>
+                            </div>
+                        `,
+                        buttons: {
+                            dar: {
+                                icon: "<i class='fas fa-magic'></i>",
+                                label: "Entregar",
+                                callback: async (dHtml) => {
+                                    const actorId = dHtml.find('#jugador-destino').val();
+                                    const actor = game.actors.get(actorId);
+                                    const itemOriginal = game.items.get(flags.itemId);
+
+                                    if (actor && itemOriginal) {
+                                        await actor.createEmbeddedDocuments("Item", [itemOriginal.toObject()]);
+                                        await canvas.scene.deleteEmbeddedDocuments("Token", [tokenDoc.id]);
+                                        ui.notifications.info(`Carta entregada con éxito a ${actor.name}.`);
+                                    }
+                                }
+                            }
+                        },
+                        default: "dar"
+                    }, { width: 350, classes: ["dorso_oscuro"] }).render(true);
+                });
+            }
         }
 
         if (flags.type === "carta_alma") return;
 
-        // Botones de descarte para cartas normales
         // Botones de descarte para cartas normales
         const btnDescarte = $(`<div class="control-icon" title="Descarte"><i class="fas fa-trash-can" style="color: #aaa;"></i></div>`);
         const btnEliminadas = $(`<div class="control-icon" title="Destierro"><i class="fas fa-ban" style="color: #ff4444;"></i></div>`);
@@ -918,7 +975,7 @@ Hooks.once('init', async function() {
         // Si el token es nuestro, tiene un ítem válido y es una carta jugable (Poder u Objeto)
         if (actor && actor.isOwner && item && (item.type === "carta_poder" || item.type === "carta_objeto")) {
 
-            // --- NUEVO: BOTÓN DE DEVOLVER A LA MANO ---
+            // --- BOTÓN DE DEVOLVER A LA MANO ---
             const btnDevolver = $(`
                 <div class="control-icon" title="Devolver a la Mano (Reembolsa Energía)" style="border: 2px solid #66ff66; border-radius: 5px; background: rgba(0,50,0,0.8); margin-top: 5px;">
                     <i class="fas fa-undo" style="color: #66ff66;"></i>
@@ -962,7 +1019,7 @@ Hooks.once('init', async function() {
                 }
             });
 
-            // Forzamos la conversión a número por seguridad (El código que ya pusimos antes)
+            // Forzamos la conversión a número por seguridad
             const maxMazo = Number(item.system.permiteBuscarMazo) || 0;
             const maxDescarte = Number(item.system.permiteBuscarDescarte) || 0;
 
@@ -1096,10 +1153,8 @@ Hooks.once('init', async function() {
             crearBotonBusqueda("mazo", maxMazo, "fa-search", "#00ccff");
             crearBotonBusqueda("descarte", maxDescarte, "fa-history", "#ffaa00");
         }
-
-
-
     });
+
 
     // --- NUEVO HOOK: Refrescar el Panel del DJ cuando un token cambia en mesa ---
     Hooks.on("updateToken", (token, changes) => {

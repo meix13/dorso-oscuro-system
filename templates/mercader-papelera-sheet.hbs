@@ -1,0 +1,42 @@
+<form class="{{cssClass}} flexcol" autocomplete="off" style="background: #141414; color: #d4c4a8; font-family: 'Kalam', cursive; padding: 15px; height: 100%;">
+
+    {{!-- Cabecera Temática --}}
+    <header style="text-align: center; border-bottom: 2px solid #8b0000; padding-bottom: 10px; margin-bottom: 15px;">
+        <h1 style="color: #ffaa00; font-size: 26px; text-shadow: 1px 1px 4px black; margin: 0;">
+            <i class="fas fa-box-open"></i> Almacén del Mercader
+        </h1>
+        <p style="font-size: 13px; color: #888; margin: 5px 0 0 0; font-family: sans-serif;">
+            Aquí se custodian las cartas compradas que han salido de la aventura. Elimina una carta para devolverla al stock.
+        </p>
+    </header>
+
+    {{!-- Cuerpo con el listado de cartas --}}
+    <div style="flex: 1; overflow-y: auto; background: rgba(0,0,0,0.4); border: 1px solid #333; border-radius: 5px; padding: 10px;">
+        {{#if items.length}}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; padding: 5px;">
+                {{#each items as |carta|}}
+                    <div class="mercader-stored-card" data-item-id="{{carta._id}}" style="position: relative; background: #222; border: 1px solid #444; border-radius: 6px; padding: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.6); transition: border-color 0.2s;">
+
+                        {{!-- Imagen de la Carta --}}
+                        <img src="{{carta.img}}" style="width: 100%; height: auto; display: block; border-radius: 4px; border: 1px solid #111;" title="{{carta.name}}"/>
+
+                        {{!-- Nombre abreviado abajo por si la imagen no aclara el tipo --}}
+                        <div style="font-size: 11px; text-align: center; margin-top: 4px; color: #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-family: sans-serif;">
+                            {{carta.name}}
+                        </div>
+
+                        {{!-- Botón Flotante de Destrucción / Devolución --}}
+                        <a class="btn-recuperar-carta" data-item-id="{{carta._id}}" title="Eliminar del almacén (Devolver a la Aventura)" style="position: absolute; top: -5px; right: -5px; background: #8b0000; color: white; border: 1px solid #ff4444; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.8); cursor: pointer; transition: transform 0.1s;">
+                            <i class="fas fa-trash-can" style="font-size: 12px;"></i>
+                        </a>
+                    </div>
+                {{/each}}
+            </div>
+        {{else}}
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #666; font-size: 18px; padding: 40px 0;">
+                <i class="fas fa-folder-open" style="font-size: 40px; margin-bottom: 10px; color: #444;"></i>
+                <p>El almacén está vacío.</p>
+            </div>
+        {{/if}}
+    </div>
+</form>

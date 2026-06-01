@@ -117,6 +117,7 @@
                         </div>
 
 
+
                     {{/unless}}
                     {{!-- Fila de Existencias (Ahora visible para todos: Jugadores y Criaturas) --}}
                     <div class="stat-row flexrow" style="align-items: center; margin-bottom: 8px; border-bottom: 1px solid #444; padding-bottom: 5px;">
@@ -194,7 +195,19 @@
                     {{editor item.system.descripcion target="system.descripcion" button=true owner=owner editable=editable}}
                 </div>
             </div>
+        {{#unless system.idCriatura}}
+            <div class="form-group">
+                <label>¿Es del Draft Inicial?</label>
+                <input type="checkbox" name="system.esDraftInicial" {{checked system.esDraftInicial}}>
+            </div>
+            {{#if system.esDraftInicial}}
+                <div class="form-group">
+                    <label>Cantidad en el Draft</label>
+                    <input type="number" name="system.cantidadDraft" value="{{system.cantidadDraft}}" style="flex: 0 0 60px; background: #222; color: #fff; text-align: center; border: 1px solid #444;">
 
+                </div>
+            {{/if}}
+        {{/unless}}
         </div>
 
     {{else}}
