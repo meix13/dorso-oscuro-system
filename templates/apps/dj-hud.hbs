@@ -42,11 +42,9 @@
 
         {{!-- PESTAÑA 1: RADAR DE ALMAS --}}
         <div class="tab" data-group="primary" data-tab="radar">
-            <div class="players-grid flexrow" style="gap: 15px; flex-wrap: wrap; justify-content: center; align-items: flex-start;">
-
-                {{#if jugadores.length}}
+            <div class="players-grid flexrow" style="gap: 15px; flex-wrap: wrap; justify-content: flex-start; align-items: flex-start;">       {{#if jugadores.length}}
                     {{#each jugadores as |jug|}}
-                        <div class="player-card flexcol" style="background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #555; width: 260px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
+                        <div class="player-card flexcol" style="flex: 0 0 260px; max-width: 260px; background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #555; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
 
                             {{!-- DATOS DEL PERSONAJE --}}
                             <div class="character-header flexrow" style="align-items: center; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 8px;">
