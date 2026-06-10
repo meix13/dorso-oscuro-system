@@ -172,7 +172,7 @@ Hooks.once('init', async function() {
         // --- 1. LÓGICA DE ECONOMÍA Y CARTA EN MANO ---
         let cardPassed = false;
 
-        // NUEVO: Si la carta viene de la barra lateral (Global) y es el DJ, omitimos la lógica de mano y energía
+        // Si la carta viene de la barra lateral (Global) y es el DJ, omitimos la lógica de mano y energía
         if (data.isGlobal && game.user.isGM) {
             ChatMessage.create({
                 speaker: { alias: "SISTEMA" },
@@ -317,7 +317,7 @@ Hooks.once('init', async function() {
         } else {
             // C) CARTAS NORMALES (Poderes y Objetos)...
             // --- GESTIÓN DE DORSOS ---
-            const reversoPorDefecto = "systems/dorso_oscuro/assets/cartas/reverso_carta1.png";
+            const reversoPorDefecto = "systems/dorso_oscuro/assets/cartas/reverso_carta1.webp";
             let reverso = data.backImg || reversoPorDefecto;
 
             // --- Dorso para Cartas de Equipo ---
@@ -338,7 +338,7 @@ Hooks.once('init', async function() {
 
             let tokenName = estaOculta ? "Carta Oculta" : item.name;
 
-            // --- NUEVO: ¿Es una Carta con Vida de base (Objeto o Poder)? ---
+            // --- ¿Es una Carta con Vida de base (Objeto o Poder)? ---
             if (item.system.vida && item.system.vida.max > 0) {
                 // Al bajarla, le rellenamos la vida al máximo
                 await item.update({"system.vida.value": item.system.vida.max});
@@ -968,6 +968,41 @@ Hooks.once('init', async function() {
         $html.find('.col.left').append(btnDescarte);
         $html.find('.col.right').append(btnEliminadas);
 
+        btnDescarte.click(async () => {
+
+            const enJuego = game.cards.get(actor.system.enJuegoId);
+            const descarte = game.cards.get(actor.system.discardId);
+            if (!enJuego || !descarte) return ui.notifications.error("Faltan las pilas de cartas.");
+
+            const card = enJuego.cards.find(c => c.flags.dorso_oscuro?.itemId === flags.itemId);
+
+            if (card) {
+                await enJuego.pass(descarte, [card.id]);
+                await tokenDoc.delete({ devolviendoMano: true });
+                ui.notifications.info("Carta descartada.");
+            }else{
+                ui.notifications.info("No se ha encontrado la carta.");
+            }
+
+
+        });
+
+        btnEliminadas.click(async () => {
+
+            const enJuego = game.cards.get(actor.system.enJuegoId);
+            const eliminadas = game.cards.get(actor.system.eliminadasId);
+            if (!enJuego || !eliminadas) return ui.notifications.error("Faltan las pilas de cartas.");
+
+            const card = enJuego.cards.find(c => c.flags.dorso_oscuro?.itemId === flags.itemId);
+
+            if (card) {
+                await enJuego.pass(eliminadas, [card.id]);
+                await tokenDoc.delete({ devolviendoMano: true });
+                ui.notifications.info("Carta descartada.");
+            }else{
+                ui.notifications.info("No se ha encontrado la carta.");
+            }
+        });
         // --- 4. BOTONES DINÁMICOS Y GESTIÓN DE MANO ---
         const actor = game.actors.get(flags.actorId);
         const item = actor?.items.get(flags.itemId);
