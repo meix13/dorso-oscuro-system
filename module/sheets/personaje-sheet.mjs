@@ -133,10 +133,11 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
         html.find('.open-hud-btn').click(async ev => {
             // Si NO tiene un mazo creado, lo registramos por primera vez
-            if (!this.actor.system.deckId) {
+
+            if (!this.actor.system.deckId||this.actor.system.deckId==='') {
                 await this._registrarMazoDeJuego();
             }
-
+            await new Promise(resolve => setTimeout(resolve, 250));
             // Abrimos el HUD (si ya estaba abierto, Foundry simplemente le da foco)
             new ManoHUD(this.actor).render(true);
         });
@@ -387,7 +388,8 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
         // --- 1. GESTIÓN DE CARPETAS (Solo para el Director de Juego) ---
         // Si el usuario es el GM, organizamos en carpetas. Si es jugador, folderId se queda null (Raíz).
-        if (game.user.isGM) {
+        //Lo quito, que vaya todo en RAIZ siempre, pro si el GM le crea las cartas al jugador
+       /* if (game.user.isGM) {
             try {
                 let rootFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
                 if (!rootFolder) rootFolder = await Folder.create({ name: "PARTIDAS", type: "Cards" });
@@ -400,9 +402,10 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             } catch (error) {
                 console.error("Dorso Oscuro | Error al organizar carpetas del GM:", error);
             }
-        }
+        }*/
 
-        // --- 2. CREACIÓN DE LAS 5 PILAS (Directo al raíz si es jugador) ---
+
+
         const createStack = async (name, type) => {
             return await Cards.create({
                 name: `[${name}] ${actor.name}`,
@@ -411,6 +414,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                 ownership: actor.ownership // Mantenemos esto para que el jugador sea dueño de sus cartas
             });
         };
+
 
         const deck = await createStack("Mazo", "deck");
         const hand = await createStack("Mano", "hand");
