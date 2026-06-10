@@ -235,7 +235,7 @@ Hooks.once('init', async function() {
 
                 if (item.system.esCriatura && item.system.idCriatura) {
                     // Si es una criatura, construimos la ruta automáticamente
-                    reverso = `modules/dorso_oscuro_aventura1/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
+                    reverso = `modules/dorso_oscuro_aventura1/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.webp`;
                 }
 
                 const estaOculta = data.faceDown || false;
@@ -323,14 +323,14 @@ Hooks.once('init', async function() {
             // --- Dorso para Cartas de Equipo ---
             if (item.type === "carta_equipo") {
                 if (item.system.formato === "horizontal") {
-                    reverso = "systems/dorso_oscuro/assets/cartas/reverso_equipo.jpg";
+                    reverso = "systems/dorso_oscuro/assets/cartas/reverso_equipo.webp";
                 } else {
                     // Si queremos cambiar el dorso vertical, lo cambiamos aquí, por ahora usamos el de carta normal
-                    reverso = "systems/dorso_oscuro/assets/cartas/reverso_equipo.jpg";
+                    reverso = "systems/dorso_oscuro/assets/cartas/reverso_equipo.webp";
                 }
             }else if (item.system.esDeCriatura && item.system.idCriatura) {
                 // Si es una criatura, construimos la ruta automáticamente
-                reverso = `modules/dorso_oscuro_aventura1/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.jpg`;
+                reverso = `modules/dorso_oscuro_aventura1/cartas/criaturas/${item.system.idCriatura}_dorso_cartas.webp`;
             }
 
 
@@ -871,7 +871,7 @@ Hooks.once('init', async function() {
 
                     // Si es equipo y no tiene el flag guardado, forzamos el suyo
                     if (flags.type === "carta_equipo") {
-                        dorsoFinal = "systems/dorso_oscuro/assets/cartas/reverso_equipo.jpg";
+                        dorsoFinal = "systems/dorso_oscuro/assets/cartas/reverso_equipo.webp";
                     }
 
                     const nuevaImagen = nuevoEstado ? dorsoFinal : flags.imgReal;

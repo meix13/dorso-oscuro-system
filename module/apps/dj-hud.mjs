@@ -209,7 +209,7 @@ export class DJHUD extends Application {
             const eliminadas = await Cards.create({ name: `Eliminadas - ${almaItemOriginal.name}`, type: "pile", folder: folder.id });
 
             // 5. POBLAR EL MAZO CON LAS COPIAS INDEPENDIENTES
-            const dorsoBoss = `systems/dorso_oscuro/assets/cartas/criaturas/${idCriatura}_dorso_cartas.jpg`;
+            const dorsoBoss = `systems/dorso_oscuro/assets/cartas/criaturas/${idCriatura}_dorso_cartas.webp`;
 
             // Filtramos las cartas (excluyendo el alma) y creamos una carta en el mazo por cada ítem en el actor
             const cartasData = itemsCreados.filter(i => i.type !== "carta_alma").map(item => ({

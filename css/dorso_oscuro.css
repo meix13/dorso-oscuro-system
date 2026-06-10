@@ -12,7 +12,7 @@
 }
 
 form.mystery-paper-theme {
-    background-image: url('../assets/fondo_ficha.jpg');
+    background-image: url('../assets/fondo_ficha.webp');
     background-size: cover;
     background-position: top center;
     background-attachment: local;
@@ -502,7 +502,7 @@ form.mystery-paper-theme {
 /* Usamos 'background' a secas para anular las variables CSS de Foundry V14 */
 #chat-log .chat-message,
 .chat-message {
-    background: url('../assets/fondo_ficha.jpg') no-repeat center center / cover !important;
+    background: url('../assets/fondo_ficha.webp') no-repeat center center / cover !important;
     border: 1px solid #4a3424 !important;
     border-radius: 4px !important;
     color: #1a1a1a !important;
@@ -545,7 +545,7 @@ form.mystery-paper-theme {
 /* 1. Ponemos el pergamino SOLO en el contenedor principal (la mitad derecha del diario) y en la ventana de edición de páginas */
 .journal-sheet .journal-entry-content,
 .journal-entry-page .window-content {
-    background: url('../assets/fondo_ficha.jpg') no-repeat top center / cover !important;
+    background: url('../assets/fondo_ficha.webp') no-repeat top center / cover !important;
 }
 
 /* 2. Hacemos transparente el interior (la página) para quitar el efecto parche/doble imagen */
