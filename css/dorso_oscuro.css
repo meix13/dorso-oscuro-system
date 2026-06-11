@@ -877,3 +877,26 @@ form.mystery-paper-theme {
     border-color: #fff !important;
     transform: scale(1.1);
 }
+
+/* =========================================================
+   ESTILOS PARA DESPLEGABLES EN EL MERCADER
+========================================================= */
+.mercader-app select {
+    background-color: #141414; /* Fondo oscuro */
+    color: #ffffff;            /* Texto blanco */
+    border: 1px solid #8b0000; /* Borde rojo oscuro acorde a tus pestañas */
+    padding: 4px;
+    border-radius: 4px;
+    font-family: 'Kalam', cursive; /* Mantenemos la fuente de tu interfaz */
+}
+
+/* Forzar el estilo de las opciones cuando se despliega */
+.mercader-app select option {
+    background-color: #141414;
+    color: #ffffff;
+}
+
+.mercader-app select:focus {
+    outline: none;
+    border-color: #ff4444; /* Brillo al hacer clic */
+}
