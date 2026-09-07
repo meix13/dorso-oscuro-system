@@ -13,7 +13,8 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             width: 750,  // Lo ensanchamos un pelín más para que respire
             height: 850,
             // AQUI ESTÁ LA MAGIA DE LAS PESTAÑAS:
-            tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "expediente" }]
+            tabs: [{ navSelector: ".sheet-tabs", contentSelector: ".sheet-body", initial: "expediente" }],
+            scrollowners: ["form", ".sheet-body", ".tab", ".window-content", ".skills-list"]
         });
     }
 
@@ -79,6 +80,16 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         return context;
     }
 
+    async _render(force = false, options = {}) {
+        const formScroll = this.element?.find('form').scrollTop() || 0;
+        const windowScroll = this.element?.find('.window-content').scrollTop() || 0;
+
+        await super._render(force, options);
+
+        if (formScroll > 0) this.element.find('form').scrollTop(formScroll);
+        if (windowScroll > 0) this.element.find('.window-content').scrollTop(windowScroll);
+    }
+
     // 3. Escuchar Eventos del DOM (Clics)
     activateListeners(html) {
         super.activateListeners(html);
@@ -97,13 +108,13 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         html.find('.tirar-atributo').click(this._onTirarAtributo.bind(this));
         html.find('.estabilidad-box').click(this._onCambiarEstabilidad.bind(this));
 
-        html.find('.tirar-habilidad').click(this._onTirarHabilidad.bind(this));
         html.find('.arma-roll').click(this._onTirarArma.bind(this)); // NUEVO ESCUCHADOR
 
 
         //NUEVO: Escuchador para guardar valores de habilidades "al vuelo"
         html.find('.skill-values input').change(ev => {
             ev.preventDefault();
+            ev.stopPropagation();
             const input = ev.currentTarget;
             const itemId = $(input).closest('.item').data('itemId'); // Sacamos el ID de la habilidad
             const field = input.dataset.edit; // "system.valorActual"
@@ -134,7 +145,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         html.find('.open-hud-btn').click(async ev => {
             // Si NO tiene un mazo creado, lo registramos por primera vez
 
-            if (!this.actor.system.deckId||this.actor.system.deckId==='') {
+            if (!this.actor.system.deckId || this.actor.system.deckId === '') {
                 await this._registrarMazoDeJuego();
             }
             await new Promise(resolve => setTimeout(resolve, 250));
@@ -229,7 +240,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                     <p style="font-size: 16px; margin-bottom: 15px;">¿Cuántos puntos de <b>${item.name}</b> quieres gastar?<br><span style="font-size: 13px; color: #aaa;">(Máximo disponible: ${puntosDisponibles})</span></p>
                     <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
                         <i class="fas fa-bolt" style="color: #00ccff; font-size: 24px;"></i>
-                        <input type="number" id="puntos-gasto" value="1" min="1" max="${puntosDisponibles}" style="width: 80px; height: 45px; text-align: center; background: #111; color: #fff; border: 2px solid #00ccff; font-size: 24px; font-weight: bold; border-radius: 5px; font-family: 'Kalam', cursive;">
+                        <input type="number" id="puntos-gasto" value="0" min="0" max="${puntosDisponibles}" style="width: 80px; height: 45px; text-align: center; background: #111; color: #fff; border: 2px solid #00ccff; font-size: 24px; font-weight: bold; border-radius: 5px; font-family: 'Kalam', cursive;">
                     </div>
                 </div>
             `,
@@ -240,7 +251,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                     callback: async (htmlContent) => {
                         const gasto = parseInt(htmlContent.find('#puntos-gasto').val());
 
-                        if (gasto > puntosDisponibles || gasto <= 0 || isNaN(gasto)) {
+                        if (gasto > puntosDisponibles || gasto < 0 || isNaN(gasto)) {
                             return ui.notifications.error("Cantidad inválida");
                         }
 
@@ -331,7 +342,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                 title: `Borrar Item`,
                 content: `<p style="text-align: center;">¿Estás seguro de que quieres borrar <strong>${item.name}</strong>?</p>`,
                 yes: () => item.delete(),
-                no: () => {},
+                no: () => { },
                 defaultYes: false
             });
         }
@@ -389,20 +400,20 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         // --- 1. GESTIÓN DE CARPETAS (Solo para el Director de Juego) ---
         // Si el usuario es el GM, organizamos en carpetas. Si es jugador, folderId se queda null (Raíz).
         //Lo quito, que vaya todo en RAIZ siempre, pro si el GM le crea las cartas al jugador
-       /* if (game.user.isGM) {
-            try {
-                let rootFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
-                if (!rootFolder) rootFolder = await Folder.create({ name: "PARTIDAS", type: "Cards" });
-
-                let actorCardsFolder = game.folders.find(f => f.name === actor.name && f.type === "Cards" && f.folder?.id === rootFolder.id);
-                if (!actorCardsFolder) {
-                    actorCardsFolder = await Folder.create({ name: actor.name, type: "Cards", folder: rootFolder.id });
-                }
-                folderId = actorCardsFolder.id;
-            } catch (error) {
-                console.error("Dorso Oscuro | Error al organizar carpetas del GM:", error);
-            }
-        }*/
+        /* if (game.user.isGM) {
+             try {
+                 let rootFolder = game.folders.find(f => f.name === "PARTIDAS" && f.type === "Cards");
+                 if (!rootFolder) rootFolder = await Folder.create({ name: "PARTIDAS", type: "Cards" });
+ 
+                 let actorCardsFolder = game.folders.find(f => f.name === actor.name && f.type === "Cards" && f.folder?.id === rootFolder.id);
+                 if (!actorCardsFolder) {
+                     actorCardsFolder = await Folder.create({ name: actor.name, type: "Cards", folder: rootFolder.id });
+                 }
+                 folderId = actorCardsFolder.id;
+             } catch (error) {
+                 console.error("Dorso Oscuro | Error al organizar carpetas del GM:", error);
+             }
+         }*/
 
 
 
@@ -561,7 +572,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                     callback: async (htmlContent) => {
                         const selectedIds = [];
                         const selectedNames = [];
-                        htmlContent.find('.dormir-skill-chk:checked').each(function() {
+                        htmlContent.find('.dormir-skill-chk:checked').each(function () {
                             selectedIds.push($(this).val());
                             selectedNames.push($(this).data('name'));
                         });
@@ -625,7 +636,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
             },
             render: (htmlContent) => {
                 // Controlar que no marquen más de 3
-                htmlContent.find('.dormir-skill-chk').change(function() {
+                htmlContent.find('.dormir-skill-chk').change(function () {
                     if (htmlContent.find('.dormir-skill-chk:checked').length > 3) {
                         this.checked = false;
                         htmlContent.find('#dormir-warning').text('¡Solo puedes recuperar 3 habilidades!').css('color', '#ffaa00');
@@ -663,7 +674,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                     ui.notifications.info(`Todas las habilidades de ${this.actor.name} han sido restauradas al máximo.`);
                 }
             },
-            no: () => {},
+            no: () => { },
             defaultYes: false
         }, { classes: ["dorso_oscuro", "dialog"] });
     }

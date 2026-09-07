@@ -104,6 +104,11 @@ Hooks.once('init', async function() {
         makeDefault: true
     });
 
+    foundry.documents.collections.Items.registerSheet("dorso_oscuro", HabilidadSheet, {
+        types: ["habilidad"],
+        makeDefault: true
+    });
+
     foundry.documents.collections.Actors.registerSheet("dorso_oscuro", MonstruoSheet, {
         types: ["monstruo"],
         makeDefault: true
@@ -153,16 +158,16 @@ Hooks.once('init', async function() {
             }
         }
 
-
         // --- DIMENSIONES DINÁMICAS ---
         let width = 2.5;
         let height = 3.6;
+        let rotation = 0;
 
-        // Si es Equipo Horizontal, invertimos las dimensiones
+        // Si es Equipo Horizontal, invertimos las dimensiones y asignamos rotación de 90°
         if (item.type === "carta_equipo" && item.system.formato === "horizontal") {
-            width = 5;
-            height = 3.6;
-
+            width = 7;
+            height = 5;
+            rotation = -90;
         } else if (item.system.esCriatura) {
             // Si es una criatura, doblamos el tamaño
             width *= 2;
@@ -242,9 +247,10 @@ Hooks.once('init', async function() {
 
                 const tokenData = await actor.getTokenDocument({
                     name: estaOculta ? "Criatura Oculta" : `❤️ ${item.system.vida.value}  |  ⚡ ${actor.system.energia.value}  |  ${item.name}`,
-                    texture: { src: estaOculta ? reverso : item.img },
+                    texture: { src: estaOculta ? reverso : item.img, rotation: rotation },
                     width: width,
                     height: height,
+                    rotation: rotation,
                     x: data.x - (canvas.grid.size * width) / 2,
                     y: data.y - (canvas.grid.size * height) / 2,
                     actorLink: true,
@@ -283,7 +289,7 @@ Hooks.once('init', async function() {
                         energia: { value: actor.system.energia.value, max: 7 }
                     },
                     prototypeToken: {
-                        texture: { src: item.img },
+                        texture: { src: item.img, rotation: rotation },
                         width: width,
                         height: height,
                         displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
@@ -304,11 +310,14 @@ Hooks.once('init', async function() {
                     name: `❤️ ${item.system.vida.value}  |  ⚡ ${actor.system.energia.value}  |  ${item.name}`,
                     x: data.x - (canvas.grid.size * width) / 2,
                     y: data.y - (canvas.grid.size * height) / 2,
+                    width: width,
+                    height: height,
+                    rotation: rotation,
                     actorLink: true,
                     lockRotation: true,
                     displayName: CONST.TOKEN_DISPLAY_MODES.ALWAYS,
                     displayBars: CONST.TOKEN_DISPLAY_MODES.NONE,
-                    flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id } }
+                    flags: { dorso_oscuro: { isCard: true, type: item.type, actorId: actor.id, itemId: item.id, imgReal: item.img, nombreReal: item.name } }
                 });
 
                 await canvas.scene.createEmbeddedDocuments("Token", [tokenData]);
@@ -350,14 +359,15 @@ Hooks.once('init', async function() {
 
             const tokenData = {
                 name: tokenName,
-                texture: { src: estaOculta ? reverso : item.img },
+                texture: { src: estaOculta ? reverso : item.img, rotation: rotation },
                 width: width,
                 height: height,
+                rotation: rotation,
                 x: data.x - (canvas.grid.size * width) / 2,
                 y: data.y - (canvas.grid.size * height) / 2,
 
                 // --- MEJORA DE PERMISOS Y VÍNCULO ---
-                actorId: actor ? actor.id : null, // Vinculamos el token al personaje en la raíz
+                actorId: actor ? actor.id : null, // Vinculamos el personaje en la raíz
                 actorLink: false,                // IMPORTANTE: Unlinked para que cada carta sea independiente
                 ownership: actor ? actor.ownership : { default: 0 }, // Hereda quién es el dueño del personaje
 
@@ -385,13 +395,49 @@ Hooks.once('init', async function() {
 
         // --- 3. ACTUALIZAR HUD AL FINAL ---
         // ¡Este era el fallo! Al ponerlo aquí garantizamos que el token YA existe en la mesa antes de calcular.
-        if (cardPassed || item.type === "carta_alma") {
+        if (actor && (cardPassed || item.type === "carta_alma")) {
             const hud = Object.values(ui.windows).find(w => w.id === "mano-hud" && w.actor?.id === actor.id);
             if (hud) hud.render(true);
         }
 
         return false;
     });
+
+    // --- INTERCEPTAR DOBLE CLIC EN CARTAS DEL TABLERO PARA ABRIR LA IMAGEN EN GRANDE ---
+    const originalTokenOnClickLeft2 = Token.prototype._onClickLeft2;
+    Token.prototype._onClickLeft2 = function(event) {
+        const flags = this.document.flags?.dorso_oscuro;
+        if (flags && flags.isCard) {
+            const estaOculta = flags.isFaceDown;
+            const imagen = (estaOculta && !game.user.isGM)
+                ? (this.document.texture?.src || flags.reverso)
+                : (flags.imgReal || this.document.texture?.src);
+            const titulo = (estaOculta && !game.user.isGM)
+                ? "Carta Oculta"
+                : (flags.nombreReal || this.document.name);
+
+            if (imagen) {
+                new ImagePopout(imagen, {
+                    title: titulo,
+                    shareable: true
+                }).render(true);
+            }
+            return;
+        }
+        return originalTokenOnClickLeft2.call(this, event);
+    };
+
+    // --- BLOQUEAR ROTACIÓN AL MOVER CARTAS PERO RESPETAR ORIENTACIÓN FIJA (HORIZONTAL/VERTICAL) ---
+    const originalRefreshRotation = Token.prototype._refreshRotation;
+    Token.prototype._refreshRotation = function() {
+        if (this.document?.flags?.dorso_oscuro?.isCard) {
+            if (this.mesh) {
+                this.mesh.rotation = ((this.document.rotation || 0) * Math.PI) / 180;
+            }
+            return;
+        }
+        return originalRefreshRotation.call(this);
+    };
 
 // --- INTERCEPTAR BORRADO DE TOKENS (Pasar de En Juego a Descarte o Eliminadas) ---
     Hooks.on("deleteToken", async (tokenDocument, options, userId) => {

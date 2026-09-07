@@ -1,7 +1,8 @@
 <form class="{{cssClass}} mystery-paper-theme" autocomplete="off">
 
     {{!-- MENÚ DE NAVEGACIÓN (LAS PESTAÑAS) --}}
-    <nav class="sheet-tabs tabs" data-group="primary" style="display: flex; justify-content: center; gap: 20px; font-size: 24px; border-bottom: 2px solid #1a1a1a; margin-bottom: 20px;">
+    <nav class="sheet-tabs tabs" data-group="primary"
+        style="display: flex; justify-content: center; gap: 20px; font-size: 24px; border-bottom: 2px solid #1a1a1a; margin-bottom: 20px;">
         <a class="item" data-tab="expediente" style="cursor: pointer; padding-bottom: 5px;">Expediente</a>
         <a class="item" data-tab="baraja" style="cursor: pointer; padding-bottom: 5px;">Baraja y Equipo</a>
     </nav>
@@ -18,17 +19,17 @@
                 {{!-- Dados Atributos --}}
                 <div class="dice-column flexcol">
                     {{#each system.atributos as |dado key|}}
-                        <div class="dice-row flexrow" style="position: relative;">
-                            <span class="attribute-label">{{key}}</span>
-                            <a class="tirar-atributo" data-atributo="{{key}}">
-                                <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
-                            </a>
+                    <div class="dice-row flexrow" style="position: relative;">
+                        <span class="attribute-label">{{key}}</span>
+                        <a class="tirar-atributo" data-atributo="{{key}}">
+                            <img src="systems/dorso_oscuro/assets/{{dado}}.png" class="img-dado" />
+                        </a>
 
-                            {{!-- NUEVO: Botón para cambiar el dado --}}
-                            <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}" title="Cambiar dado">
-                                <i class="fas fa-pen-fancy"></i>
-                            </a>
-                        </div>
+                        {{!-- NUEVO: Botón para cambiar el dado --}}
+                        <a class="cambiar-dado btn-editar-dado" data-atributo="{{key}}" title="Cambiar dado">
+                            <i class="fas fa-pen-fancy"></i>
+                        </a>
+                    </div>
                     {{/each}}
                 </div>
 
@@ -40,7 +41,7 @@
                 {{!-- Nombre y Foto Circular --}}
                 <div class="portrait-column flexcol">
                     <h1 class="charname">
-                        <input name="name" type="text" value="{{actor.name}}" placeholder="Nombre"/>
+                        <input name="name" type="text" value="{{actor.name}}" placeholder="Nombre" />
                     </h1>
                     <div class="portrait-container">
                         <img class="profile-img-circle" src="{{actor.img}}" data-edit="img" />
@@ -86,7 +87,8 @@
             </section>
 
             {{!-- CONTROLES DE DESCANSO Y RECUPERACIÓN --}}
-            <div class="rest-controls flexrow" style="justify-content: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dotted rgba(0,0,0,0.3);">
+            <div class="rest-controls flexrow"
+                style="justify-content: center; gap: 20px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px dotted rgba(0,0,0,0.3);">
                 <button type="button" class="btn-dormir">
                     <i class="fas fa-moon"></i> DORMIR
                 </button>
@@ -115,52 +117,71 @@
                 <div class="footer-box armas flexcol" style="flex: 1; display: flex; flex-direction: column;">
                     <h3>Inventario</h3>
 
-                    <ul class="skills-list flexcol" style="gap: 5px; padding: 0; margin: 0; list-style: none; overflow-y: auto; flex: 1; padding-right: 10px;">
+                    <ul class="skills-list flexcol"
+                        style="gap: 5px; padding: 0; margin: 0; list-style: none; overflow-y: auto; flex: 1; padding-right: 10px;">
 
                         {{!-- Listado de Armas --}}
                         {{#each armas as |item|}}
-                            <li class="item flexrow" data-item-id="{{item._id}}" style="align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.3);">
-                                <div class="flexrow" style="align-items: center; flex: 1;">
-                                    <img src="{{item.img}}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 3px; border: 1px solid #1a1a1a; margin-right: 8px;">
-                                    <span style="font-weight: bold; font-size: 16px; color: #1a1a1a; cursor: default;">{{item.name}}</span>
-                                    <span style="margin-left: 5px; font-size: 12px; color: #ff4444; cursor: default;">[Daño: {{item.system.danio}}]</span>
-                                </div>
+                        <li class="item flexrow" data-item-id="{{item._id}}"
+                            style="align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.3);">
+                            <div class="flexrow" style="align-items: center; flex: 1;">
+                                <img src="{{item.img}}"
+                                    style="width: 28px; height: 28px; object-fit: cover; border-radius: 3px; border: 1px solid #1a1a1a; margin-right: 8px;">
+                                <span
+                                    style="font-weight: bold; font-size: 16px; color: #1a1a1a; cursor: default;">{{item.name}}</span>
+                                <span style="margin-left: 5px; font-size: 12px; color: #ff4444; cursor: default;">[Daño:
+                                    {{item.system.danio}}]</span>
+                            </div>
 
-                                <div class="item-controls flexrow" style="align-items: center; flex: 0 0 auto; gap: 8px;">
-                                    <a class="arma-roll" title="Atacar" style="color: #8b0000; font-size: 18px; cursor: pointer;"><i class="fas fa-crosshairs"></i></a>
-                                    <a class="item-edit" title="Ver Ficha" style="color: #4a3424; font-size: 16px; cursor: pointer;"><i class="fas fa-eye"></i></a>
-                                    {{!-- Solo el DJ puede borrar --}}
-                                    {{#if @root.user.isGM}}
-                                        <a class="item-delete" title="Borrar Arma" style="color: #8b0000; font-size: 16px; cursor: pointer;"><i class="fas fa-trash"></i></a>
-                                    {{/if}}
-                                </div>
-                            </li>
+                            <div class="item-controls flexrow" style="align-items: center; flex: 0 0 auto; gap: 8px;">
+                                <a class="arma-roll" title="Atacar"
+                                    style="color: #8b0000; font-size: 18px; cursor: pointer;"><i
+                                        class="fas fa-crosshairs"></i></a>
+                                <a class="item-edit" title="Ver Ficha"
+                                    style="color: #4a3424; font-size: 16px; cursor: pointer;"><i
+                                        class="fas fa-eye"></i></a>
+                                {{!-- Solo el DJ puede borrar --}}
+                                {{#if @root.user.isGM}}
+                                <a class="item-delete" title="Borrar Arma"
+                                    style="color: #8b0000; font-size: 16px; cursor: pointer;"><i
+                                        class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
                         {{/each}}
 
                         {{!-- Listado de Objetos --}}
                         {{#each objetos as |item|}}
-                            <li class="item flexrow" data-item-id="{{item._id}}" style="align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.3);">
-                                <div class="flexrow" style="align-items: center; flex: 1;">
-                                    <img src="{{item.img}}" style="width: 28px; height: 28px; object-fit: cover; border-radius: 3px; border: 1px solid #1a1a1a; margin-right: 8px;">
-                                    <span style="font-weight: bold; font-size: 16px; color: #1a1a1a; cursor: default;">{{item.name}}</span>
-                                    <span style="margin-left: 5px; font-size: 12px; color: #b388ff; cursor: default;">[Objeto]</span>
-                                </div>
+                        <li class="item flexrow" data-item-id="{{item._id}}"
+                            style="align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed rgba(0,0,0,0.3);">
+                            <div class="flexrow" style="align-items: center; flex: 1;">
+                                <img src="{{item.img}}"
+                                    style="width: 28px; height: 28px; object-fit: cover; border-radius: 3px; border: 1px solid #1a1a1a; margin-right: 8px;">
+                                <span
+                                    style="font-weight: bold; font-size: 16px; color: #1a1a1a; cursor: default;">{{item.name}}</span>
+                                <span
+                                    style="margin-left: 5px; font-size: 12px; color: #b388ff; cursor: default;">[Objeto]</span>
+                            </div>
 
-                                <div class="item-controls flexrow" style="align-items: center; flex: 0 0 auto; gap: 8px;">
-                                    <a class="item-edit" title="Ver Ficha" style="color: #4a3424; font-size: 16px; cursor: pointer;"><i class="fas fa-eye"></i></a>
-                                    {{!-- Solo el DJ puede borrar --}}
-                                    {{#if @root.user.isGM}}
-                                        <a class="item-delete" title="Borrar Objeto" style="color: #8b0000; font-size: 16px; cursor: pointer;"><i class="fas fa-trash"></i></a>
-                                    {{/if}}
-                                </div>
-                            </li>
+                            <div class="item-controls flexrow" style="align-items: center; flex: 0 0 auto; gap: 8px;">
+                                <a class="item-edit" title="Ver Ficha"
+                                    style="color: #4a3424; font-size: 16px; cursor: pointer;"><i
+                                        class="fas fa-eye"></i></a>
+                                {{!-- Solo el DJ puede borrar --}}
+                                {{#if @root.user.isGM}}
+                                <a class="item-delete" title="Borrar Objeto"
+                                    style="color: #8b0000; font-size: 16px; cursor: pointer;"><i
+                                        class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
                         {{/each}}
 
                         {{!-- Mensaje si el inventario está vacío --}}
                         {{#unless armas.length}}
-                            {{#unless objetos.length}}
-                                <div class="empty-placeholder">Inventario vacío...</div>
-                            {{/unless}}
+                        {{#unless objetos.length}}
+                        <div class="empty-placeholder">Inventario vacío...</div>
+                        {{/unless}}
                         {{/unless}}
 
                     </ul>
@@ -169,8 +190,10 @@
                 <div class="footer-box notas flexcol" style="flex: 1; display: flex; flex-direction: column;">
                     <h3>Notas</h3>
                     {{!-- Contenedor del Editor de Texto Enriquecido --}}
-                    <div style="flex: 1; position: relative; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(0,0,0,0.4); padding: 5px; min-height: 120px; font-family: sans-serif; font-size: 14px;">
-                        {{editor enrichedNotas target="system.notas" button=true owner=owner editable=true engine="prosemirror" collaborate=false}}
+                    <div
+                        style="flex: 1; position: relative; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(0,0,0,0.4); padding: 5px; min-height: 120px; font-family: sans-serif; font-size: 14px;">
+                        {{editor enrichedNotas target="system.notas" button=true owner=owner editable=true
+                        engine="prosemirror" collaborate=false}}
                     </div>
                 </div>
             </footer>
@@ -180,7 +203,8 @@
 
         <div class="tab" data-group="primary" data-tab="baraja">
             <div class="deck-container flexcol" style="gap: 20px;">
-                <button class="open-hud-btn" style="margin-bottom: 10px; background: #4a3424; color: white;">
+                <button class="open-hud-btn" type="button" style=" margin-bottom: 10px; background: #4a3424; color:
+                    white;">
                     <i class="fas fa-play"></i> ENTRAR EN COMBATE (Abrir Mesa)
                 </button>
                 {{!-- 1. FILA SUPERIOR: ALMAS Y BANQUILLO --}}
@@ -191,37 +215,46 @@
                         <h3 style="border-bottom: 2px solid #4a3424; margin-bottom: 10px;">Almas Disponibles</h3>
                         <ul class="skills-list flexcol" style="gap: 5px;">
                             {{#each cartasAlma as |carta|}}
-                                <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px 0;">
-                                    <div class="skill-main-info flexrow">
-                                        {{!-- CLASE card-thumbnail aplicada, eliminados width/height inline --}}
-                                        <img src="{{carta.img}}" class="card-thumbnail">
-                                        <h4 class="skill-name" style="margin:0; font-size: 18px;">{{carta.name}}</h4>
-                                        <span class="skill-attr" style="margin-left: 10px;">[{{carta.system.elemento}}]</span>
-                                    </div>
-                                    <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
-                                        <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
-                                        {{#if @root.user.isGM}}
-                                            <a class="item-delete" title="Borrar Alma" style="color: #8b0000;"><i class="fas fa-trash"></i></a>
-                                        {{/if}}
-                                    </div>
-                                </li>
+                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px 0;">
+                                <div class="skill-main-info flexrow">
+                                    {{!-- CLASE card-thumbnail aplicada, eliminados width/height inline --}}
+                                    <img src="{{carta.img}}" class="card-thumbnail">
+                                    <h4 class="skill-name" style="margin:0; font-size: 18px;">{{carta.name}}</h4>
+                                    <span class="skill-attr"
+                                        style="margin-left: 10px;">[{{carta.system.elemento}}]</span>
+                                </div>
+                                <div class="item-controls flexrow"
+                                    style="align-items: center; justify-content: flex-end; gap: 10px;">
+                                    <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
+                                    {{#if @root.user.isGM}}
+                                    <a class="item-delete" title="Borrar Alma" style="color: #8b0000;"><i
+                                            class="fas fa-trash"></i></a>
+                                    {{/if}}
+                                </div>
+                            </li>
                             {{/each}}
                         </ul>
                     </div>
 
                     {{!-- BANQUILLO (Derecha) --}}
-                    <div class="deck-section" style="flex: 1; border: 2px dashed #666; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px;">
-                        <h3 style="border-bottom: 2px solid #666; margin-bottom: 10px; text-align: center;">Banquillo (Máx 3)</h3>
+                    <div class="deck-section"
+                        style="flex: 1; border: 2px dashed #666; padding: 10px; background: rgba(0,0,0,0.03); border-radius: 8px;">
+                        <h3 style="border-bottom: 2px solid #666; margin-bottom: 10px; text-align: center;">Banquillo
+                            (Máx 3)</h3>
                         <ul class="skills-list flexcol" style="gap: 8px;">
                             {{#each banquillo as |carta|}}
-                                <li class="item flexrow" data-item-id="{{carta._id}}" style="align-items: center; background: #eee; padding: 5px 8px; border-radius: 4px; border: 1px solid #ccc;">
-                                    <img src="{{carta.img}}" width="20" height="30" style="margin-right: 8px; border-radius: 2px; filter: grayscale(100%); object-fit: cover;">
-                                    <span style="font-size: 14px; flex: 1; line-height: 1.1;">{{carta.name}}</span>
-                                    <div class="item-controls flexrow" style="flex: 0 0 auto; gap: 8px;">
-                                        <a class="item-edit" title="Ver Carta" style="color: #444;"><i class="fas fa-eye"></i></a>
-                                        <a class="item-toggle-bench" title="Sacar del Banquillo" style="color: #4a3424;"><i class="fas fa-hand-holding-magic"></i></a>
-                                    </div>
-                                </li>
+                            <li class="item flexrow" data-item-id="{{carta._id}}"
+                                style="align-items: center; background: #eee; padding: 5px 8px; border-radius: 4px; border: 1px solid #ccc;">
+                                <img src="{{carta.img}}" width="20" height="30"
+                                    style="margin-right: 8px; border-radius: 2px; filter: grayscale(100%); object-fit: cover;">
+                                <span style="font-size: 14px; flex: 1; line-height: 1.1;">{{carta.name}}</span>
+                                <div class="item-controls flexrow" style="flex: 0 0 auto; gap: 8px;">
+                                    <a class="item-edit" title="Ver Carta" style="color: #444;"><i
+                                            class="fas fa-eye"></i></a>
+                                    <a class="item-toggle-bench" title="Sacar del Banquillo" style="color: #4a3424;"><i
+                                            class="fas fa-hand-holding-magic"></i></a>
+                                </div>
+                            </li>
                             {{/each}}
                         </ul>
                     </div>
@@ -233,74 +266,87 @@
                 <div class="deck-section">
                     <h3 style="border-bottom: 2px solid #884400; margin-bottom: 10px;">Objetos Activos</h3>
                     {{!-- Usamos un grid para que si hay varios objetos se pongan en cajitas --}}
-                    <ul class="skills-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                    <ul class="skills-list"
+                        style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
                         {{#each barajaObjetos as |carta|}}
-                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 5px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.3); border-radius: 4px;">
-                                <div class="skill-main-info flexrow">
-                                    {{!-- CLASE card-thumbnail aplicada --}}
-                                    <img src="{{carta.img}}" class="card-thumbnail">
-                                    <span class="skill-name" style="font-weight: bold; font-size: 16px;">{{carta.name}}</span>
-                                </div>
-                                <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
-                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-suitcase"></i></a>
-                                    <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
-                                    {{#if @root.user.isGM}}
-                                        <a class="item-delete" title="Borrar Objeto" style="color: #8b0000;"><i class="fas fa-trash"></i></a>
-                                    {{/if}}
-                                </div>
-                            </li>
+                        <li class="item skill-row" data-item-id="{{carta._id}}"
+                            style="padding: 5px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.3); border-radius: 4px;">
+                            <div class="skill-main-info flexrow">
+                                {{!-- CLASE card-thumbnail aplicada --}}
+                                <img src="{{carta.img}}" class="card-thumbnail">
+                                <span class="skill-name"
+                                    style="font-weight: bold; font-size: 16px;">{{carta.name}}</span>
+                            </div>
+                            <div class="item-controls flexrow"
+                                style="align-items: center; justify-content: flex-end; gap: 10px;">
+                                <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-suitcase"></i></a>
+                                <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
+                                {{#if @root.user.isGM}}
+                                <a class="item-delete" title="Borrar Objeto" style="color: #8b0000;"><i
+                                        class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
                         {{/each}}
                     </ul>
                 </div>
 
                 {{!-- 3. FILA INFERIOR: PODERES (Ancho completo a DOS COLUMNAS) --}}
                 <div class="deck-section">
-                    <h3 style="border-bottom: 2px solid #004488; margin-bottom: 10px;">Poderes Activos ({{barajaPoderes.length}})</h3>
+                    <h3 style="border-bottom: 2px solid #004488; margin-bottom: 10px;">Poderes Activos
+                        ({{barajaPoderes.length}})</h3>
                     {{!-- GRID DE 2 COLUMNAS para optimizar las 30 cartas --}}
-                    <ul class="skills-list" style="display: grid; grid-template-columns: 1fr 1fr; gap: x 15px; column-gap: 30px;">
+                    <ul class="skills-list"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: x 15px; column-gap: 30px;">
                         {{#each barajaPoderes as |carta|}}
-                            <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 4px 0;">
-                                <div class="skill-main-info flexrow">
-                                    {{!-- CLASE card-thumbnail aplicada --}}
-                                    <img src="{{carta.img}}" class="card-thumbnail">
-                                    <span class="skill-name" style="font-size: 16px;">{{carta.name}}</span>
-                                </div>
-                                <div class="item-controls flexrow" style="align-items: center; justify-content: flex-end; gap: 10px;">
-                                    <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-suitcase"></i></a>
-                                    <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
-                                    {{#if @root.user.isGM}}
-                                        <a class="item-delete" title="Borrar Poder" style="color: #8b0000;"><i class="fas fa-trash"></i></a>
-                                    {{/if}}
-                                </div>
-                            </li>
+                        <li class="item skill-row" data-item-id="{{carta._id}}" style="padding: 4px 0;">
+                            <div class="skill-main-info flexrow">
+                                {{!-- CLASE card-thumbnail aplicada --}}
+                                <img src="{{carta.img}}" class="card-thumbnail">
+                                <span class="skill-name" style="font-size: 16px;">{{carta.name}}</span>
+                            </div>
+                            <div class="item-controls flexrow"
+                                style="align-items: center; justify-content: flex-end; gap: 10px;">
+                                <a class="item-toggle-bench" title="Al Banquillo"><i class="fas fa-suitcase"></i></a>
+                                <a class="item-edit" title="Ver Carta"><i class="fas fa-eye"></i></a>
+                                {{#if @root.user.isGM}}
+                                <a class="item-delete" title="Borrar Poder" style="color: #8b0000;"><i
+                                        class="fas fa-trash"></i></a>
+                                {{/if}}
+                            </div>
+                        </li>
                         {{/each}}
                     </ul>
                 </div>
                 {{!-- --- NUEVO: 4. FILA FINAL: EQUIPO GLOBAL DESCUBIERTO --- --}}
                 {{#if equipoDisponible.length}}
-                    <div class="deck-section" style="margin-top: 25px; border-top: 2px dashed #00ccff; padding-top: 15px;">
-                        <h3 style="border-bottom: 2px solid #00ccff; margin-bottom: 10px; color: #007799;">
-                            <i class="fas fa-shield-alt"></i> Equipo Global Disponible
-                        </h3>
-                        <ul class="skills-list" style="display: flex; flex-wrap: wrap; gap: 10px;">
-                            {{#each equipoDisponible as |eq|}}
-                                <li class="item flexrow" style="align-items: center; background: rgba(0, 204, 255, 0.05); padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(0, 204, 255, 0.3); width: auto; min-width: 220px; flex: 1;">
+                <div class="deck-section" style="margin-top: 25px; border-top: 2px dashed #00ccff; padding-top: 15px;">
+                    <h3 style="border-bottom: 2px solid #00ccff; margin-bottom: 10px; color: #007799;">
+                        <i class="fas fa-shield-alt"></i> Equipo Global Disponible
+                    </h3>
+                    <ul class="skills-list" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        {{#each equipoDisponible as |eq|}}
+                        <li class="item flexrow"
+                            style="align-items: center; background: rgba(0, 204, 255, 0.05); padding: 5px 10px; border-radius: 5px; border: 1px solid rgba(0, 204, 255, 0.3); width: auto; min-width: 220px; flex: 1;">
 
-                                    {{!-- Miniatura controlada para que horizontales y verticales queden igual de bien --}}
-                                    <img src="{{eq.img}}" style="height: 40px; width: 60px; object-fit: contain; border-radius: 3px; border: 1px solid #00ccff; margin-right: 10px;">
+                            {{!-- Miniatura controlada para que horizontales y verticales queden igual de bien --}}
+                            <img src="{{eq.img}}"
+                                style="height: 40px; width: 60px; object-fit: contain; border-radius: 3px; border: 1px solid #00ccff; margin-right: 10px;">
 
-                                    <span style="font-size: 14px; font-weight: bold; color: #1a1a1a; flex: 1;">{{eq.name}}</span>
+                            <span
+                                style="font-size: 14px; font-weight: bold; color: #1a1a1a; flex: 1;">{{eq.name}}</span>
 
-                                    <div class="item-controls flexrow" style="flex: 0 0 auto; margin-left: 10px;">
-                                        {{!-- El botón del ojo sigue usando la clase que pusimos en el .mjs --}}
-                                        <a class="item-edit-global" title="Consultar Carta" data-item-id="{{eq.id}}" style="color: #007799; cursor: pointer;">
-                                            <i class="fas fa-eye" style="font-size: 16px;"></i>
-                                        </a>
-                                    </div>
-                                </li>
-                            {{/each}}
-                        </ul>
-                    </div>
+                            <div class="item-controls flexrow" style="flex: 0 0 auto; margin-left: 10px;">
+                                {{!-- El botón del ojo sigue usando la clase que pusimos en el .mjs --}}
+                                <a class="item-edit-global" title="Consultar Carta" data-item-id="{{eq.id}}"
+                                    style="color: #007799; cursor: pointer;">
+                                    <i class="fas fa-eye" style="font-size: 16px;"></i>
+                                </a>
+                            </div>
+                        </li>
+                        {{/each}}
+                    </ul>
+                </div>
                 {{/if}}
 
             </div>

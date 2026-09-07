@@ -12,8 +12,10 @@ export class HabilidadSheet extends foundry.appv1.sheets.ItemSheet {
     }
 
     async getData() {
-        const context = super.getData();
+
+        const context = await super.getData();
         const item = context.item;
+
 
         context.system = item.system;
         context.isOwned = !!item.actor;

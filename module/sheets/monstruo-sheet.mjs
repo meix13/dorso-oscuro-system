@@ -7,7 +7,8 @@ export class MonstruoSheet extends foundry.appv1.sheets.ActorSheet {
             classes: ["dorso_oscuro", "sheet", "actor", "mystery-paper-theme"],
             template: "systems/dorso_oscuro/templates/monstruo-sheet.hbs",
             width: 820,
-            height: 800
+            height: 800,
+            scrollowners: ["form", ".sheet-body", ".tab", ".window-content", ".skills-list"]
         });
     }
 
