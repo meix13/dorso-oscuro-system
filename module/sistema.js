@@ -104,6 +104,11 @@ Hooks.once('init', async function() {
         makeDefault: true
     });
 
+    foundry.documents.collections.Items.registerSheet("dorso_oscuro", HabilidadSheet, {
+        types: ["habilidad"],
+        makeDefault: true
+    });
+
     foundry.documents.collections.Actors.registerSheet("dorso_oscuro", MonstruoSheet, {
         types: ["monstruo"],
         makeDefault: true
