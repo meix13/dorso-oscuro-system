@@ -14,8 +14,10 @@ export class PersonajeData extends foundry.abstract.TypeDataModel {
                 max: new fields.NumberField({initial: 10, integer: true, min: 1})
             }),
             esencia: new fields.NumberField({initial: 0, integer: true, min: 0}),
-            estabilidad: new fields.NumberField({initial: 15, integer: true, min: -11, max: 22}),
-            cordura: new fields.NumberField({initial: 5, integer: true, min: 0, max: 5}),
+            estabilidad: new fields.NumberField({initial: 15, integer: true}),
+            estabilidadMax: new fields.NumberField({initial: 22, integer: true, min: 1}),
+            cordura: new fields.NumberField({initial: 5, integer: true}),
+            corduraMax: new fields.NumberField({initial: 5, integer: true, min: 1}),
             credito: new fields.NumberField({initial: 1, integer: true, min: 0, max: 5}),
 
             // NUEVO: Umbral de Daño

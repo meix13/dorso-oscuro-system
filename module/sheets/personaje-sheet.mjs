@@ -603,7 +603,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                         const roll = new Roll("1d4 + 2");
                         await roll.evaluate();
                         let estActual = this.actor.system.estabilidad;
-                        let estMax = 22; // Máximo establecido en tu sistema
+                        let estMax = this.actor.system.estabilidadMax || 22; // Máximo dinámico
                         let nuevaEstabilidad = Math.min(estMax, estActual + roll.total);
                         let recReal = nuevaEstabilidad - estActual;
                         await this.actor.update({ "system.estabilidad": nuevaEstabilidad });
@@ -616,7 +616,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                         mensaje += `<li><b>Salud:</b> ${saludRecuperada > 0 ? `Recupera +1 <span style="color: #444;">(${saludActual + 1}/${saludMax})</span>` : `Ya estaba al máximo.`}</li>`;
 
                         // Estabilidad
-                        mensaje += `<li><b>Estabilidad:</b> Recupera +${recReal} <span style="color: #444;">(Tirada: ${roll.total}) [${nuevaEstabilidad}/22]</span></li>`;
+                        mensaje += `<li><b>Estabilidad:</b> Recupera +${recReal} <span style="color: #444;">(Tirada: ${roll.total}) [${nuevaEstabilidad}/${estMax}]</span></li>`;
 
                         // Habilidades
                         mensaje += `<li><b>Hab. Generales:</b> ${selectedNames.length > 0 ? selectedNames.join(', ') : `Ninguna`}</li>`;
@@ -659,7 +659,7 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                 <div style="text-align: center; padding: 10px;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 30px; color: #ffaa00; margin-bottom: 10px;"></i>
                     <p style="font-family: 'Kalam', cursive; font-size: 18px;">Esto solo pasa al cambiar de capítulo.</p>
-                    <p style="font-size: 14px; color: #aaa;">¿Estás seguro de que quieres recuperar al máximo TODAS tus habilidades Técnicas y Generales?</p>
+                    <p style="font-size: 14px; color: #aaa;">¿Estás seguro de que quieres recuperar al máximo TODAS tus habilidades Técnicas y Generales, Salud y Estabilidad?</p>
                 </div>
             `,
             yes: async () => {
@@ -671,8 +671,14 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
                 if (updates.length > 0) {
                     await this.actor.updateEmbeddedDocuments("Item", updates);
-                    ui.notifications.info(`Todas las habilidades de ${this.actor.name} han sido restauradas al máximo.`);
                 }
+                
+                await this.actor.update({
+                    "system.hp.value": this.actor.system.hp.max,
+                    "system.estabilidad": this.actor.system.estabilidadMax
+                });
+                
+                ui.notifications.info(`Todos los atributos y habilidades de ${this.actor.name} han sido restaurados al máximo.`);
             },
             no: () => { },
             defaultYes: false

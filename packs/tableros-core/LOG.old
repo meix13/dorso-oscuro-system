@@ -1,7 +1,7 @@
-2026/09/07-12:59:49.563378 7f67333ff6c0 Recovering log #117
-2026/09/07-12:59:49.566503 7f67333ff6c0 Delete type=3 #115
-2026/09/07-12:59:49.566549 7f67333ff6c0 Delete type=0 #117
-2026/09/07-13:48:02.003115 7f67313fb6c0 Level-0 table #122: started
-2026/09/07-13:48:02.003215 7f67313fb6c0 Level-0 table #122: 0 bytes OK
-2026/09/07-13:48:02.004824 7f67313fb6c0 Delete type=0 #120
-2026/09/07-13:48:02.008250 7f67313fb6c0 Manual compaction at level-0 from '!folders!GxyAT4qaqprkQAvT' @ 72057594037927935 : 1 .. '!scenes.tokens!OMRhouuBey6PmcoH.z5PSbQj6s5PUBX7f' @ 0 : 0; will stop at (end)
+2026/09/07-13:48:11.153058 7f67323fd6c0 Recovering log #121
+2026/09/07-13:48:11.155325 7f67323fd6c0 Delete type=0 #121
+2026/09/07-13:48:11.155358 7f67323fd6c0 Delete type=3 #119
+2026/09/13-19:43:11.366409 7f67313fb6c0 Level-0 table #126: started
+2026/09/13-19:43:11.366484 7f67313fb6c0 Level-0 table #126: 0 bytes OK
+2026/09/13-19:43:11.368031 7f67313fb6c0 Delete type=0 #124
+2026/09/13-19:43:11.370404 7f67313fb6c0 Manual compaction at level-0 from '!folders!GxyAT4qaqprkQAvT' @ 72057594037927935 : 1 .. '!scenes.tokens!OMRhouuBey6PmcoH.z5PSbQj6s5PUBX7f' @ 0 : 0; will stop at (end)
