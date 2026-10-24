@@ -1192,3 +1192,103 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
         inset 0 12px 38px -8px rgba(56, 189, 248, 0.42),
         inset 0 -12px 38px -8px rgba(168, 85, 247, 0.42) !important;
 }
+
+
+/* ==========================================================================
+   AJUSTE: BARRAS SUPERIOR/INFERIOR FINAS (2px) Y NEÓN GRUESO VERTICAL EN SIDEBAR
+   ========================================================================== */
+
+@keyframes doNeonFlowVertical {
+    0% {
+        background-position: 50% 0%;
+    }
+    50% {
+        background-position: 50% 100%;
+    }
+    100% {
+        background-position: 50% 0%;
+    }
+}
+
+@keyframes doLightSweepVertical {
+    0% {
+        transform: translateY(-120%);
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(420%);
+        opacity: 0.4;
+    }
+}
+
+/* Barras superior e inferior: finas (2px) con luz en movimiento sutil */
+.do-neon-bar {
+    height: 2px !important;
+}
+
+.do-neon-bar-top {
+    border-bottom: none !important;
+    box-shadow:
+        0 0 6px rgba(56, 189, 248, 0.8),
+        0 2px 14px rgba(168, 85, 247, 0.5) !important;
+}
+
+.do-neon-bar-bottom {
+    border-top: none !important;
+    box-shadow:
+        0 0 6px rgba(56, 189, 248, 0.8),
+        0 -2px 14px rgba(168, 85, 247, 0.5) !important;
+}
+
+/* Barra vertical gruesa (5px) en la separación del panel derecho (Chat y Herramientas) */
+.do-neon-bar-sidebar {
+    position: fixed;
+    width: 5px;
+    border-radius: 999px;
+    pointer-events: none !important;
+    overflow: hidden;
+    background: linear-gradient(
+        180deg,
+        rgba(15, 23, 42, 0.2) 0%,
+        rgba(56, 189, 248, 0.98) 14%,
+        rgba(192, 132, 252, 1) 28%,
+        rgba(224, 242, 254, 1) 44%,
+        rgba(168, 85, 247, 1) 60%,
+        rgba(56, 189, 248, 0.98) 76%,
+        rgba(217, 70, 239, 0.95) 90%,
+        rgba(15, 23, 42, 0.2) 100%
+    );
+    background-size: 100% 260%;
+    border-left: 1px solid rgba(224, 242, 254, 0.7);
+    box-shadow:
+        0 0 10px rgba(56, 189, 248, 0.95),
+        -3px 0 20px rgba(56, 189, 248, 0.8),
+        -6px 0 36px rgba(168, 85, 247, 0.7),
+        2px 0 14px rgba(56, 189, 248, 0.55);
+    animation:
+        doNeonFlowVertical 8s ease-in-out infinite,
+        doNeonPulse 4.5s ease-in-out infinite;
+}
+
+.do-neon-bar-sidebar::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 26%;
+    pointer-events: none;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(125, 211, 252, 0.85) 35%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(216, 180, 254, 0.85) 65%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    filter: blur(1px);
+    animation: doLightSweepVertical 6.5s ease-in-out infinite alternate;
+}

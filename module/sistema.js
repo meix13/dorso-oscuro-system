@@ -1380,3 +1380,82 @@ Hooks.once("init", () => {
         personalizarElementoPausa(root || document);
     });
 });
+
+
+/* ==========================================================================
+   BARRA DE NEÓN VERTICAL EN LA SEPARACIÓN DE LA BARRA DERECHA (#sidebar)
+   ========================================================================== */
+
+Hooks.once("ready", () => {
+    let sidebarObserverInitialized = false;
+
+    function syncSidebarVerticalNeonBar() {
+        const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
+        const frame = document.getElementById("do-neon-frame");
+        if (!activo || !frame) {
+            document.getElementById("do-neon-sidebar-bar")?.remove();
+            return;
+        }
+
+        let vBar = document.getElementById("do-neon-sidebar-bar");
+        if (!vBar) {
+            vBar = document.createElement("div");
+            vBar.id = "do-neon-sidebar-bar";
+            vBar.className = "do-neon-bar-sidebar";
+            frame.appendChild(vBar);
+        }
+
+        const sidebar = document.getElementById("sidebar") || document.getElementById("ui-right");
+        if (!sidebar) {
+            vBar.style.display = "none";
+            return;
+        }
+
+        const rect = sidebar.getBoundingClientRect();
+        if (rect.width < 10 || rect.height < 40) {
+            vBar.style.display = "none";
+            return;
+        }
+
+        vBar.style.display = "block";
+        vBar.style.left = `${Math.round(rect.left - 2)}px`;
+        vBar.style.top = `${Math.round(rect.top)}px`;
+        vBar.style.height = `${Math.round(rect.height)}px`;
+    }
+
+    window.syncSidebarVerticalNeonBar = syncSidebarVerticalNeonBar;
+
+    // Envolver aplicarDecoracionVisualDorsoOscuro para que también actualice la barra vertical
+    const origApply = window.aplicarDecoracionVisualDorsoOscuro;
+    if (typeof origApply === "function") {
+        window.aplicarDecoracionVisualDorsoOscuro = function () {
+            origApply();
+            syncSidebarVerticalNeonBar();
+        };
+    }
+
+    syncSidebarVerticalNeonBar();
+    setTimeout(syncSidebarVerticalNeonBar, 400);
+
+    if (!sidebarObserverInitialized) {
+        sidebarObserverInitialized = true;
+        window.addEventListener("resize", () => requestAnimationFrame(syncSidebarVerticalNeonBar));
+
+        const sidebar = document.getElementById("sidebar") || document.getElementById("ui-right");
+        if (sidebar) {
+            if (typeof ResizeObserver !== "undefined") {
+                const ro = new ResizeObserver(() => requestAnimationFrame(syncSidebarVerticalNeonBar));
+                ro.observe(sidebar);
+            }
+            if (typeof MutationObserver !== "undefined") {
+                const mo = new MutationObserver(() => requestAnimationFrame(syncSidebarVerticalNeonBar));
+                mo.observe(sidebar, { attributes: true, attributeFilter: ["class", "style"] });
+            }
+        }
+    }
+
+    Hooks.on("collapseSidebar", () => {
+        setTimeout(syncSidebarVerticalNeonBar, 50);
+        setTimeout(syncSidebarVerticalNeonBar, 320);
+    });
+});
