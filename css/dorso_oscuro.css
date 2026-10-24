@@ -1093,3 +1093,102 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
         0 0 8px rgba(56, 189, 248, 0.55),
         0 0 14px rgba(168, 85, 247, 0.35) !important;
 }
+
+
+/* ==========================================================================
+   MEJORA DE NEONES: MAYOR GROSOR Y FLUJO DE LUZ EN MOVIMIENTO
+   ========================================================================== */
+
+@keyframes doNeonFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+@keyframes doLightSweep {
+    0% {
+        transform: translateX(-120%);
+        opacity: 0.4;
+    }
+    50% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateX(420%);
+        opacity: 0.4;
+    }
+}
+
+.do-neon-bar {
+    height: 5px !important;
+    overflow: hidden;
+    background: linear-gradient(
+        90deg,
+        rgba(15, 23, 42, 0.2) 0%,
+        rgba(56, 189, 248, 0.98) 14%,
+        rgba(192, 132, 252, 1) 28%,
+        rgba(224, 242, 254, 1) 44%,
+        rgba(168, 85, 247, 1) 60%,
+        rgba(56, 189, 248, 0.98) 76%,
+        rgba(217, 70, 239, 0.95) 90%,
+        rgba(15, 23, 42, 0.2) 100%
+    ) !important;
+    background-size: 260% 100% !important;
+    animation:
+        doNeonFlow 8s ease-in-out infinite,
+        doNeonPulse 4.5s ease-in-out infinite !important;
+}
+
+/* Destello de luz móvil que viaja suavemente por el interior del neón */
+.do-neon-bar::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 26%;
+    pointer-events: none;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(125, 211, 252, 0.85) 35%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(216, 180, 254, 0.85) 65%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    filter: blur(1px);
+    animation: doLightSweep 6.5s ease-in-out infinite alternate;
+}
+
+.do-neon-bar-top {
+    border-bottom: 1px solid rgba(224, 242, 254, 0.75);
+    box-shadow:
+        0 0 10px rgba(56, 189, 248, 0.95),
+        0 3px 20px rgba(56, 189, 248, 0.8),
+        0 6px 36px rgba(168, 85, 247, 0.7) !important;
+}
+
+.do-neon-bar-bottom {
+    border-top: 1px solid rgba(224, 242, 254, 0.75);
+    box-shadow:
+        0 0 10px rgba(56, 189, 248, 0.95),
+        0 -3px 20px rgba(56, 189, 248, 0.8),
+        0 -6px 36px rgba(168, 85, 247, 0.7) !important;
+    animation-direction: reverse, normal !important;
+}
+
+.do-neon-bar-bottom::after {
+    animation-delay: -3.25s;
+}
+
+.do-neon-vignette {
+    box-shadow:
+        inset 0 12px 38px -8px rgba(56, 189, 248, 0.42),
+        inset 0 -12px 38px -8px rgba(168, 85, 247, 0.42) !important;
+}
