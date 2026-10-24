@@ -1459,3 +1459,51 @@ Hooks.once("ready", () => {
         setTimeout(syncSidebarVerticalNeonBar, 320);
     });
 });
+
+
+/* ==========================================================================
+   INTRO SPLASH DE ENTRADA A LA SESIÓN CON EFECTO INTERFERENCIA / GLITCH
+   ========================================================================== */
+
+Hooks.once("ready", () => {
+    const LOGO_DORSO_PATH = "systems/dorso_oscuro/assets/logo_dorso_oscuro.png";
+
+    function mostrarIntroDorsoOscuro() {
+        const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
+        if (!activo) return;
+
+        document.getElementById("do-intro-splash")?.remove();
+
+        const splash = document.createElement("div");
+        splash.id = "do-intro-splash";
+        splash.className = "do-intro-splash";
+        splash.setAttribute("aria-hidden", "true");
+        splash.innerHTML = `
+            <div class="do-intro-backdrop"></div>
+            <div class="do-intro-logo-wrap">
+                <img class="do-intro-logo-main" src="${LOGO_DORSO_PATH}" alt="" />
+                <img class="do-intro-logo-glitch do-glitch-cyan" src="${LOGO_DORSO_PATH}" alt="" />
+                <img class="do-intro-logo-glitch do-glitch-magenta" src="${LOGO_DORSO_PATH}" alt="" />
+                <div class="do-intro-scanline"></div>
+            </div>
+        `;
+        document.body.appendChild(splash);
+
+        // Fase 1 (0s -> 2.0s): Presencia imponente en el centro
+        // Fase 2 (2.0s -> 3.1s): Interferencia / Glitch y desvanecimiento
+        setTimeout(() => {
+            splash.classList.add("is-glitching-out");
+        }, 2000);
+
+        setTimeout(() => {
+            splash.remove();
+        }, 3250);
+    }
+
+    window.mostrarIntroDorsoOscuro = mostrarIntroDorsoOscuro;
+
+    // Mostrar al entrar en el mundo
+    setTimeout(() => {
+        mostrarIntroDorsoOscuro();
+    }, 250);
+});

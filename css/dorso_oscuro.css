@@ -1292,3 +1292,277 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     filter: blur(1px);
     animation: doLightSweepVertical 6.5s ease-in-out infinite alternate;
 }
+
+
+/* ==========================================================================
+   ANIMACIÓN MÁS LENTA EN BARRA VERTICAL + INTRO SPLASH CON INTERFERENCIA
+   ========================================================================== */
+
+.do-neon-bar-sidebar {
+    animation:
+        doNeonFlowVertical 18s ease-in-out infinite,
+        doNeonPulse 7s ease-in-out infinite !important;
+}
+
+.do-neon-bar-sidebar::after {
+    animation: doLightSweepVertical 14s ease-in-out infinite alternate !important;
+}
+
+/* --- INTRO SPLASH DEL LOGO EN GRANDE AL ENTRAR A LA SESIÓN --- */
+.do-intro-splash {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    pointer-events: none !important;
+    user-select: none !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.do-intro-backdrop {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at center,
+        rgba(8, 12, 24, 0.82) 0%,
+        rgba(15, 23, 42, 0.55) 45%,
+        rgba(2, 6, 23, 0) 78%
+    );
+    animation: doIntroBackdropIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.do-intro-logo-wrap {
+    position: relative;
+    width: min(620px, 74vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: doIntroLogoIn 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.do-intro-logo-main {
+    width: 100%;
+    height: auto;
+    display: block;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    filter:
+        drop-shadow(0 0 16px rgba(56, 189, 248, 0.9))
+        drop-shadow(0 0 38px rgba(168, 85, 247, 0.75))
+        drop-shadow(0 8px 28px rgba(0, 0, 0, 0.95));
+}
+
+.do-intro-logo-glitch {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: auto;
+    border: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    opacity: 0;
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+.do-glitch-cyan {
+    filter:
+        drop-shadow(-6px 0 0 rgba(0, 240, 255, 0.95))
+        hue-rotate(175deg)
+        saturate(300%);
+}
+
+.do-glitch-magenta {
+    filter:
+        drop-shadow(6px 0 0 rgba(255, 0, 170, 0.95))
+        hue-rotate(290deg)
+        saturate(300%);
+}
+
+.do-intro-scanline {
+    position: absolute;
+    inset: -15% -10%;
+    pointer-events: none;
+    opacity: 0;
+    background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0px,
+        rgba(255, 255, 255, 0) 3px,
+        rgba(56, 189, 248, 0.22) 4px,
+        rgba(168, 85, 247, 0.3) 5px
+    );
+}
+
+@keyframes doIntroBackdropIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes doIntroLogoIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.92);
+        filter: blur(8px) brightness(1.8);
+    }
+    40% {
+        opacity: 1;
+        filter: blur(0px) brightness(1.25);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        filter: blur(0px) brightness(1);
+    }
+}
+
+/* Fase de salida con interferencia / glitch electromagnético */
+.do-intro-splash.is-glitching-out .do-intro-backdrop {
+    animation: doIntroBackdropOut 1.15s ease-out forwards;
+}
+
+.do-intro-splash.is-glitching-out .do-intro-logo-main {
+    animation: doGlitchMainOut 1.15s steps(2, end) forwards;
+}
+
+.do-intro-splash.is-glitching-out .do-glitch-cyan {
+    animation: doGlitchSliceCyan 1.15s steps(2, end) forwards;
+}
+
+.do-intro-splash.is-glitching-out .do-glitch-magenta {
+    animation: doGlitchSliceMagenta 1.15s steps(2, end) forwards;
+}
+
+.do-intro-splash.is-glitching-out .do-intro-scanline {
+    animation: doScanlineFlash 1.15s linear forwards;
+}
+
+@keyframes doIntroBackdropOut {
+    0% { opacity: 1; }
+    65% { opacity: 0.7; }
+    100% { opacity: 0; }
+}
+
+@keyframes doGlitchMainOut {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) skewX(0deg);
+    }
+    12% {
+        opacity: 0.85;
+        transform: translate(-14px, 2px) skewX(-8deg);
+        filter: brightness(1.6) drop-shadow(0 0 24px rgba(56, 189, 248, 1));
+    }
+    24% {
+        opacity: 0.35;
+        transform: translate(18px, -3px) skewX(12deg);
+    }
+    36% {
+        opacity: 0.95;
+        transform: translate(-6px, 0) scaleX(1.04);
+    }
+    50% {
+        opacity: 0.2;
+        transform: translate(26px, 4px) skewX(-18deg) scaleY(0.92);
+        filter: brightness(2) blur(1px);
+    }
+    65% {
+        opacity: 0.75;
+        transform: translate(-22px, -2px) skewX(14deg) scaleX(1.12);
+    }
+    80% {
+        opacity: 0.15;
+        transform: translate(12px, 0) scaleX(1.25) scaleY(0.2);
+        filter: blur(4px) brightness(2.5);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(0, 0) scaleX(1.6) scaleY(0.02);
+        filter: blur(10px);
+    }
+}
+
+@keyframes doGlitchSliceCyan {
+    0% {
+        opacity: 0;
+        clip-path: inset(10% 0 65% 0);
+        transform: translate(0, 0);
+    }
+    15% {
+        opacity: 0.95;
+        clip-path: inset(12% 0 58% 0);
+        transform: translate(-24px, -2px);
+    }
+    30% {
+        opacity: 0.8;
+        clip-path: inset(55% 0 15% 0);
+        transform: translate(20px, 3px);
+    }
+    48% {
+        opacity: 0.95;
+        clip-path: inset(25% 0 42% 0);
+        transform: translate(-32px, 0);
+    }
+    66% {
+        opacity: 0.7;
+        clip-path: inset(68% 0 8% 0);
+        transform: translate(28px, -2px);
+    }
+    85% {
+        opacity: 0.4;
+        clip-path: inset(40% 0 45% 0);
+        transform: translate(-45px, 0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes doGlitchSliceMagenta {
+    0% {
+        opacity: 0;
+        clip-path: inset(60% 0 10% 0);
+        transform: translate(0, 0);
+    }
+    15% {
+        opacity: 0.9;
+        clip-path: inset(62% 0 12% 0);
+        transform: translate(22px, 2px);
+    }
+    32% {
+        opacity: 0.85;
+        clip-path: inset(8% 0 68% 0);
+        transform: translate(-26px, -3px);
+    }
+    52% {
+        opacity: 0.95;
+        clip-path: inset(45% 0 22% 0);
+        transform: translate(34px, 1px);
+    }
+    70% {
+        opacity: 0.65;
+        clip-path: inset(18% 0 52% 0);
+        transform: translate(-30px, 2px);
+    }
+    88% {
+        opacity: 0.35;
+        clip-path: inset(50% 0 38% 0);
+        transform: translate(48px, 0);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(0, 0);
+    }
+}
+
+@keyframes doScanlineFlash {
+    0%, 10% { opacity: 0; }
+    20% { opacity: 0.75; }
+    35% { opacity: 0.2; }
+    55% { opacity: 0.9; }
+    75% { opacity: 0.35; }
+    100% { opacity: 0; }
+}
