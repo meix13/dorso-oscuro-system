@@ -1269,3 +1269,114 @@ Hooks.once('init', async function() {
     });
 
 });
+
+
+/* ==========================================================================
+   DECORACIÓN VISUAL DE SESIÓN: LOGO EL DORSO OSCURO, BARRAS NEÓN Y PAUSA
+   ========================================================================== */
+
+Hooks.once("init", () => {
+    const LOGO_DORSO_PATH = "systems/dorso_oscuro/assets/logo_dorso_oscuro.png";
+
+    game.settings.register("dorso_oscuro", "mostrarDecoracionNeon", {
+        name: "Estética Visual Dorso Oscuro (Logo y Marco de Neón)",
+        hint: "Muestra el logo de El Dorso Oscuro arriba a la izquierda, las barras sutiles de neón azul/morado en los bordes superior e inferior y la pantalla de pausa personalizada.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: true,
+        onChange: () => {
+            if (typeof window.aplicarDecoracionVisualDorsoOscuro === "function") {
+                window.aplicarDecoracionVisualDorsoOscuro();
+            }
+        }
+    });
+
+    function personalizarElementoPausa(rootEl = document) {
+        const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
+        if (!activo) return;
+
+        const pauseEl =
+            (rootEl instanceof HTMLElement && rootEl.id === "pause" ? rootEl : null) ||
+            rootEl?.querySelector?.("#pause") ||
+            document.getElementById("pause");
+        if (!pauseEl) return;
+
+        pauseEl.classList.add("do-custom-pause");
+        const img = pauseEl.querySelector("img");
+        if (img) {
+            img.src = LOGO_DORSO_PATH;
+            img.classList.remove("fa-spin");
+        }
+        const caption = pauseEl.querySelector("figcaption, h3");
+        if (caption) {
+            caption.textContent = "EL DORSO OSCURO — EN PAUSA";
+        }
+    }
+
+    function aplicarDecoracionVisualDorsoOscuro() {
+        const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
+        document.body.classList.toggle("do-neon-theme-active", activo);
+
+        if (!activo) {
+            document.getElementById("do-neon-frame")?.remove();
+            document.getElementById("do-brand-corner")?.remove();
+            return;
+        }
+
+        // 1. Marco de barras finas de neón superior e inferior + viñeteado sutil
+        if (!document.getElementById("do-neon-frame")) {
+            const frame = document.createElement("div");
+            frame.id = "do-neon-frame";
+            frame.setAttribute("aria-hidden", "true");
+            frame.innerHTML = `
+                <div class="do-neon-bar do-neon-bar-top"></div>
+                <div class="do-neon-bar do-neon-bar-bottom"></div>
+                <div class="do-neon-vignette"></div>
+            `;
+            document.body.appendChild(frame);
+        }
+
+        // 2. Logo de El Dorso Oscuro arriba a la izquierda
+        const nativeLogo = document.getElementById("logo");
+        const nativeLogoVisible =
+            nativeLogo &&
+            nativeLogo.tagName === "IMG" &&
+            window.getComputedStyle(nativeLogo).display !== "none";
+
+        if (nativeLogoVisible) {
+            nativeLogo.src = LOGO_DORSO_PATH;
+            nativeLogo.classList.add("do-custom-logo");
+            nativeLogo.removeAttribute("width");
+            nativeLogo.removeAttribute("height");
+        } else if (!document.getElementById("do-brand-corner")) {
+            const brand = document.createElement("div");
+            brand.id = "do-brand-corner";
+            brand.className = "do-brand-corner";
+            brand.setAttribute("aria-hidden", "true");
+            brand.innerHTML = `<img src="${LOGO_DORSO_PATH}" alt="El Dorso Oscuro" class="do-custom-logo" />`;
+
+            const uiLeftCol = document.getElementById("ui-left-column-1") || document.getElementById("ui-left");
+            if (uiLeftCol) {
+                uiLeftCol.prepend(brand);
+            } else {
+                brand.classList.add("is-fixed-fallback");
+                document.body.appendChild(brand);
+            }
+        }
+
+        // 3. Pantalla de Pausa personalizada
+        personalizarElementoPausa(document);
+    }
+
+    window.aplicarDecoracionVisualDorsoOscuro = aplicarDecoracionVisualDorsoOscuro;
+
+    Hooks.once("ready", () => {
+        aplicarDecoracionVisualDorsoOscuro();
+    });
+
+    Hooks.on("renderPause", (app, html) => {
+        const root = html instanceof HTMLElement ? html : html?.[0];
+        personalizarElementoPausa(root || document);
+    });
+});
