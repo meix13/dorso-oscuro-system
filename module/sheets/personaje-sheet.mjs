@@ -1,6 +1,7 @@
 // module/sheets/personaje-sheet.mjs
 import { ManoHUD } from "../apps/mano-hud.mjs";
 import { MercaderManager } from "../apps/mercader.mjs";
+import { abrirDialogoTiradaHabilidad } from "../apps/solicitar-tirada.mjs";
 
 export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
 
@@ -220,59 +221,11 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
     async _onTirarHabilidad(event) {
         event.preventDefault();
 
-        // Obtenemos qué habilidad se ha pulsado mediante el ID guardado en el HTML
         const li = $(event.currentTarget).parents(".item");
         const item = this.actor.items.get(li.data("itemId"));
+        if (!item) return;
 
-        const puntosDisponibles = item.system.valorActual;
-        const atributoBase = item.system.atributoBase; // "mental", "social" o "fisico"
-        const dadoAtributo = this.actor.system.atributos[atributoBase]; // Ej: "1d6"
-
-        if (puntosDisponibles <= 0) {
-            return ui.notifications.warn(`No te quedan puntos en ${item.name}`);
-        }
-
-        // Creamos un diálogo emergente mejorado
-        new Dialog({
-            title: `Usar ${item.name}`,
-            content: `
-                <div style="padding: 10px; text-align: center; color: #e0e0e0;">
-                    <p style="font-size: 16px; margin-bottom: 15px;">¿Cuántos puntos de <b>${item.name}</b> quieres gastar?<br><span style="font-size: 13px; color: #aaa;">(Máximo disponible: ${puntosDisponibles})</span></p>
-                    <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px;">
-                        <i class="fas fa-bolt" style="color: #00ccff; font-size: 24px;"></i>
-                        <input type="number" id="puntos-gasto" value="0" min="0" max="${puntosDisponibles}" style="width: 80px; height: 45px; text-align: center; background: #111; color: #fff; border: 2px solid #00ccff; font-size: 24px; font-weight: bold; border-radius: 5px; font-family: 'Kalam', cursive;">
-                    </div>
-                </div>
-            `,
-            buttons: {
-                lanzar: {
-                    icon: '<i class="fas fa-dice"></i>',
-                    label: "Lanzar Dado",
-                    callback: async (htmlContent) => {
-                        const gasto = parseInt(htmlContent.find('#puntos-gasto').val());
-
-                        if (gasto > puntosDisponibles || gasto < 0 || isNaN(gasto)) {
-                            return ui.notifications.error("Cantidad inválida");
-                        }
-
-                        // A) Restar los puntos en la Base de Datos
-                        await item.update({ "system.valorActual": puntosDisponibles - gasto });
-
-                        // B) Preparar y lanzar la tirada (Ej: 1d6 + 2)
-                        const formula = `${dadoAtributo} + ${gasto}`;
-                        const roll = new Roll(formula);
-                        await roll.evaluate();
-
-                        // C) Mostrar en el Chat
-                        roll.toMessage({
-                            speaker: ChatMessage.getSpeaker({ actor: this.actor }),
-                            flavor: `<h3><i class="fas fa-dice-d20"></i> ${item.name}</h3>Utiliza Atributo <b>${atributoBase.toUpperCase()}</b> gastando <b>${gasto}</b> punto(s).`
-                        });
-                    }
-                }
-            },
-            default: "lanzar"
-        }, { width: 350, classes: ["dorso_oscuro", "dialog"] }).render(true);
+        abrirDialogoTiradaHabilidad(this.actor, item);
     }
 
     async _onCambiarEstabilidad(event) {

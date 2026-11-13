@@ -1,4 +1,5 @@
 import { PersonajeSheet } from "../sheets/personaje-sheet.mjs";
+import { abrirDialogoSolicitarTirada } from "./solicitar-tirada.mjs";
 
 export class DJHUD extends Application {
     constructor(options = {}) {
@@ -148,6 +149,12 @@ export class DJHUD extends Application {
 
     activateListeners(html) {
         super.activateListeners(html);
+
+        html.find('.dj-request-roll').click(ev => {
+            ev.preventDefault();
+            const actorId = ev.currentTarget.dataset.actorId || null;
+            abrirDialogoSolicitarTirada(actorId);
+        });
 
         // --- SELECTOR DE CRIATURA (BOSS) ACTUALIZADO ---
         // --- selector de criatura (BOSS) ---

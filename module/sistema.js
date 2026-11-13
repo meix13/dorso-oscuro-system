@@ -10,6 +10,7 @@ import { ObjetoSheet } from "./sheets/objeto-sheet.mjs";
 import { MonstruoSheet } from "./sheets/monstruo-sheet.mjs";
 import { FichaMesaSheet } from "./sheets/ficha-mesa-sheet.mjs";
 import { MercaderPapeleraSheet } from "./sheets/mercader-papelera-sheet.mjs";
+import { abrirDialogoSolicitarTirada, inicializarSistemaTiradasSolicitadas } from "./apps/solicitar-tirada.mjs";
 
 
 
@@ -520,14 +521,23 @@ Hooks.once('init', async function() {
                 button: true,
                 onClick: () => { new MercaderHud().render(true); }
             };
+            const botonSolicitarTirada = {
+                name: "solicitar-tirada",
+                title: "Solicitar Tirada",
+                icon: "fas fa-dice-d20",
+                button: true,
+                onClick: () => { abrirDialogoSolicitarTirada(); }
+            };
 
             // Inyectamos de forma segura según la arquitectura (igual que el otro)
             if (Array.isArray(tokenControls.tools)) {
                 if (!tokenControls.tools.find(t => t.name === "panel-dj")) tokenControls.tools.push(botonDJ);
                 if (!tokenControls.tools.find(t => t.name === "panel-mercader")) tokenControls.tools.push(botonMercader);
+                if (!tokenControls.tools.find(t => t.name === "solicitar-tirada")) tokenControls.tools.push(botonSolicitarTirada);
             } else {
                 if (!tokenControls.tools["panel-dj"]) tokenControls.tools["panel-dj"] = botonDJ;
                 if (!tokenControls.tools["panel-mercader"]) tokenControls.tools["panel-mercader"] = botonMercader;
+                if (!tokenControls.tools["solicitar-tirada"]) tokenControls.tools["solicitar-tirada"] = botonSolicitarTirada;
             }
         }
 
@@ -586,6 +596,7 @@ Hooks.once('init', async function() {
     });
 
     Hooks.once("ready", async () => {
+        inicializarSistemaTiradasSolicitadas();
 
 
         // ==========================================

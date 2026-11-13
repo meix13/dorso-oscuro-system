@@ -42,6 +42,11 @@
 
         {{!-- PESTAÑA 1: RADAR DE ALMAS --}}
         <div class="tab" data-group="primary" data-tab="radar">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                <button type="button" class="dj-request-roll" style="background: rgba(0, 60, 90, 0.85); color: #00ccff; border: 1px solid #00ccff; border-radius: 5px; padding: 4px 12px; font-size: 12px; font-weight: bold; cursor: pointer;">
+                    <i class="fas fa-dice-d20"></i> Solicitar Tirada a Jugadores
+                </button>
+            </div>
             <div class="players-grid flexrow" style="gap: 15px; flex-wrap: wrap; justify-content: flex-start; align-items: flex-start;">       {{#if jugadores.length}}
                     {{#each jugadores as |jug|}}
                         <div class="player-card flexcol" style="flex: 0 0 260px; max-width: 260px; background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #555; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.8);">
@@ -50,6 +55,9 @@
                             <div class="character-header flexrow" style="align-items: center; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 8px;">
                                 <img src="{{jug.actor.img}}" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid #888; margin-right: 8px;">
                                 <span style="font-size: 16px; font-weight: bold; color: #ddd; flex: 1;">{{jug.actor.name}}</span>
+                                <a class="dj-request-roll" data-actor-id="{{jug.actor.id}}" title="Solicitar Tirada a {{jug.actor.name}}" style="color: #00ccff; margin-right: 6px; font-size: 14px; cursor: pointer;">
+                                    <i class="fas fa-dice-d20"></i>
+                                </a>
                                 <div title="Estabilidad" style="background: #222; padding: 2px 6px; border-radius: 4px; border: 1px solid #444; text-align: center;">
                                     <i class="fas fa-brain" style="color: #b388ff; font-size: 12px;"></i>
                                     <span style="color: white; font-weight: bold;">{{jug.system.estabilidad}}</span><span style="color: #666; font-size: 11px;">/{{jug.system.estabilidadMax}}</span>

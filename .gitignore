@@ -1,0 +1,11 @@
+# Archivos privados / locales (no subir al repositorio público)
+GEMINI.md
+dorso-oscuro-solo-texto.md
+manual_dj_dorso_oscuro.md
+manual_jugador_dorso_oscuro.md
+
+# IDE / Editor
+.idea/
+
+# Artefactos de build
+*.zip
