@@ -1948,7 +1948,7 @@ export async function lanzarTransicionOniricaDorso(options = {}) {
         broadcast = false,
         sceneId = null,
         coverMs = 2400,
-        holdMs = 800,
+        holdMs = 850,
         fadeOutMs = 1700
     } = options;
 
@@ -1958,6 +1958,27 @@ export async function lanzarTransicionOniricaDorso(options = {}) {
         holdMs,
         fadeOutMs
     };
+
+    // Ejecutar primero localmente (y registrar lastOniricTimestamp) para que el onChange de game.settings.set
+    // no anule el callback onFullBlack que activa la escena en el cliente del GM
+    ejecutarTransicionOniricaLocal({
+        ...payload,
+        onFullBlack: async () => {
+            if (sceneId && game.user?.isGM) {
+                const targetScene = game.scenes?.get(sceneId);
+                if (targetScene) {
+                    if (!targetScene.active) {
+                        await targetScene.activate();
+                    } else if (canvas?.scene?.id !== targetScene.id) {
+                        await targetScene.view();
+                    }
+                }
+            }
+            if (typeof options.onFullBlack === "function") {
+                await options.onFullBlack();
+            }
+        }
+    });
 
     if (broadcast && game.user?.isGM) {
         try {
@@ -1971,23 +1992,6 @@ export async function lanzarTransicionOniricaDorso(options = {}) {
             await game.settings.set("dorso_oscuro", "oniricTransitionState", payload);
         } catch (_) {}
     }
-
-    ejecutarTransicionOniricaLocal({
-        ...payload,
-        onFullBlack: async () => {
-            if (sceneId && game.user?.isGM) {
-                const targetScene = game.scenes?.get(sceneId);
-                if (targetScene && !targetScene.active) {
-                    await targetScene.activate();
-                } else if (targetScene && canvas?.scene?.id !== targetScene.id) {
-                    await targetScene.view();
-                }
-            }
-            if (typeof options.onFullBlack === "function") {
-                options.onFullBlack();
-            }
-        }
-    });
 }
 
 window.lanzarTransicionOniricaDorso = lanzarTransicionOniricaDorso;
