@@ -2844,3 +2844,162 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     min-height: 165px;
 }
 
+/* ==========================================================================
+   TRANSICIÓN AL MUNDO ONÍRICO (SOMBRAS NEGRAS Y BRUMA MORADA/AZULADA)
+   ========================================================================== */
+
+#do-oniric-transition {
+    --do-oniric-cover-ms: 2400ms;
+    --do-oniric-fade-ms: 1700ms;
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 100050;
+    pointer-events: none;
+    overflow: hidden;
+    opacity: 1;
+}
+
+#do-oniric-transition .do-oniric-svg-defs {
+    position: absolute;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+#do-oniric-transition .do-oniric-tendrils-stage {
+    position: absolute;
+    inset: -12%;
+    width: 124%;
+    height: 124%;
+    filter: url(#do-oniric-turbulence);
+    will-change: transform, opacity;
+}
+
+/* Leve bruma morada y azul abisal en el borde interno de las sombras */
+#do-oniric-transition .do-oniric-mist-rim {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(3, 4, 8, 0) 0%,
+        rgba(3, 4, 8, 0) 26%,
+        rgba(56, 189, 248, 0.16) 35%,
+        rgba(139, 92, 246, 0.28) 44%,
+        rgba(30, 15, 60, 0.82) 54%,
+        rgba(3, 4, 8, 0.98) 66%,
+        #020306 100%
+    );
+    transform: scale(2.85);
+    opacity: 0;
+    transition:
+        transform var(--do-oniric-cover-ms) cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 450ms ease-out;
+}
+
+/* Olas de sombra negra orgánica que se cierran hacia el centro */
+#do-oniric-transition .do-oniric-shadow-wave {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+}
+
+#do-oniric-transition .do-wave-outer {
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(2, 3, 6, 0) 0%,
+        rgba(2, 3, 6, 0) 24%,
+        rgba(76, 29, 149, 0.22) 32%,
+        rgba(4, 6, 12, 0.94) 45%,
+        #020306 60%,
+        #020306 100%
+    );
+    transform: scale(2.9) rotate(0deg);
+    opacity: 0;
+    transition:
+        transform var(--do-oniric-cover-ms) cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        opacity 380ms ease-out;
+}
+
+#do-oniric-transition .do-wave-inner {
+    background: radial-gradient(
+        circle at 50% 50%,
+        rgba(2, 3, 6, 0) 0%,
+        rgba(15, 23, 42, 0.15) 18%,
+        rgba(56, 189, 248, 0.14) 26%,
+        rgba(124, 58, 237, 0.24) 33%,
+        rgba(2, 3, 6, 0.97) 44%,
+        #020306 56%,
+        #020306 100%
+    );
+    transform: scale(3.2) rotate(25deg);
+    opacity: 0;
+    transition:
+        transform var(--do-oniric-cover-ms) cubic-bezier(0.32, 0.08, 0.24, 1),
+        opacity 520ms ease-out;
+}
+
+/* Sombras densas que nacen de las cuatro esquinas */
+#do-oniric-transition .do-oniric-corners {
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(circle at 0% 0%, #020306 0%, rgba(15, 10, 35, 0.88) 28%, transparent 58%),
+        radial-gradient(circle at 100% 0%, #020306 0%, rgba(12, 20, 40, 0.88) 28%, transparent 58%),
+        radial-gradient(circle at 0% 100%, #020306 0%, rgba(12, 20, 40, 0.88) 28%, transparent 58%),
+        radial-gradient(circle at 100% 100%, #020306 0%, rgba(18, 10, 38, 0.88) 28%, transparent 58%);
+    transform: scale(1.65);
+    opacity: 0;
+    transition:
+        transform calc(var(--do-oniric-cover-ms) * 0.85) ease-in-out,
+        opacity 350ms ease-out;
+}
+
+/* Capa de cierre negro total con levísimo resplandor onírico que se apaga */
+#do-oniric-transition .do-oniric-blackout {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+        circle at 50% 50%,
+        #050711 0%,
+        #020306 70%,
+        #010103 100%
+    );
+    opacity: 0;
+    transition: opacity 550ms ease-in-out;
+}
+
+/* Estado activo Fase 1: las sombras avanzan y devoran la pantalla */
+#do-oniric-transition.is-creeping-in .do-oniric-mist-rim {
+    opacity: 1;
+    transform: scale(0.08);
+}
+
+#do-oniric-transition.is-creeping-in .do-wave-outer {
+    opacity: 1;
+    transform: scale(0.04) rotate(-14deg);
+}
+
+#do-oniric-transition.is-creeping-in .do-wave-inner {
+    opacity: 1;
+    transform: scale(0.02) rotate(2deg);
+}
+
+#do-oniric-transition.is-creeping-in .do-oniric-corners {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Estado Fase 2: pantalla cubierta de negro absoluto */
+#do-oniric-transition.is-full-black .do-oniric-blackout {
+    opacity: 1;
+}
+
+/* Estado Fase 3: desvanecimiento suave (fade out) hacia la escena onírica */
+#do-oniric-transition.is-fading-out {
+    opacity: 0;
+    transition: opacity var(--do-oniric-fade-ms) ease-in-out;
+}
+
+

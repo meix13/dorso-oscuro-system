@@ -592,6 +592,10 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
                             speaker: ChatMessage.getSpeaker({ actor: this.actor }),
                             flavor: mensaje
                         });
+
+                        if (typeof window.lanzarTransicionOniricaDorso === "function") {
+                            window.lanzarTransicionOniricaDorso({ broadcast: false });
+                        }
                     }
                 },
                 cancelar: {

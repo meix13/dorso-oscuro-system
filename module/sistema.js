@@ -528,16 +528,29 @@ Hooks.once('init', async function() {
                 button: true,
                 onClick: () => { abrirDialogoSolicitarTirada(); }
             };
+            const botonTransicionOnirica = {
+                name: "transicion-onirica",
+                title: "Transición al Mundo Onírico (Sombras del Dorso)",
+                icon: "fas fa-cloud-moon",
+                button: true,
+                onClick: () => {
+                    if (typeof window.lanzarTransicionOniricaDorso === "function") {
+                        window.lanzarTransicionOniricaDorso({ broadcast: true });
+                    }
+                }
+            };
 
             // Inyectamos de forma segura según la arquitectura (igual que el otro)
             if (Array.isArray(tokenControls.tools)) {
                 if (!tokenControls.tools.find(t => t.name === "panel-dj")) tokenControls.tools.push(botonDJ);
                 if (!tokenControls.tools.find(t => t.name === "panel-mercader")) tokenControls.tools.push(botonMercader);
                 if (!tokenControls.tools.find(t => t.name === "solicitar-tirada")) tokenControls.tools.push(botonSolicitarTirada);
+                if (!tokenControls.tools.find(t => t.name === "transicion-onirica")) tokenControls.tools.push(botonTransicionOnirica);
             } else {
                 if (!tokenControls.tools["panel-dj"]) tokenControls.tools["panel-dj"] = botonDJ;
                 if (!tokenControls.tools["panel-mercader"]) tokenControls.tools["panel-mercader"] = botonMercader;
                 if (!tokenControls.tools["solicitar-tirada"]) tokenControls.tools["solicitar-tirada"] = botonSolicitarTirada;
+                if (!tokenControls.tools["transicion-onirica"]) tokenControls.tools["transicion-onirica"] = botonTransicionOnirica;
             }
         }
 
@@ -1838,3 +1851,203 @@ Hooks.once("ready", () => {
     // Mostrar al entrar en el mundo sin demora para que no se cuele ningún fragmento del audio de escena
     mostrarIntroDorsoOscuro();
 });
+
+
+/* ==========================================================================
+   TRANSICIÓN AL MUNDO ONÍRICO (SOMBRAS NEGRAS Y BRUMA ABISAL DEL DORSO)
+   ========================================================================== */
+
+Hooks.once("init", () => {
+    game.settings.register("dorso_oscuro", "oniricTransitionState", {
+        name: "Estado de Transición al Mundo Onírico",
+        scope: "world",
+        config: false,
+        type: Object,
+        default: { timestamp: 0 },
+        onChange: (payload) => {
+            if (payload && payload.timestamp) {
+                ejecutarTransicionOniricaLocal(payload);
+            }
+        }
+    });
+});
+
+let lastOniricTimestamp = 0;
+
+function ejecutarTransicionOniricaLocal(options = {}) {
+    const ts = options.timestamp || Date.now();
+    if (options.timestamp && options.timestamp <= lastOniricTimestamp) return;
+    lastOniricTimestamp = ts;
+
+    const coverMs = Number(options.coverMs) || 2400;
+    const holdMs = Number(options.holdMs) || 750;
+    const fadeOutMs = Number(options.fadeOutMs) || 1700;
+
+    document.getElementById("do-oniric-transition")?.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "do-oniric-transition";
+    overlay.className = "do-oniric-transition";
+    overlay.setAttribute("aria-hidden", "true");
+    overlay.style.setProperty("--do-oniric-cover-ms", `${coverMs}ms`);
+    overlay.style.setProperty("--do-oniric-fade-ms", `${fadeOutMs}ms`);
+
+    overlay.innerHTML = `
+        <svg class="do-oniric-svg-defs" width="0" height="0" aria-hidden="true">
+            <defs>
+                <filter id="do-oniric-turbulence" x="-25%" y="-25%" width="150%" height="150%">
+                    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.018" numOctaves="4" seed="${Math.floor(Math.random() * 900) + 100}" result="noise">
+                        <animate attributeName="baseFrequency" values="0.012 0.018;0.018 0.014;0.012 0.018" dur="4.5s" repeatCount="indefinite" />
+                    </feTurbulence>
+                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="135" xChannelSelector="R" yChannelSelector="G" />
+                </filter>
+            </defs>
+        </svg>
+        <div class="do-oniric-tendrils-stage">
+            <div class="do-oniric-mist-rim"></div>
+            <div class="do-oniric-shadow-wave do-wave-outer"></div>
+            <div class="do-oniric-shadow-wave do-wave-inner"></div>
+            <div class="do-oniric-corners"></div>
+        </div>
+        <div class="do-oniric-blackout"></div>
+    `;
+
+    document.body.appendChild(overlay);
+    void overlay.offsetWidth;
+
+    // Fase 1: Las sombras negras con bruma morada/azulada reptan desde los bordes hasta cubrir toda la pantalla
+    overlay.classList.add("is-creeping-in");
+
+    // Asegurar cierre a negro absoluto al final de la fase 1
+    const tBlack = setTimeout(() => {
+        overlay.classList.add("is-full-black");
+        if (typeof options.onFullBlack === "function") {
+            try { options.onFullBlack(); } catch (_) {}
+        }
+    }, Math.max(200, coverMs - 220));
+
+    // Fase 2 -> 3: Tras mantenerse en negro, se desvanece suavemente con un fade revelando el Mundo Onírico
+    const tFade = setTimeout(() => {
+        overlay.classList.add("is-fading-out");
+    }, coverMs + holdMs);
+
+    const tRemove = setTimeout(() => {
+        overlay.remove();
+    }, coverMs + holdMs + fadeOutMs + 150);
+
+    return { tBlack, tFade, tRemove };
+}
+
+/**
+ * Lanza la transición de sombras al Mundo Onírico.
+ * Si broadcast=true y el usuario es GM, la reproduce en las pantallas de todos los jugadores conectados.
+ * Si se pasa sceneId, activa dicha escena justo cuando las sombras han cubierto la pantalla de negro.
+ */
+export async function lanzarTransicionOniricaDorso(options = {}) {
+    const {
+        broadcast = false,
+        sceneId = null,
+        coverMs = 2400,
+        holdMs = 800,
+        fadeOutMs = 1700
+    } = options;
+
+    const payload = {
+        timestamp: Date.now(),
+        coverMs,
+        holdMs,
+        fadeOutMs
+    };
+
+    if (broadcast && game.user?.isGM) {
+        try {
+            game.socket?.emit("system.dorso_oscuro", {
+                type: "oniricTransition",
+                payload
+            });
+        } catch (_) {}
+
+        try {
+            await game.settings.set("dorso_oscuro", "oniricTransitionState", payload);
+        } catch (_) {}
+    }
+
+    ejecutarTransicionOniricaLocal({
+        ...payload,
+        onFullBlack: async () => {
+            if (sceneId && game.user?.isGM) {
+                const targetScene = game.scenes?.get(sceneId);
+                if (targetScene && !targetScene.active) {
+                    await targetScene.activate();
+                } else if (targetScene && canvas?.scene?.id !== targetScene.id) {
+                    await targetScene.view();
+                }
+            }
+            if (typeof options.onFullBlack === "function") {
+                options.onFullBlack();
+            }
+        }
+    });
+}
+
+window.lanzarTransicionOniricaDorso = lanzarTransicionOniricaDorso;
+
+Hooks.once("ready", () => {
+    try {
+        game.socket?.on("system.dorso_oscuro", (msg) => {
+            if (msg?.type === "oniricTransition" && msg.payload) {
+                ejecutarTransicionOniricaLocal(msg.payload);
+            }
+        });
+    } catch (_) {}
+
+    // Añadir opción "Activar con Transición Onírica (Sombras)" al hacer clic derecho sobre una escena
+    document.addEventListener("contextmenu", (ev) => {
+        if (!game.user?.isGM) return;
+        const target = ev.target;
+        if (!(target instanceof HTMLElement)) return;
+
+        const inSceneArea = target.closest(
+            "#scenes, .scenes-sidebar, [data-tab='scenes'], #navigation, #scene-navigation"
+        );
+        if (!inSceneArea) return;
+
+        const item = target.closest("[data-scene-id], [data-document-id], [data-entry-id]");
+        const sceneId = item?.dataset?.sceneId || item?.dataset?.documentId || item?.dataset?.entryId;
+        if (!sceneId || !game.scenes?.get(sceneId)) return;
+
+        const injectOniricOption = () => {
+            const ctxLists = document.querySelectorAll(
+                "#context-menu .context-items, .context-menu .context-items, #context-menu menu, #context-menu ol"
+            );
+            ctxLists.forEach(ctxMenu => {
+                if (ctxMenu.querySelector(".do-oniric-ctx-item")) return;
+
+                const li = document.createElement("li");
+                li.className = "context-item do-oniric-ctx-item";
+                li.innerHTML = `<i class="fa-solid fa-cloud-moon fa-fw" style="color:#a855f7;"></i> <span>Activar con Transición Onírica</span>`;
+                li.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    document.querySelectorAll("#context-menu, .context-menu").forEach(m => m.remove());
+                    lanzarTransicionOniricaDorso({ broadcast: true, sceneId });
+                });
+
+                const children = Array.from(ctxMenu.children);
+                const activateLi = children.find(el => {
+                    const txt = (el.textContent || "").toLowerCase();
+                    return txt.includes("activar") || txt.includes("activate");
+                });
+
+                if (activateLi && activateLi.nextSibling) {
+                    ctxMenu.insertBefore(li, activateLi.nextSibling);
+                } else {
+                    ctxMenu.prepend(li);
+                }
+            });
+        };
+
+        [15, 45, 95].forEach(d => setTimeout(injectOniricOption, d));
+    }, true);
+});
+
