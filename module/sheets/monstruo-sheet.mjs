@@ -54,10 +54,12 @@ export class MonstruoSheet extends foundry.appv1.sheets.ActorSheet {
         // Mostrar Retrato (Ojo)
         html.find('.show-portrait').click(ev => {
             ev.preventDefault();
+            ev.stopPropagation();
             // Creamos un popout nativo de Foundry con la imagen del monstruo
             const imagePopout = new ImagePopout(this.actor.img, {
                 title: this.actor.name,
-                uuid: this.actor.uuid
+                uuid: this.actor.uuid,
+                shareable: true
             });
             imagePopout.render(true);
         });

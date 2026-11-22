@@ -2325,3 +2325,522 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     75% { opacity: 0.35; }
     100% { opacity: 0; }
 }
+
+/* ==========================================================================
+   BOTÓN DE VER RETRATO EN GRANDE (PJ Y PNJ) + FICHA DE PNJ / CRIATURA REDISEÑADA
+   ========================================================================== */
+
+.mystery-paper-theme .portrait-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mystery-paper-theme .btn-ver-retrato {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #2c1e14;
+    color: #f8f1e5 !important;
+    border: 2px solid #eaddc5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
+    z-index: 25;
+    opacity: 0.88;
+    transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none !important;
+}
+
+.mystery-paper-theme .portrait-container:hover .btn-ver-retrato {
+    opacity: 1;
+}
+
+.mystery-paper-theme .btn-ver-retrato:hover {
+    opacity: 1 !important;
+    background: #8b0000;
+    color: #ffffff !important;
+    transform: scale(1.15);
+    box-shadow: 0 4px 10px rgba(139, 0, 0, 0.55);
+}
+
+/* --- Ficha de PNJ / Monstruo (Mismo lenguaje visual que Expediente de PJ) --- */
+.mystery-paper-theme.npc-sheet-form {
+    position: relative;
+}
+
+.mystery-paper-theme .npc-corner-ornament {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    width: 82px;
+    border: none !important;
+    pointer-events: none;
+    opacity: 0.72;
+    z-index: 5;
+}
+
+.mystery-paper-theme .npc-top-bar {
+    position: relative;
+    z-index: 6;
+}
+
+.mystery-paper-theme .npc-header-title {
+    font-family: 'Kalam', cursive;
+    font-size: 21px;
+    font-weight: bold;
+    color: #6b0f0f;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 2px 14px;
+    border-bottom: 3px solid #6b0f0f;
+    background: rgba(139, 0, 0, 0.06);
+    border-radius: 6px 6px 0 0;
+}
+
+.mystery-paper-theme .npc-world-badge {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(234, 221, 197, 0.85);
+    border: 1px solid rgba(74, 52, 36, 0.45);
+    border-radius: 999px;
+    padding: 2px 11px;
+    height: 28px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    color: #2c1e14;
+}
+
+.mystery-paper-theme .npc-world-badge i {
+    color: #2c4c68;
+    font-size: 13px;
+}
+
+.mystery-paper-theme .npc-world-badge select {
+    background: transparent !important;
+    border: none !important;
+    color: #2c1e14 !important;
+    font-family: 'Kalam', cursive !important;
+    font-size: 14px !important;
+    font-weight: bold !important;
+    cursor: pointer;
+    outline: none !important;
+    padding: 0 2px !important;
+    height: 24px;
+}
+
+.mystery-paper-theme .npc-world-badge select option {
+    background: #eaddc5;
+    color: #1a1a1a;
+}
+
+/* Filas de dados de PNJ (Físico y Perseguir con Modificador + Dado) */
+.mystery-paper-theme .npc-dice-row {
+    width: 255px;
+    padding: 6px 12px;
+    gap: 10px;
+}
+
+.mystery-paper-theme .npc-attr-roll {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    text-decoration: none !important;
+    color: #2c1e14;
+    transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.mystery-paper-theme .npc-attr-roll i {
+    color: #1e4d6b;
+    font-size: 18px;
+    transition: transform 0.2s ease, color 0.2s ease;
+}
+
+.mystery-paper-theme .npc-attr-roll:hover .attribute-label,
+.mystery-paper-theme .npc-attr-roll:hover i {
+    color: #8b0000;
+}
+
+.mystery-paper-theme .npc-attr-roll:hover i {
+    transform: rotate(15deg) scale(1.15);
+}
+
+.mystery-paper-theme .npc-attr-controls {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.mystery-paper-theme .npc-mod-box {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px solid rgba(74, 52, 36, 0.35);
+    border-radius: 6px;
+    padding: 1px 6px;
+    height: 32px;
+}
+
+.mystery-paper-theme .npc-mod-sign {
+    font-size: 15px;
+    font-weight: bold;
+    color: #6b0f0f;
+    margin-right: 1px;
+    user-select: none;
+}
+
+.mystery-paper-theme .npc-mod-box input[type="number"] {
+    width: 30px;
+    height: 26px;
+    text-align: center;
+    font-size: 19px;
+    font-weight: bold;
+    color: #1a1a1a;
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+.mystery-paper-theme .npc-dice-select-wrap {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+}
+
+.mystery-paper-theme .npc-dice-select-wrap .img-dado {
+    width: 48px;
+    height: 48px;
+}
+
+.mystery-paper-theme .npc-dice-native-select {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 25;
+}
+
+/* Retrato del PNJ */
+.mystery-paper-theme .monster-portrait-circle {
+    mix-blend-mode: normal;
+}
+
+/* Secciones inferiores de PNJ (Ataques y Lore) */
+.mystery-paper-theme .npc-lower-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.mystery-paper-theme .npc-section-box {
+    width: 100%;
+}
+
+.mystery-paper-theme .npc-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid rgba(74, 52, 36, 0.65);
+    margin-bottom: 10px;
+    padding-bottom: 4px;
+}
+
+.mystery-paper-theme .npc-section-header h3 {
+    border-bottom: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.mystery-paper-theme .npc-header-actions {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.mystery-paper-theme .npc-action-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(234, 221, 197, 0.85);
+    color: #2c1e14 !important;
+    border: 1px solid rgba(74, 52, 36, 0.45);
+    font-family: 'Kalam', cursive;
+    font-size: 13px;
+    font-weight: bold;
+    padding: 2px 10px;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+    transition: all 0.18s ease;
+    text-decoration: none !important;
+}
+
+.mystery-paper-theme .npc-action-pill:hover {
+    background: #d8c6af;
+    border-color: #6b0f0f;
+    transform: translateY(-1px);
+}
+
+.mystery-paper-theme .npc-action-pill-add {
+    color: #8b0000 !important;
+    border-color: rgba(139, 0, 0, 0.45);
+}
+
+.mystery-paper-theme .npc-attacks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.mystery-paper-theme .npc-attack-card {
+    background: rgba(255, 255, 255, 0.35);
+    border: 1px solid rgba(74, 52, 36, 0.28);
+    border-radius: 7px;
+    padding: 8px 12px;
+    box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.4);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.mystery-paper-theme .npc-attack-card:hover {
+    background: rgba(255, 255, 255, 0.48);
+    border-color: rgba(74, 52, 36, 0.45);
+}
+
+.mystery-paper-theme .npc-attack-read-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.mystery-paper-theme .npc-attack-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 180px;
+}
+
+.mystery-paper-theme .npc-attack-name {
+    font-size: 19px;
+    font-weight: bold;
+    color: #1a1a1a;
+}
+
+.mystery-paper-theme .npc-attack-rolls-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+}
+
+.mystery-paper-theme .npc-roll-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(74, 52, 36, 0.35);
+    background: rgba(234, 221, 197, 0.75);
+    color: #2c1e14 !important;
+    cursor: pointer;
+    text-decoration: none !important;
+    transition: all 0.18s ease;
+}
+
+.mystery-paper-theme .npc-roll-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.mystery-paper-theme .npc-roll-pill-impact i {
+    color: #1e4d6b;
+}
+
+.mystery-paper-theme .npc-roll-pill-impact:hover {
+    border-color: #1e4d6b;
+    background: rgba(30, 77, 107, 0.12);
+}
+
+.mystery-paper-theme .npc-roll-pill-damage i {
+    color: #8b0000;
+}
+
+.mystery-paper-theme .npc-roll-pill-damage:hover {
+    border-color: #8b0000;
+    background: rgba(139, 0, 0, 0.12);
+}
+
+.mystery-paper-theme .npc-roll-pill-label {
+    font-size: 13px;
+    font-weight: bold;
+    color: #5a4636;
+}
+
+.mystery-paper-theme .npc-roll-pill-formula {
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: bold;
+    color: #1a1a1a;
+    background: rgba(255, 255, 255, 0.55);
+    padding: 1px 5px;
+    border-radius: 4px;
+}
+
+.mystery-paper-theme .npc-attack-special-note {
+    margin-top: 6px;
+    padding-top: 5px;
+    border-top: 1px dashed rgba(74, 52, 36, 0.25);
+    font-size: 14px;
+    color: #3d2b1f;
+    line-height: 1.35;
+}
+
+.mystery-paper-theme .npc-attack-special-note i {
+    color: #8b0000;
+    font-size: 12px;
+    margin-right: 4px;
+}
+
+/* Modo edición de ataques de PNJ */
+.mystery-paper-theme .npc-attack-edit-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.mystery-paper-theme .npc-attack-name-input {
+    flex: 2 !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    border-bottom: 1px solid rgba(74, 52, 36, 0.55) !important;
+    padding: 2px 6px !important;
+}
+
+.mystery-paper-theme .npc-attack-type-select {
+    flex: 1 !important;
+    height: 30px !important;
+    padding: 2px 6px !important;
+}
+
+.mystery-paper-theme .npc-attack-delete-btn {
+    flex: 0 0 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #8b0000 !important;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.mystery-paper-theme .npc-attack-delete-btn:hover {
+    background: rgba(139, 0, 0, 0.12);
+    transform: scale(1.1);
+}
+
+.mystery-paper-theme .npc-attack-edit-formulas {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 8px;
+}
+
+.mystery-paper-theme .npc-formula-group {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(74, 52, 36, 0.06);
+    border: 1px solid rgba(74, 52, 36, 0.25);
+    border-radius: 6px;
+    padding: 3px 8px;
+}
+
+.mystery-paper-theme .npc-formula-group label {
+    flex: 0 0 auto;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c1e14;
+    white-space: nowrap;
+}
+
+.mystery-paper-theme .npc-formula-group input[type="text"] {
+    flex: 1;
+    text-align: center;
+    font-family: monospace;
+    font-size: 15px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px dashed rgba(74, 52, 36, 0.4);
+    border-radius: 4px;
+    height: 26px;
+}
+
+.mystery-paper-theme .npc-roll-btn-impact,
+.mystery-paper-theme .npc-roll-btn-damage {
+    flex: 0 0 26px;
+    font-size: 17px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+}
+
+.mystery-paper-theme .npc-roll-btn-impact { color: #1e4d6b !important; }
+.mystery-paper-theme .npc-roll-btn-damage { color: #8b0000 !important; }
+
+.mystery-paper-theme .npc-roll-btn-impact:hover,
+.mystery-paper-theme .npc-roll-btn-damage:hover {
+    transform: scale(1.18);
+}
+
+.mystery-paper-theme .npc-attack-edit-special {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.mystery-paper-theme .npc-attack-edit-special label {
+    flex: 0 0 65px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #2c1e14;
+    padding-top: 4px;
+}
+
+.mystery-paper-theme .npc-attack-edit-special textarea {
+    flex: 1;
+    min-height: 44px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.45);
+    border: 1px dashed rgba(74, 52, 36, 0.35);
+    border-radius: 5px;
+    padding: 5px 8px;
+    font-family: 'Kalam', cursive;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.mystery-paper-theme .npc-lore-panel {
+    min-height: 165px;
+}
+

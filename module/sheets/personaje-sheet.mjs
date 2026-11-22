@@ -100,6 +100,18 @@ export class PersonajeSheet extends foundry.appv1.sheets.ActorSheet {
         html.find('.btn-dormir').click(this._onDormir.bind(this));
         html.find('.btn-recuperacion-total').click(this._onRecuperacionTotal.bind(this));
 
+        // Ver retrato / arte del PJ en grande
+        html.find('.show-portrait').click(ev => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            if (!this.actor.img) return;
+            new ImagePopout(this.actor.img, {
+                title: this.actor.name,
+                uuid: this.actor.uuid,
+                shareable: true
+            }).render(true);
+        });
+
 
         // Escuchamos el clic en la habilidad y en el lápiz de editar (los que ya tenías)
         html.find('.tirar-habilidad').click(this._onTirarHabilidad.bind(this));
