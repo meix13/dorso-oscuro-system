@@ -1473,11 +1473,13 @@ Hooks.once("ready", () => {
 
 
 /* ==========================================================================
-   INTRO SPLASH DE ENTRADA A LA SESIÓN CON EFECTO INTERFERENCIA / GLITCH
+   INTRO SPLASH DE ENTRADA A LA SESIÓN CON VÍDEO, AUDIO E INTERFERENCIAS
    ========================================================================== */
 
 Hooks.once("ready", () => {
     const LOGO_DORSO_PATH = "systems/dorso_oscuro/assets/logo_dorso_oscuro.png";
+    const VIDEO_INTRO_PATH = "systems/dorso_oscuro/assets/vid_intro.mp4";
+    const AUDIO_INTRO_PATH = "systems/dorso_oscuro/assets/intro_dorso_oscuro.mp3";
 
     function mostrarIntroDorsoOscuro() {
         const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
@@ -1489,26 +1491,167 @@ Hooks.once("ready", () => {
         splash.id = "do-intro-splash";
         splash.className = "do-intro-splash";
         splash.setAttribute("aria-hidden", "true");
+        splash.title = "Haz clic para saltar la introducción";
         splash.innerHTML = `
             <div class="do-intro-backdrop"></div>
+            <div class="do-intro-video-stage">
+                <video
+                    class="do-intro-video"
+                    src="${VIDEO_INTRO_PATH}"
+                    muted
+                    playsinline
+                    preload="auto"
+                ></video>
+                <div class="do-intro-video-vignette"></div>
+                <div class="do-intro-crt-overlay"></div>
+            </div>
             <div class="do-intro-logo-wrap">
                 <img class="do-intro-logo-main" src="${LOGO_DORSO_PATH}" alt="" />
                 <img class="do-intro-logo-glitch do-glitch-cyan" src="${LOGO_DORSO_PATH}" alt="" />
                 <img class="do-intro-logo-glitch do-glitch-magenta" src="${LOGO_DORSO_PATH}" alt="" />
                 <div class="do-intro-scanline"></div>
             </div>
+            <div class="do-intro-skip-hint">Clic para saltar</div>
         `;
         document.body.appendChild(splash);
 
-        // Fase 1 (0s -> 2.0s): Presencia imponente en el centro
-        // Fase 2 (2.0s -> 3.1s): Interferencia / Glitch y desvanecimiento
-        setTimeout(() => {
-            splash.classList.add("is-glitching-out");
-        }, 2000);
+        // 1. Reproducir el vídeo a 1.15x para cubrir el arco completo de 10.4s en ~9.0s
+        const videoEl = splash.querySelector(".do-intro-video");
+        if (videoEl) {
+            videoEl.playbackRate = 1.15;
+            const playPromise = videoEl.play();
+            if (playPromise && typeof playPromise.catch === "function") {
+                playPromise.catch(() => {});
+            }
+        }
 
-        setTimeout(() => {
-            splash.remove();
-        }, 3250);
+        // 2. Reproducir audio de introducción (El Dorso Oscuro + Rayo sutil)
+        let introAudio = null;
+        let unlockAudioHandler = null;
+
+        const limpiarUnlockListeners = () => {
+            if (!unlockAudioHandler) return;
+            window.removeEventListener("pointerdown", unlockAudioHandler, true);
+            window.removeEventListener("keydown", unlockAudioHandler, true);
+            unlockAudioHandler = null;
+        };
+
+        const iniciarAudioIntro = () => {
+            try {
+                let vol = 0.65;
+                try {
+                    const ambientVol = game.settings?.get?.("core", "globalAmbientVolume");
+                    const interfaceVol = game.settings?.get?.("core", "globalInterfaceVolume");
+                    const refVol = typeof interfaceVol === "number" ? interfaceVol : ambientVol;
+                    if (typeof refVol === "number") {
+                        vol = Math.max(0.15, Math.min(0.9, refVol));
+                    }
+                } catch (_) {}
+
+                introAudio = new Audio(AUDIO_INTRO_PATH);
+                introAudio.volume = vol;
+                const p = introAudio.play();
+                if (p && typeof p.catch === "function") {
+                    p.catch(() => {
+                        // Si el navegador bloquea autoplay tras F5, arranca en el primer gesto si sigue activa
+                        unlockAudioHandler = (ev) => {
+                            limpiarUnlockListeners();
+                            if (!document.body.contains(splash) || splash.dataset.skipped === "1") return;
+                            // Si el clic fue directamente en el splash para cerrarlo, no arrancamos el audio
+                            if (ev?.type === "pointerdown" && splash.contains(ev.target)) return;
+                            if (introAudio && videoEl) {
+                                introAudio.currentTime = Math.min(8.2, (videoEl.currentTime || 0) / 1.15);
+                                introAudio.play().catch(() => {});
+                            }
+                        };
+                        window.addEventListener("pointerdown", unlockAudioHandler, true);
+                        window.addEventListener("keydown", unlockAudioHandler, true);
+                    });
+                }
+            } catch (_) {}
+        };
+
+        iniciarAudioIntro();
+
+        const timers = [];
+        let cerrada = false;
+
+        const detenerAudioSuave = (duracionMs = 350) => {
+            limpiarUnlockListeners();
+            if (!introAudio) return;
+            const audioRef = introAudio;
+            introAudio = null;
+            const startVol = audioRef.volume || 0.5;
+            const steps = 10;
+            const stepTime = Math.max(20, Math.floor(duracionMs / steps));
+            let currentStep = 0;
+            const fadeInterval = setInterval(() => {
+                currentStep++;
+                const nextVol = Math.max(0, startVol * (1 - currentStep / steps));
+                try {
+                    audioRef.volume = nextVol;
+                } catch (_) {}
+                if (currentStep >= steps) {
+                    clearInterval(fadeInterval);
+                    try {
+                        audioRef.pause();
+                        audioRef.src = "";
+                    } catch (_) {}
+                }
+            }, stepTime);
+        };
+
+        const finalizarIntro = (inmediato = false) => {
+            if (cerrada) return;
+            cerrada = true;
+            timers.forEach(t => clearTimeout(t));
+
+            if (inmediato) {
+                splash.dataset.skipped = "1";
+                splash.classList.add("is-skipping-out", "is-glitching-out");
+                detenerAudioSuave(240);
+                setTimeout(() => {
+                    try {
+                        if (videoEl) {
+                            videoEl.pause();
+                            videoEl.removeAttribute("src");
+                        }
+                    } catch (_) {}
+                    splash.remove();
+                }, 320);
+            } else {
+                detenerAudioSuave(950);
+                setTimeout(() => {
+                    try {
+                        if (videoEl) {
+                            videoEl.pause();
+                            videoEl.removeAttribute("src");
+                        }
+                    } catch (_) {}
+                    splash.remove();
+                }, 1150);
+            }
+        };
+
+        // Clic en cualquier parte de la intro para saltarla al instante
+        splash.addEventListener("click", (ev) => {
+            ev.stopPropagation();
+            finalizarIntro(true);
+        });
+
+        // Fase 1 (0.0s -> 1.5s): El portal místico se abre en pantalla
+        // Fase 2 (1.5s -> 7.85s): El logo EL DORSO OSCURO irrumpe sutilmente con interferencias leves en el centro
+        timers.push(setTimeout(() => {
+            if (!cerrada) splash.classList.add("is-logo-active");
+        }, 1500));
+
+        // Fase 3 (7.85s -> 9.0s): Desintegración final con interferencias y fundido hacia la mesa
+        timers.push(setTimeout(() => {
+            if (!cerrada) {
+                splash.classList.add("is-glitching-out");
+                finalizarIntro(false);
+            }
+        }, 7850));
     }
 
     window.mostrarIntroDorsoOscuro = mostrarIntroDorsoOscuro;

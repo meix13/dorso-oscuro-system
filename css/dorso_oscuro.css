@@ -1308,12 +1308,13 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     animation: doLightSweepVertical 14s ease-in-out infinite alternate !important;
 }
 
-/* --- INTRO SPLASH DEL LOGO EN GRANDE AL ENTRAR A LA SESIÓN --- */
+/* --- INTRO SPLASH CON VÍDEO, LOGO EN EL CENTRO E INTERFERENCIA --- */
 .do-intro-splash {
     position: fixed;
     inset: 0;
     z-index: 99999;
-    pointer-events: none !important;
+    pointer-events: auto !important;
+    cursor: pointer;
     user-select: none !important;
     display: flex;
     align-items: center;
@@ -1326,20 +1327,97 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     inset: 0;
     background: radial-gradient(
         circle at center,
-        rgba(8, 12, 24, 0.82) 0%,
-        rgba(15, 23, 42, 0.55) 45%,
-        rgba(2, 6, 23, 0) 78%
+        rgba(5, 8, 18, 0.94) 0%,
+        rgba(3, 6, 15, 0.97) 65%,
+        rgba(1, 3, 10, 0.99) 100%
     );
-    animation: doIntroBackdropIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation: doIntroBackdropIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
-.do-intro-logo-wrap {
-    position: relative;
-    width: min(620px, 74vw);
+/* Escenario del vídeo del portal */
+.do-intro-video-stage {
+    position: absolute;
+    inset: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: doIntroLogoIn 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    overflow: hidden;
+    pointer-events: none;
+    animation: doIntroVideoIn 0.9s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.do-intro-video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: cover;
+    object-position: center center;
+    filter: contrast(1.08) saturate(1.15) brightness(0.92);
+    transform: scale(1.02);
+}
+
+/* Viñeteado oscuro alrededor del vídeo para fundirlo con los bordes de pantalla */
+.do-intro-video-vignette {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(
+            ellipse at center,
+            rgba(8, 12, 24, 0.05) 0%,
+            rgba(8, 12, 24, 0.35) 55%,
+            rgba(2, 6, 18, 0.88) 90%,
+            rgba(2, 4, 12, 0.98) 100%
+        );
+    box-shadow: inset 0 0 90px rgba(0, 0, 0, 0.9);
+}
+
+/* Trama sutil de líneas de interferencia sobre el vídeo */
+.do-intro-crt-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.28;
+    background: repeating-linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0) 0px,
+        rgba(255, 255, 255, 0) 3px,
+        rgba(56, 189, 248, 0.08) 4px,
+        rgba(0, 0, 0, 0.28) 5px
+    );
+}
+
+/* Contenedor del logo EL DORSO OSCURO en el centro (oculto hasta t = 1.5s) */
+.do-intro-logo-wrap {
+    position: relative;
+    z-index: 3;
+    width: min(650px, 76vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.95);
+    pointer-events: none;
+}
+
+/* Fase 2 (1.5s -> 5.5s): Irrupción sutil del logo con interferencias leves */
+.do-intro-splash.is-logo-active .do-intro-logo-wrap {
+    animation: doIntroLogoEmergeSubtle 0.95s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.do-intro-splash.is-logo-active .do-intro-logo-main {
+    animation: doLogoSubtleInterference 3.6s ease-in-out infinite;
+}
+
+.do-intro-splash.is-logo-active .do-glitch-cyan {
+    animation: doSubtleGlitchCyan 3.4s steps(2, end) infinite;
+}
+
+.do-intro-splash.is-logo-active .do-glitch-magenta {
+    animation: doSubtleGlitchMagenta 3.8s steps(2, end) infinite;
+}
+
+.do-intro-splash.is-logo-active .do-intro-scanline {
+    animation: doSubtleScanlinePulse 3.2s ease-in-out infinite;
 }
 
 .do-intro-logo-main {
@@ -1350,9 +1428,9 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     box-shadow: none !important;
     background: transparent !important;
     filter:
-        drop-shadow(0 0 16px rgba(56, 189, 248, 0.9))
-        drop-shadow(0 0 38px rgba(168, 85, 247, 0.75))
-        drop-shadow(0 8px 28px rgba(0, 0, 0, 0.95));
+        drop-shadow(0 0 18px rgba(56, 189, 248, 0.92))
+        drop-shadow(0 0 42px rgba(168, 85, 247, 0.85))
+        drop-shadow(0 8px 30px rgba(0, 0, 0, 0.98));
 }
 
 .do-intro-logo-glitch {
@@ -1370,16 +1448,16 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
 
 .do-glitch-cyan {
     filter:
-        drop-shadow(-6px 0 0 rgba(0, 240, 255, 0.95))
+        drop-shadow(-5px 0 0 rgba(0, 240, 255, 0.9))
         hue-rotate(175deg)
-        saturate(300%);
+        saturate(260%);
 }
 
 .do-glitch-magenta {
     filter:
-        drop-shadow(6px 0 0 rgba(255, 0, 170, 0.95))
+        drop-shadow(5px 0 0 rgba(255, 0, 170, 0.9))
         hue-rotate(290deg)
-        saturate(300%);
+        saturate(260%);
 }
 
 .do-intro-scanline {
@@ -1391,9 +1469,34 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
         180deg,
         rgba(255, 255, 255, 0) 0px,
         rgba(255, 255, 255, 0) 3px,
-        rgba(56, 189, 248, 0.22) 4px,
-        rgba(168, 85, 247, 0.3) 5px
+        rgba(56, 189, 248, 0.2) 4px,
+        rgba(168, 85, 247, 0.26) 5px
     );
+}
+
+/* Indicador discreto abajo a la derecha para saltar */
+.do-intro-skip-hint {
+    position: absolute;
+    bottom: 22px;
+    right: 28px;
+    z-index: 5;
+    font-family: 'Kalam', cursive;
+    font-size: 13px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(224, 242, 254, 0.52);
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+    padding: 4px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    background: rgba(8, 12, 24, 0.45);
+    pointer-events: none;
+    transition: opacity 0.25s ease, color 0.25s ease;
+}
+
+.do-intro-splash:hover .do-intro-skip-hint {
+    color: rgba(224, 242, 254, 0.85);
+    border-color: rgba(56, 189, 248, 0.5);
 }
 
 @keyframes doIntroBackdropIn {
@@ -1401,48 +1504,234 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     100% { opacity: 1; }
 }
 
-@keyframes doIntroLogoIn {
+@keyframes doIntroVideoIn {
     0% {
         opacity: 0;
-        transform: scale(0.92);
-        filter: blur(8px) brightness(1.8);
-    }
-    40% {
-        opacity: 1;
-        filter: blur(0px) brightness(1.25);
+        transform: scale(1.06);
+        filter: brightness(1.5) blur(6px);
     }
     100% {
         opacity: 1;
         transform: scale(1);
+        filter: brightness(1) blur(0px);
+    }
+}
+
+/* Irrupción sutil del logo con micro-interferencia de entrada */
+@keyframes doIntroLogoEmergeSubtle {
+    0% {
+        opacity: 0;
+        transform: scale(0.95) translateX(-4px);
+        filter: blur(6px) brightness(1.45);
+    }
+    22% {
+        opacity: 0.65;
+        transform: scale(0.98) translateX(3px) skewX(-2deg);
+        filter: blur(2px) brightness(1.3);
+    }
+    38% {
+        opacity: 0.42;
+        transform: scale(0.99) translateX(-2px) skewX(1.5deg);
+        filter: blur(1px) brightness(1.15);
+    }
+    65% {
+        opacity: 0.92;
+        transform: scale(1.005) translateX(0px) skewX(0deg);
+        filter: blur(0px) brightness(1.08);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateX(0px);
         filter: blur(0px) brightness(1);
     }
 }
 
-/* Fase de salida con interferencia / glitch electromagnético */
+/* Interferencia leve continua mientras las letras están en el centro */
+@keyframes doLogoSubtleInterference {
+    0%, 100% {
+        transform: translate(0, 0) skewX(0deg);
+        opacity: 0.97;
+    }
+    18% {
+        transform: translate(0, 0);
+        opacity: 0.98;
+    }
+    19% {
+        transform: translate(-3px, 0.5px) skewX(-1.5deg);
+        opacity: 0.86;
+    }
+    20% {
+        transform: translate(2px, -0.5px) skewX(1deg);
+        opacity: 1;
+    }
+    21%, 56% {
+        transform: translate(0, 0) skewX(0deg);
+        opacity: 0.96;
+    }
+    57% {
+        transform: translate(3px, 0) skewX(2deg);
+        opacity: 0.84;
+    }
+    58% {
+        transform: translate(-2px, 0.5px) skewX(-1deg);
+        opacity: 0.98;
+    }
+    59%, 84% {
+        transform: translate(0, 0) skewX(0deg);
+        opacity: 0.97;
+    }
+    85% {
+        transform: translate(-2px, 0) scaleX(1.008);
+        opacity: 0.9;
+    }
+    86% {
+        transform: translate(0, 0) scaleX(1);
+        opacity: 0.98;
+    }
+}
+
+@keyframes doSubtleGlitchCyan {
+    0%, 17%, 22%, 55%, 60%, 83%, 88%, 100% {
+        opacity: 0;
+        transform: translate(0, 0);
+    }
+    18% {
+        opacity: 0.55;
+        clip-path: inset(18% 0 54% 0);
+        transform: translate(-7px, 0);
+    }
+    20% {
+        opacity: 0.35;
+        clip-path: inset(58% 0 16% 0);
+        transform: translate(5px, 1px);
+    }
+    57% {
+        opacity: 0.5;
+        clip-path: inset(32% 0 40% 0);
+        transform: translate(-8px, -1px);
+    }
+    85% {
+        opacity: 0.42;
+        clip-path: inset(12% 0 66% 0);
+        transform: translate(-6px, 0);
+    }
+}
+
+@keyframes doSubtleGlitchMagenta {
+    0%, 17%, 22%, 55%, 60%, 83%, 88%, 100% {
+        opacity: 0;
+        transform: translate(0, 0);
+    }
+    19% {
+        opacity: 0.5;
+        clip-path: inset(54% 0 18% 0);
+        transform: translate(7px, 0);
+    }
+    56% {
+        opacity: 0.48;
+        clip-path: inset(15% 0 60% 0);
+        transform: translate(8px, 1px);
+    }
+    58% {
+        opacity: 0.32;
+        clip-path: inset(64% 0 14% 0);
+        transform: translate(-5px, 0);
+    }
+    86% {
+        opacity: 0.4;
+        clip-path: inset(44% 0 28% 0);
+        transform: translate(6px, -1px);
+    }
+}
+
+@keyframes doSubtleScanlinePulse {
+    0%, 100% { opacity: 0.08; }
+    19% { opacity: 0.32; }
+    22% { opacity: 0.1; }
+    57% { opacity: 0.35; }
+    60% { opacity: 0.1; }
+    85% { opacity: 0.26; }
+}
+
+/* Fase 3: Salida / Desintegración final con interferencia electromagnética */
+.do-intro-splash.is-glitching-out {
+    pointer-events: none !important;
+}
+
+.do-intro-splash.is-glitching-out .do-intro-skip-hint {
+    opacity: 0 !important;
+}
+
 .do-intro-splash.is-glitching-out .do-intro-backdrop {
-    animation: doIntroBackdropOut 1.15s ease-out forwards;
+    animation: doIntroBackdropOut 1.15s ease-out forwards !important;
+}
+
+.do-intro-splash.is-glitching-out .do-intro-video-stage {
+    animation: doIntroVideoGlitchOut 1.15s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+}
+
+.do-intro-splash.is-glitching-out .do-intro-logo-wrap {
+    opacity: 1;
 }
 
 .do-intro-splash.is-glitching-out .do-intro-logo-main {
-    animation: doGlitchMainOut 1.15s steps(2, end) forwards;
+    animation: doGlitchMainOut 1.15s steps(2, end) forwards !important;
 }
 
 .do-intro-splash.is-glitching-out .do-glitch-cyan {
-    animation: doGlitchSliceCyan 1.15s steps(2, end) forwards;
+    animation: doGlitchSliceCyan 1.15s steps(2, end) forwards !important;
 }
 
 .do-intro-splash.is-glitching-out .do-glitch-magenta {
-    animation: doGlitchSliceMagenta 1.15s steps(2, end) forwards;
+    animation: doGlitchSliceMagenta 1.15s steps(2, end) forwards !important;
 }
 
 .do-intro-splash.is-glitching-out .do-intro-scanline {
-    animation: doScanlineFlash 1.15s linear forwards;
+    animation: doScanlineFlash 1.15s linear forwards !important;
+}
+
+/* Si el usuario hace clic para saltar, aceleramos la desintegración a 0.3s */
+.do-intro-splash.is-skipping-out .do-intro-backdrop,
+.do-intro-splash.is-skipping-out .do-intro-video-stage,
+.do-intro-splash.is-skipping-out .do-intro-logo-main,
+.do-intro-splash.is-skipping-out .do-glitch-cyan,
+.do-intro-splash.is-skipping-out .do-glitch-magenta,
+.do-intro-splash.is-skipping-out .do-intro-scanline {
+    animation-duration: 0.3s !important;
 }
 
 @keyframes doIntroBackdropOut {
     0% { opacity: 1; }
-    65% { opacity: 0.7; }
+    60% { opacity: 0.65; }
     100% { opacity: 0; }
+}
+
+@keyframes doIntroVideoGlitchOut {
+    0% {
+        opacity: 1;
+        transform: scale(1) skewX(0deg);
+        filter: brightness(1) contrast(1.08);
+    }
+    20% {
+        opacity: 0.85;
+        transform: scale(1.02) translateX(-8px) skewX(-3deg);
+        filter: brightness(1.35) contrast(1.3) hue-rotate(15deg);
+    }
+    45% {
+        opacity: 0.5;
+        transform: scale(1.04) translateX(10px) skewX(4deg);
+        filter: brightness(1.6) blur(2px);
+    }
+    75% {
+        opacity: 0.18;
+        transform: scaleX(1.15) scaleY(0.4);
+        filter: brightness(2) blur(6px);
+    }
+    100% {
+        opacity: 0;
+        transform: scaleX(1.35) scaleY(0.05);
+        filter: blur(12px);
+    }
 }
 
 @keyframes doGlitchMainOut {
