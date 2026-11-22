@@ -1316,6 +1316,15 @@ Hooks.once("init", () => {
         }
     });
 
+    game.settings.register("dorso_oscuro", "mostrarIntroInicio", {
+        name: "Mostrar Introducción de Dorso Oscuro al Entrar",
+        hint: "Reproduce la animación del portal con audio e interferencias al cargar el mundo. Puedes desactivarla aquí o marcando «No volver a mostrar» durante la intro.",
+        scope: "client",
+        config: true,
+        type: Boolean,
+        default: true
+    });
+
     function personalizarElementoPausa(rootEl = document) {
         const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
         if (!activo) return;
@@ -1494,9 +1503,10 @@ Hooks.once("ready", () => {
     const VIDEO_INTRO_PATH = "systems/dorso_oscuro/assets/vid_intro.mp4";
     const AUDIO_INTRO_PATH = "systems/dorso_oscuro/assets/intro_dorso_oscuro.mp3";
 
-    function mostrarIntroDorsoOscuro() {
+    function mostrarIntroDorsoOscuro(forzar = false) {
         const activo = game.settings?.get?.("dorso_oscuro", "mostrarDecoracionNeon") !== false;
-        if (!activo) return;
+        const mostrarIntro = game.settings?.get?.("dorso_oscuro", "mostrarIntroInicio") !== false;
+        if (!forzar && (!activo || !mostrarIntro)) return;
 
         document.getElementById("do-intro-splash")?.remove();
 
@@ -1524,7 +1534,13 @@ Hooks.once("ready", () => {
                 <img class="do-intro-logo-glitch do-glitch-magenta" src="${LOGO_DORSO_PATH}" alt="" />
                 <div class="do-intro-scanline"></div>
             </div>
-            <div class="do-intro-skip-hint">Clic para saltar</div>
+            <div class="do-intro-controls">
+                <label class="do-intro-dont-show" title="No volver a reproducir la intro automáticamente al cargar Foundry (puedes reactivarla en Ajustes)">
+                    <input type="checkbox" class="do-intro-dont-show-chk" ${!mostrarIntro ? "checked" : ""} />
+                    <span>No volver a mostrar</span>
+                </label>
+                <div class="do-intro-skip-hint">Clic para saltar</div>
+            </div>
         `;
         document.body.appendChild(splash);
 
@@ -1824,6 +1840,28 @@ Hooks.once("ready", () => {
                 }, 1150);
             }
         };
+
+        // Casilla "No volver a mostrar": guarda la preferencia del usuario y salta la intro
+        const dontShowLabel = splash.querySelector(".do-intro-dont-show");
+        const dontShowChk = splash.querySelector(".do-intro-dont-show-chk");
+        if (dontShowLabel) {
+            dontShowLabel.addEventListener("click", (ev) => {
+                ev.stopPropagation();
+            });
+        }
+        if (dontShowChk) {
+            dontShowChk.addEventListener("change", async (ev) => {
+                ev.stopPropagation();
+                const noMostrarMas = Boolean(ev.currentTarget.checked);
+                try {
+                    await game.settings.set("dorso_oscuro", "mostrarIntroInicio", !noMostrarMas);
+                } catch (_) {}
+                if (noMostrarMas) {
+                    ui.notifications?.info?.("Intro desactivada para próximas cargas. Puedes reactivarla en Configuración > Ajustes del Sistema.");
+                    finalizarIntro(true);
+                }
+            });
+        }
 
         // Clic en cualquier parte de la intro para saltarla al instante
         splash.addEventListener("click", (ev) => {

@@ -1944,12 +1944,51 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     );
 }
 
-/* Indicador discreto abajo a la derecha para saltar */
-.do-intro-skip-hint {
+/* Controles inferiores a la derecha: "No volver a mostrar" + "Clic para saltar" */
+.do-intro-controls {
     position: absolute;
     bottom: 22px;
     right: 28px;
-    z-index: 5;
+    z-index: 6;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.do-intro-dont-show {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    font-family: 'Kalam', cursive;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: rgba(224, 242, 254, 0.72);
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.45);
+    padding: 4px 13px;
+    border-radius: 999px;
+    border: 1px solid rgba(56, 189, 248, 0.28);
+    background: rgba(8, 12, 24, 0.62);
+    cursor: pointer;
+    pointer-events: auto;
+    transition: all 0.22s ease;
+}
+
+.do-intro-dont-show:hover {
+    color: rgba(255, 255, 255, 0.96);
+    border-color: rgba(56, 189, 248, 0.75);
+    background: rgba(15, 23, 42, 0.85);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
+}
+
+.do-intro-dont-show input.do-intro-dont-show-chk {
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    cursor: pointer;
+    accent-color: #38bdf8;
+}
+
+.do-intro-skip-hint {
     font-family: 'Kalam', cursive;
     font-size: 13px;
     letter-spacing: 0.14em;
@@ -2128,8 +2167,10 @@ body.do-neon-theme-active #scene-controls .ui-control:hover {
     pointer-events: none !important;
 }
 
+.do-intro-splash.is-glitching-out .do-intro-controls,
 .do-intro-splash.is-glitching-out .do-intro-skip-hint {
     opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .do-intro-splash.is-glitching-out .do-intro-backdrop {
