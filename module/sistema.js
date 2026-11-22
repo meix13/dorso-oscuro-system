@@ -1526,8 +1526,187 @@ Hooks.once("ready", () => {
         }
 
         // 2. Reproducir audio de introducción (El Dorso Oscuro + Rayo sutil)
+        //    y silenciar temporalmente cualquier sonido de escena / playlist de Foundry hasta que termine la intro
         let introAudio = null;
         let unlockAudioHandler = null;
+        let muteWatchInterval = null;
+        const suspendedContexts = new Set();
+        const savedGainNodes = new Map();
+        const savedSoundGains = new Map();
+        const mutedMediaElements = new Set();
+
+        // Capturar el volumen de referencia ANTES de silenciar el audio de Foundry
+        let introRefVol = 0.65;
+        try {
+            const ambientVol = game.settings?.get?.("core", "globalAmbientVolume");
+            const interfaceVol = game.settings?.get?.("core", "globalInterfaceVolume");
+            const playlistVol = game.settings?.get?.("core", "globalPlaylistVolume");
+            const refVol = typeof interfaceVol === "number"
+                ? interfaceVol
+                : (typeof ambientVol === "number" ? ambientVol : playlistVol);
+            if (typeof refVol === "number") {
+                introRefVol = Math.max(0.15, Math.min(0.9, refVol));
+            }
+        } catch (_) {}
+
+        const obtenerSonidosFoundryActivos = () => {
+            const sounds = new Set();
+            try {
+                if (game.audio?.playing instanceof Map) {
+                    for (const s of game.audio.playing.values()) {
+                        if (s) sounds.add(s);
+                    }
+                }
+            } catch (_) {}
+            try {
+                for (const pl of (game.playlists?.contents || [])) {
+                    for (const ps of (pl.sounds?.contents || [])) {
+                        if (ps?.sound) sounds.add(ps.sound);
+                    }
+                }
+            } catch (_) {}
+            try {
+                for (const amb of (canvas?.sounds?.placeables || [])) {
+                    if (amb?.sound) sounds.add(amb.sound);
+                }
+                if (canvas?.sounds?.weatherSound) {
+                    sounds.add(canvas.sounds.weatherSound);
+                }
+            } catch (_) {}
+            return sounds;
+        };
+
+        const silenciarAudioEscenaDuranteIntro = () => {
+            // A) Suspender contextos WebAudio de Foundry (no afecta a new Audio() de la intro)
+            try {
+                const candidateContexts = [
+                    game.audio?.context,
+                    game.audio?.music?.context,
+                    game.audio?.environment?.context,
+                    game.audio?.interface?.context,
+                    game.audio?.music,
+                    game.audio?.environment,
+                    game.audio?.interface
+                ];
+                for (const ctx of candidateContexts) {
+                    if (ctx && typeof ctx.suspend === "function" && ctx.state === "running") {
+                        suspendedContexts.add(ctx);
+                        ctx.suspend().catch(() => {});
+                    }
+                }
+            } catch (_) {}
+
+            // B) Silenciar GainNodes maestros de canales de Foundry si existen
+            try {
+                const channelNodes = [
+                    game.audio?.music,
+                    game.audio?.environment,
+                    game.audio?.interface,
+                    game.audio?.music?.gain,
+                    game.audio?.environment?.gain,
+                    game.audio?.interface?.gain
+                ];
+                for (const node of channelNodes) {
+                    const gainParam = node?.gain?.value !== undefined ? node.gain : (node?.value !== undefined ? node : null);
+                    if (gainParam && typeof gainParam.value === "number") {
+                        if (!savedGainNodes.has(gainParam) && gainParam.value > 0) {
+                            savedGainNodes.set(gainParam, gainParam.value);
+                        }
+                        gainParam.value = 0;
+                    }
+                }
+            } catch (_) {}
+
+            // C) Silenciar instancias Sound activas (Playlists, AmbientSounds, Streaming HTMLAudioElements)
+            try {
+                for (const s of obtenerSonidosFoundryActivos()) {
+                    const gParam = s?.gainNode?.gain || s?.gain;
+                    if (gParam && typeof gParam.value === "number") {
+                        if (!savedSoundGains.has(s) && gParam.value > 0) {
+                            savedSoundGains.set(s, gParam.value);
+                        }
+                        gParam.value = 0;
+                    }
+                    const mediaEl = s?.element || s?.node || s?.container?.element;
+                    if (mediaEl && mediaEl !== introAudio && typeof mediaEl.muted === "boolean") {
+                        if (!mediaEl.muted) {
+                            mutedMediaElements.add(mediaEl);
+                            mediaEl.muted = true;
+                        }
+                    }
+                }
+            } catch (_) {}
+
+            // D) Silenciar cualquier etiqueta <audio> del DOM ajena a la intro
+            try {
+                document.querySelectorAll("audio").forEach(el => {
+                    if (el !== introAudio && !el.muted) {
+                        mutedMediaElements.add(el);
+                        el.muted = true;
+                    }
+                });
+            } catch (_) {}
+        };
+
+        const restaurarAudioEscenaTrasIntro = () => {
+            if (muteWatchInterval) {
+                clearInterval(muteWatchInterval);
+                muteWatchInterval = null;
+            }
+
+            // 1. Reanudar contextos WebAudio suspendidos
+            for (const ctx of suspendedContexts) {
+                try {
+                    if (typeof ctx.resume === "function" && ctx.state === "suspended") {
+                        ctx.resume().catch(() => {});
+                    }
+                } catch (_) {}
+            }
+            suspendedContexts.clear();
+
+            // 2. Restaurar GainNodes de canales
+            for (const [gainParam, origVal] of savedGainNodes.entries()) {
+                try {
+                    gainParam.value = origVal;
+                } catch (_) {}
+            }
+            savedGainNodes.clear();
+
+            // 3. Restaurar GainNodes de sonidos individuales
+            for (const [s, origVal] of savedSoundGains.entries()) {
+                try {
+                    const gParam = s?.gainNode?.gain || s?.gain;
+                    if (gParam) gParam.value = origVal;
+                } catch (_) {}
+            }
+            savedSoundGains.clear();
+
+            // 4. Desmutear elementos <audio> de streaming
+            for (const el of mutedMediaElements) {
+                try {
+                    el.muted = false;
+                } catch (_) {}
+            }
+            mutedMediaElements.clear();
+
+            // 5. Sincronizar volúmenes de playlists y sonidos ambientales de la escena en Foundry
+            try {
+                for (const pl of (game.playlists?.contents || [])) {
+                    for (const ps of (pl.sounds?.contents || [])) {
+                        if (ps?.playing && typeof ps.updateVolume === "function") {
+                            ps.updateVolume();
+                        }
+                    }
+                }
+                if (typeof canvas?.sounds?.initializeSounds === "function") {
+                    canvas.sounds.initializeSounds();
+                }
+            } catch (_) {}
+        };
+
+        // Activar el silenciamiento de escena inmediatamente y vigilar cada 60ms mientras dure la intro
+        silenciarAudioEscenaDuranteIntro();
+        muteWatchInterval = setInterval(silenciarAudioEscenaDuranteIntro, 60);
 
         const limpiarUnlockListeners = () => {
             if (!unlockAudioHandler) return;
@@ -1538,18 +1717,8 @@ Hooks.once("ready", () => {
 
         const iniciarAudioIntro = () => {
             try {
-                let vol = 0.65;
-                try {
-                    const ambientVol = game.settings?.get?.("core", "globalAmbientVolume");
-                    const interfaceVol = game.settings?.get?.("core", "globalInterfaceVolume");
-                    const refVol = typeof interfaceVol === "number" ? interfaceVol : ambientVol;
-                    if (typeof refVol === "number") {
-                        vol = Math.max(0.15, Math.min(0.9, refVol));
-                    }
-                } catch (_) {}
-
                 introAudio = new Audio(AUDIO_INTRO_PATH);
-                introAudio.volume = vol;
+                introAudio.volume = introRefVol;
                 const p = introAudio.play();
                 if (p && typeof p.catch === "function") {
                     p.catch(() => {
@@ -1576,9 +1745,12 @@ Hooks.once("ready", () => {
         const timers = [];
         let cerrada = false;
 
-        const detenerAudioSuave = (duracionMs = 350) => {
+        const detenerAudioSuave = (duracionMs = 350, alTerminar = null) => {
             limpiarUnlockListeners();
-            if (!introAudio) return;
+            if (!introAudio) {
+                if (typeof alTerminar === "function") alTerminar();
+                return;
+            }
             const audioRef = introAudio;
             introAudio = null;
             const startVol = audioRef.volume || 0.5;
@@ -1597,6 +1769,7 @@ Hooks.once("ready", () => {
                         audioRef.pause();
                         audioRef.src = "";
                     } catch (_) {}
+                    if (typeof alTerminar === "function") alTerminar();
                 }
             }, stepTime);
         };
@@ -1609,8 +1782,11 @@ Hooks.once("ready", () => {
             if (inmediato) {
                 splash.dataset.skipped = "1";
                 splash.classList.add("is-skipping-out", "is-glitching-out");
-                detenerAudioSuave(240);
+                detenerAudioSuave(240, () => {
+                    restaurarAudioEscenaTrasIntro();
+                });
                 setTimeout(() => {
+                    restaurarAudioEscenaTrasIntro();
                     try {
                         if (videoEl) {
                             videoEl.pause();
@@ -1620,8 +1796,11 @@ Hooks.once("ready", () => {
                     splash.remove();
                 }, 320);
             } else {
-                detenerAudioSuave(950);
+                detenerAudioSuave(950, () => {
+                    restaurarAudioEscenaTrasIntro();
+                });
                 setTimeout(() => {
+                    restaurarAudioEscenaTrasIntro();
                     try {
                         if (videoEl) {
                             videoEl.pause();
@@ -1656,8 +1835,6 @@ Hooks.once("ready", () => {
 
     window.mostrarIntroDorsoOscuro = mostrarIntroDorsoOscuro;
 
-    // Mostrar al entrar en el mundo
-    setTimeout(() => {
-        mostrarIntroDorsoOscuro();
-    }, 250);
+    // Mostrar al entrar en el mundo sin demora para que no se cuele ningún fragmento del audio de escena
+    mostrarIntroDorsoOscuro();
 });
